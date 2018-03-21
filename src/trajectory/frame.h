@@ -29,7 +29,9 @@ class Frame
 	/// Returns a reference to a single atom in a frame.
 	Atom& getAtom(int a_atomIndex);
 	/// Computes the distance between two atoms.
-	double computeDistance(int a_i, int a_j);	
+	double computeDistance(int a_i, int a_j);
+	/// Identify the layer an atom is in
+	unsigned int getLayerOf(unsigned int a_index);
     private:
 	System m_system;
         unsigned int m_stepNum;

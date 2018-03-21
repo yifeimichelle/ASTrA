@@ -72,3 +72,10 @@ double Frame::computeDistance(int a_i, int a_j)
   return retVal;
 }
 
+unsigned int Frame::getLayerOf(unsigned int a_index)
+{
+  array<double, DIM > position = m_atoms[a_index].getPosition();
+  unsigned int retval = m_system.getLayer(position);
+  return retval;
+}
+

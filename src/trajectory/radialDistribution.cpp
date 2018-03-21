@@ -29,12 +29,23 @@ RDF::RDF(System& a_system)
 {
   m_system = a_system;
   m_rdf.resize(m_system.getNumPairs());
+  m_numLayers = m_system.getNumLayers();
+  m_rdfLayer.resize(m_numLayers);
+
   m_pairCounter.resize(m_system.getNumPairs());
   m_maxDist = 14.0;
   m_numBins = 500;
   for (int i=0; i<m_system.getNumPairs(); i++)
     {
       m_rdf[i].resize(m_numBins);
+    }
+  for (int i=0; i<m_numLayers; i++)
+    {
+      m_rdfLayer[i].resize(m_system.getNumPairs());
+      for (int j=0; j<m_system.getNumPairs(); j++)
+	{
+	  m_rdfLayer[i][j].resize(m_numBins);
+	}
     }
   m_binSize = m_maxDist / m_numBins;
 };
@@ -43,26 +54,42 @@ void RDF::sample(Frame& a_frame)
 {
   double pairDistance;
   for (int pairIdx=0; pairIdx<m_system.getNumPairs(); pairIdx++) {
-    pair<unsigned int, unsigned int > pair = m_system.getPairCorrelation(pairIdx);
-    for (int atomTypeI=0; atomTypeI<m_system.getNumOfType(pair.first); atomTypeI++)
+    pair<unsigned int, unsigned int > tpair = m_system.getPairCorrelation(pairIdx);
+    pair<unsigned int, unsigned int > layer;
+    for (int atomTypeI=0; atomTypeI<m_system.getNumOfType(tpair.first); atomTypeI++)
       {
-	for (int atomTypeJ=0; atomTypeJ<m_system.getNumOfType(pair.second); atomTypeJ++)
+	layer.first=a_frame.getLayerOf(m_system.getIndexOfType(tpair.first, atomTypeI) );
+	for (int atomTypeJ=0; atomTypeJ<m_system.getNumOfType(tpair.second); atomTypeJ++)
 	  {
-	    pairDistance = a_frame.computeDistance(m_system.getIndexOfType(pair.first,atomTypeI), m_system.getIndexOfType(pair.second,atomTypeJ));
+	    layer.second=a_frame.getLayerOf(m_system.getIndexOfType(tpair.second, atomTypeJ) );
+	    pairDistance = a_frame.computeDistance(m_system.getIndexOfType(tpair.first,atomTypeI), m_system.getIndexOfType(tpair.second,atomTypeJ));
 	    if (pairDistance < m_maxDist)
 	      {
 		binPairDistance(pairIdx, pairDistance);
+		binPairDistance(pairIdx, pairDistance, layer.first, layer.second);
 		incrementCounter(pairIdx);
 	      }
 	  }
       }
   }
 }
+
 void RDF::binPairDistance(unsigned int a_pair, double a_distance)
 {
   int bin = floor(a_distance / m_binSize);
   m_rdf[a_pair][bin]++;
 }
+
+void RDF::binPairDistance(unsigned int a_pair, double a_distance, unsigned int a_firstLayer, unsigned int a_secondLayer)
+{
+  int bin = floor(a_distance / m_binSize);
+  if (a_firstLayer == a_secondLayer )
+    {
+      m_rdfLayer[a_firstLayer][a_pair][bin]++;
+      //cout << a_firstLayer << " " << m_rdfLayer[a_firstLayer][a_pair][bin]++ << endl;
+    }
+}
+
 
 void RDF::incrementCounter(unsigned int a_pair)
 {
@@ -77,6 +104,10 @@ void RDF::normalize()
 	{
 	  //m_rdf[i][j] /= m_pairCounter[i];
 	  m_rdf[i][j] /= (4./3.)*M_PI*(pow(j+1,3)-pow(j,3))*pow(m_binSize,3);
+	  for (int k=0; k<m_numLayers; k++)
+	    {
+	      m_rdfLayer[k][i][j] /= (4./3.)*M_PI*(pow(j+1,3)-pow(j,3))*pow(m_binSize,3);
+	    }
 	}
     }
 }
@@ -115,17 +146,30 @@ const double RDF::getRDFElement(int i, int j) const
   return m_rdf[i][j];
 }
 
+const double RDF::getRDFLayerElement(unsigned int a_layer, int i, int j) const
+{
+  cout << m_rdfLayer[a_layer][i][j] << endl;
+  return m_rdfLayer[a_layer][i][j];
+}
+
+const unsigned int RDF::getNumLayers() const
+{
+  return m_numLayers;
+}
+
 const char* RDFWrite(RDF* a_rdf, const char* a_filename)
 {
-  char full_filename[1024];
+  char full_filename [1024];
+
   if (strstr(a_filename, ".out") != NULL)
     {
       strcpy(full_filename, a_filename);
     }
   else
     {
-      sprintf(full_filename, "%s.out", a_filename);
+      sprintf(full_filename, "%s.out", a_filename);	
     }
+
   fp = fopen(full_filename, "w+");
 
   for (unsigned int iBin=0; iBin<a_rdf->getNumBins(); iBin++)
@@ -142,6 +186,51 @@ const char* RDFWrite(RDF* a_rdf, const char* a_filename)
       writeString("\n");
     }
   fclose(fp);
+    
+  return a_filename;
+}
+
+const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename)
+{
+  unsigned int numLayers = a_rdf->getNumLayers();
+  char** full_filenames = new char * [numLayers];
+
+  if (strstr(a_filename, ".out") != NULL)
+    {
+      for (int iLayer=0; iLayer<numLayers; iLayer++)
+	{
+	  full_filenames[iLayer] = new char [1024];
+	  strcpy(full_filenames[iLayer], a_filename);
+	}
+    }
+  else
+    {
+      for (int iLayer=0; iLayer<numLayers; iLayer++)
+	{
+	  full_filenames[iLayer] = new char [1024];
+	  sprintf(full_filenames[iLayer], "%s-%d.out", a_filename, iLayer);
+	}
+    }
+
+  for (int iLayer=0; iLayer<numLayers; iLayer++)
+    {
+      fp = fopen(full_filenames[iLayer], "w+");
+
+      for (unsigned int iBin=0; iBin<a_rdf->getNumBins(); iBin++)
+	{
+	  char str[128];
+	  sprintf(str, "%f", iBin*a_rdf->getBinSize());
+	  writeString(str);
+	  for (unsigned int jPair=0; jPair<a_rdf->getNumPairs(); jPair++)
+	    {
+	      char str[128];
+	      sprintf(str, " %f", a_rdf->getRDFLayerElement(iLayer,jPair,iBin));
+	      writeString(str);
+	    }
+	  writeString("\n");
+	}
+      fclose(fp);
+    }
   return a_filename;
 
 }

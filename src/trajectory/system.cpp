@@ -44,20 +44,43 @@ System::System(const string& a_inputFile)
     for (int i=0; i<DIM; i++) {
         system >> m_boxPeriodic[i];
     }
-
     cout << m_trajFile << endl;
     cout << "Box dims: ";
     for (int i=0; i<DIM; i++) {
         cout << m_boxDims[i] << " ";
     }
     cout << endl;
-    
+    system >> m_lowerElecTop >> m_upperElecBot;
+    cout << "Electrode limits: " << m_lowerElecTop << " " << m_upperElecBot << endl;
     system >> m_numMolecTypes;
     m_numAtomTypes = 0;
     for (unsigned int i=0; i<m_numMolecTypes; i++) {
         system >> m_numMolecs[i] >> m_numAtomsMolec[i];
 	m_numAtomTypes += m_numAtomsMolec[i];
     }
+    system >> m_cationID >> m_anionID >> m_lowerElecID >> m_upperElecID ;
+    system >> m_anodeIsLower ;
+    if (m_anodeIsLower)
+      {
+	m_anodeID = m_lowerElecID;
+	m_cathodeID = m_upperElecID;
+      }
+    else
+      {
+	m_anodeID = m_upperElecID;
+	m_cathodeID = m_lowerElecID;
+      }
+    system >> m_solventID ;
+    system >> m_capID ;
+    if (m_solventID == 0) {
+      m_boolWithSolvent = 0; }
+    else {
+      m_boolWithSolvent = 1; }
+
+    if (m_capID == 0) {
+      m_boolWithCap = 0; }
+    else {
+      m_boolWithCap = 0; }
     cout << "number of atom types: " << m_numAtomTypes << endl;
     system >> m_stepInterval >> m_stepTime;
     system >> m_numPairs;
@@ -86,7 +109,6 @@ System::System(const string& a_inputFile)
 	      }
 	  }
       }
-    
     
 };
 
@@ -166,3 +188,26 @@ const unsigned int System::isPeriodic(int i) const
   return m_boxPeriodic[i];
 }
 
+const unsigned int System::getNumLayers() const
+{
+  return 3;
+}
+
+const unsigned int System::getLayer(array<double, DIM>& a_position) const
+{
+  unsigned int retVal;
+  double z=a_position[DIM-1];
+  if (z < m_lowerElecTop )
+    {
+      retVal = 0;
+    }
+  else if (z < m_upperElecBot )
+    {
+      retVal = 1;
+    }
+  else
+    {
+      retVal = 2;
+    }
+  return retVal;
+}

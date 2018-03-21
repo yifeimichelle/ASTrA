@@ -29,7 +29,9 @@ int main(int argc, char** argv)
       }
     // normalize RDF
     rdf.normalize();
+    //rdf.print();
     // print to a file
-    rdf.print();
     RDFWrite(&rdf, "rdf");
+    RDFWriteLayers(&rdf, "rdf");
+
 }
