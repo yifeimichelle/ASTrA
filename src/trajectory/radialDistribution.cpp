@@ -53,12 +53,14 @@ RDF::RDF(System& a_system)
 void RDF::sample(Frame& a_frame)
 {
   double pairDistance;
+  double minDistance;
   for (int pairIdx=0; pairIdx<m_system.getNumPairs(); pairIdx++) {
     pair<unsigned int, unsigned int > tpair = m_system.getPairCorrelation(pairIdx);
     pair<unsigned int, unsigned int > layer;
     for (int atomTypeI=0; atomTypeI<m_system.getNumOfType(tpair.first); atomTypeI++)
       {
 	layer.first=a_frame.getLayerOf(m_system.getIndexOfType(tpair.first, atomTypeI) );
+	minDistance=1000.0;
 	for (int atomTypeJ=0; atomTypeJ<m_system.getNumOfType(tpair.second); atomTypeJ++)
 	  {
 	    layer.second=a_frame.getLayerOf(m_system.getIndexOfType(tpair.second, atomTypeJ) );
@@ -66,10 +68,15 @@ void RDF::sample(Frame& a_frame)
 	    if (pairDistance < m_maxDist)
 	      {
 		binPairDistance(pairIdx, pairDistance);
-		binPairDistance(pairIdx, pairDistance, layer.first, layer.second);
+		if (pairDistance < minDistance)
+		  {
+		    minDistance = pairDistance;
+		  }
 		incrementCounter(pairIdx);
 	      }
 	  }
+	binPairDistance(pairIdx, minDistance, layer.first, layer.second);
+
       }
   }
 }
