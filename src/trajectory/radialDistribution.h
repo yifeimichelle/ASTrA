@@ -18,10 +18,12 @@ class RDF
 	const double getBinSize() const;
 	const double getRDFElement(int i, int j) const;
 	const double getRDFLayerElement(unsigned int a_layer, int i, int j) const;
+	const double getRDFLayerClosestElement(unsigned int a_layer, int a_i, int a_k, int a_j) const;
 	const unsigned int getNumLayers() const;
     private:
         vector<vector< double > > m_rdf;
 	vector<vector<vector<double > > > m_rdfLayer;
+	vector<vector<vector<vector<double > > > > m_rdfLayerClosest;
 	vector<int > m_pairCounter;
 	System m_system;
 	double m_maxDist;
@@ -30,6 +32,7 @@ class RDF
 	double m_binSize;
 	void binPairDistance(unsigned int a_pair, double a_distance);
 	void binPairDistance(unsigned int a_pair, double a_distance, unsigned int a_firstLayer, unsigned int a_secondLayer);
+	void binPairDistance(unsigned int a_pair, double a_distance, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer);
 	void incrementCounter(unsigned int a_pair);
 };
 
