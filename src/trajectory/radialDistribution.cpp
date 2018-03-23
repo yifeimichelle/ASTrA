@@ -155,7 +155,6 @@ const double RDF::getRDFElement(int i, int j) const
 
 const double RDF::getRDFLayerElement(unsigned int a_layer, int i, int j) const
 {
-  cout << m_rdfLayer[a_layer][i][j] << endl;
   return m_rdfLayer[a_layer][i][j];
 }
 

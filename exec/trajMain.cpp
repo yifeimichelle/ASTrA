@@ -21,8 +21,13 @@ int main(int argc, char** argv)
     RDF rdf(system);
     int numAtoms = system.getNumAtoms();
     Frame frame(system); // initialize trajectory frame reader
+    cout << "Reading trajectory ..." << endl;
     for (int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
       {
+	if ( frameCounter % int(system.getNumFrames()/10) == 0)
+	  {
+	    cout << frameCounter << endl;
+	  }
 	frame.readStep();
 	rdf.sample(frame);
 	frame.clearFrame();
