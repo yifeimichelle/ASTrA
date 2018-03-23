@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     cout << "Reading trajectory ..." << endl;
     for (int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
       {
-	if ( frameCounter % int(system.getNumFrames()/10) == 0)
+	if ( frameCounter % int(ceil(system.getNumFrames()/10.0)) == 0)
 	  {
 	    cout << frameCounter << endl;
 	  }
@@ -38,5 +38,4 @@ int main(int argc, char** argv)
     // print to a file
     RDFWrite(&rdf, "rdf");
     RDFWriteLayers(&rdf, "rdf");
-
 }
