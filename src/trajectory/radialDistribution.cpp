@@ -4,6 +4,7 @@
 #include "radialDistribution.h"
 #include <vector>
 #include <iostream>
+#include <assert.h>
 
 using namespace std;
 
@@ -88,6 +89,7 @@ void RDF::sample(Frame& a_frame)
 		incrementCounter(pairIdx);
 	      }
 	  }
+	assert(minDistance < m_maxDist);
 	binPairDistance(pairIdx, minDistance, 0, layer.first, layer.second);
       }
     for (int atomTypeJ=0; atomTypeJ<m_system.getNumOfType(tpair.second); atomTypeJ++)
