@@ -89,12 +89,17 @@ void RDF::sample(Frame& a_frame)
 		incrementCounter(pairIdx);
 	      }
 	  }
-	assert(minDistance < m_maxDist);
-	binPairDistance(pairIdx, minDistance, 0, layer.first, layer.second);
+	if(minDistance < m_maxDist)
+          {
+            binPairDistance(pairIdx, minDistance, 0, layer.first, layer.second);
+          }
       }
     for (int atomTypeJ=0; atomTypeJ<m_system.getNumOfType(tpair.second); atomTypeJ++)
       {
-	binPairDistance(pairIdx, minDistanceJ[atomTypeJ], 1, layer.first, layer.second);
+	if(minDistanceJ[atomTypeJ] < m_maxDist)
+          {
+            binPairDistance(pairIdx, minDistanceJ[atomTypeJ], 1, layer.first, layer.second);
+          }
       }
   }
 }
@@ -206,7 +211,7 @@ const char* RDFWrite(RDF* a_rdf, const char* a_filename)
     }
   else
     {
-      sprintf(full_filename, "%s.out", a_filename);	
+      sprintf(full_filename, "%s.out", a_filename);
     }
 
   fp = fopen(full_filename, "w+");
@@ -225,7 +230,7 @@ const char* RDFWrite(RDF* a_rdf, const char* a_filename)
       writeString("\n");
     }
   fclose(fp);
-    
+
   return a_filename;
 }
 
