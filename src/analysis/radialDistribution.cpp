@@ -91,6 +91,7 @@ void RDF::sample(Frame& a_frame)
 	  }
 	if(minDistance < m_maxDist)
           {
+	    // bin distance as closest species J to species I (reference)
             binPairDistance(pairIdx, minDistance, 0, layer.first, layer.second);
           }
       }
@@ -98,6 +99,7 @@ void RDF::sample(Frame& a_frame)
       {
 	if(minDistanceJ[atomTypeJ] < m_maxDist)
           {
+	    // bin distance as closest species I to species J (reference)
             binPairDistance(pairIdx, minDistanceJ[atomTypeJ], 1, layer.first, layer.second);
           }
       }
@@ -180,20 +182,19 @@ const double RDF::getBinSize() const
   return m_binSize;
 }
 
-const double RDF::getRDFElement(int i, int j) const
+const double RDF::getRDFElement(int a_pair, int a_distance) const
 {
-  return m_rdf[i][j];
+  return m_rdf[a_pair][a_distance];
 }
 
-const double RDF::getRDFLayerElement(unsigned int a_layer, int i, int j) const
+const double RDF::getRDFLayerElement(unsigned int a_layer, int a_pair, int a_distance) const
 {
-  return m_rdfLayer[a_layer][i][j];
+  return m_rdfLayer[a_layer][a_pair][a_distance];
 }
 
-const double RDF::getRDFLayerClosestElement(unsigned int a_layer, int a_i, int a_k, int a_j) const
+const double RDF::getRDFLayerClosestElement(unsigned int a_layer, int a_pair, int a_whichClosest, int a_distance) const
 {
-  // arguments: layer, pair type, which closest, bin index
-  return m_rdfLayerClosest[a_layer][a_i][a_k][a_j];
+  return m_rdfLayerClosest[a_layer][a_pair][a_whichClosest][a_distance];
 }
 
 const unsigned int RDF::getNumLayers() const

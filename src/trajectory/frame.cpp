@@ -17,7 +17,7 @@ Frame::Frame(System& a_system)
   m_stepNum = -1;
   m_numAtoms = a_system.getNumAtoms();
   m_traj.open(a_system.getTrajFile());
-  int trajNumAtoms;
+  unsigned int trajNumAtoms;
   m_traj >> trajNumAtoms;
   assert(m_numAtoms==trajNumAtoms);
   m_atoms.resize(m_numAtoms);
@@ -37,13 +37,14 @@ void Frame::readStep()
       m_atoms[i].setPosition(x,y,z);
     }
 }
+
 unsigned int Frame::getStepNum()
 {
   return m_stepNum;
 }
 void Frame::clearFrame()
 {
-  for (int i=0; i<m_numAtoms; i++)
+  for (unsigned int i=0; i<m_numAtoms; i++)
     {
       m_atoms[i].setPosition(-1, -1, -1);
     }

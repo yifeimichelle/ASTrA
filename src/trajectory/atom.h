@@ -18,6 +18,7 @@ class Atom
         virtual ~Atom(); // destructor
         /// Constant access to atom position
         const array<double, DIM>& getPosition() const;
+	/// Set the atomic position.
         void setPosition(double a_x, double a_y, double a_z);
     private:
         array<double, DIM> m_position;

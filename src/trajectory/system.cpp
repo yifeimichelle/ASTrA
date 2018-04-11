@@ -11,14 +11,14 @@ using namespace std;
 unsigned int System::getAtomType(unsigned int a_molecType, unsigned int a_molecAtom)
 {
   unsigned int retVal = 0;
-  for (int i=0; i<a_molecType; i++)
+  for (unsigned int i=0; i<a_molecType; i++)
     {
-      for (int j=0; j<m_numAtomsMolec[i]; j++)
+      for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
 	{
 	  retVal++;
 	}
     }
-  for (int j=0; j<a_molecAtom; j++)
+  for (unsigned int j=0; j<a_molecAtom; j++)
     {
       retVal++;
     }
@@ -54,9 +54,14 @@ System::System(const string& a_inputFile)
     cout << "Electrode limits: " << m_lowerElecTop << " " << m_upperElecBot << endl;
     system >> m_numMolecTypes;
     m_numAtomTypes = 0;
-    for (unsigned int i=0; i<m_numMolecTypes; i++) {
-        system >> m_numMolecs[i] >> m_numAtomsMolec[i];
-	m_numAtomTypes += m_numAtomsMolec[i];
+    for (unsigned int i=0; i<m_numMolecTypes; i++)
+    {
+        system >> m_numMolecs[i] >> m_numMembersMolec[i];
+	m_numAtomTypes += m_numMembersMolec[i];
+	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
+	{
+	  system >> m_masses[i][j] >> m_charges[i][j];
+	}
     }
     system >> m_cationID >> m_anionID >> m_lowerElecID >> m_upperElecID ;
     system >> m_anodeIsLower ;
@@ -97,28 +102,74 @@ System::System(const string& a_inputFile)
 
     m_frameTime = m_stepInterval * m_stepTime;
     m_typeAtomIndices.resize(m_numAtomTypes);
-    unsigned int counter=0;
-    for (int i=0; i<m_numMolecTypes; i++)
+    m_molecMembersOfType.resize(m_numAtomTypes);
+    unsigned int atomTypeCounter=0;
+    for (unsigned int i=0; i<m_numMolecTypes; i++)
       {
-	for (int j=0; j<m_numMolecs[i]; j++)
+	for (unsigned int j=0; j<m_numMolecs[i]; j++)
 	  {
-	    for (int k=0; k<m_numAtomsMolec[i]; k++)
+	    for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
 	      {
-		m_typeAtomIndices[getAtomType(i,k)].push_back(counter);
-		counter++;
+		m_typeAtomIndices[getAtomType(i,k)].push_back(atomTypeCounter);
+		atomTypeCounter++;
 	      }
+	  }
+      }
+    for (unsigned int i=0; i<m_numMolecTypes; i++)
+      {
+	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
+	  {
+	    m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
 	  }
       }
     
 };
 
+void System::printPairCorrelations() const
+{
+  for (unsigned int i=0; i<m_numPairs; i++)
+    {
+      cout << "pair " << i << " : ";
+      cout << m_rdfPairs[i].first << " " << m_rdfPairs[i].second << endl;
+      
+    }
+}
+
+void System::printTypeAtomIndices() const
+{
+  for (unsigned int i=0; i<m_numAtomTypes; i++)
+    {
+      cout << "type " << i << " : " << endl;
+      for (unsigned int j=0; j<m_typeAtomIndices[i].size() ; j++)
+	{
+	  cout << m_typeAtomIndices[i][j] << " ";
+	}
+      cout << endl;
+    }
+}
+
 const int System::getNumAtoms() const
 {
     int retVal = 0;
     for (unsigned int i=0; i<m_numMolecTypes; i++) {
-        retVal += m_numMolecs[i]*m_numAtomsMolec[i];
+        retVal += m_numMolecs[i]*m_numMembersMolec[i];
     }
     return retVal;
+}
+
+const int System::getNumMolecTypes() const
+{
+  return m_numMolecTypes;
+}
+
+const int System::getNumMolecsOfType(unsigned int a_molecType) const
+{
+  return m_numMolecs[a_molecType];
+}
+
+const int System::getNumMembersMolec(unsigned int a_molecType) const
+{
+  return m_numMembersMolec[a_molecType];
 }
 
 const float System::getFrameTime() const
@@ -131,29 +182,6 @@ const string& System::getTrajFile() const
     return m_trajFile;
 }
 
-void System::printPairCorrelations() const
-{
-  for (int i=0; i<m_numPairs; i++)
-    {
-      cout << "pair " << i << " : ";
-      cout << m_rdfPairs[i].first << " " << m_rdfPairs[i].second << endl;
-      
-    }
-}
-
-void System::printTypeAtomIndices() const
-{
-  for (int i=0; i<m_numAtomTypes; i++)
-    {
-      cout << "type " << i << " : " << endl;
-      for (int j=0; j<m_typeAtomIndices[i].size() ; j++)
-	{
-	  cout << m_typeAtomIndices[i][j] << " ";
-	}
-      cout << endl;
-    }
-}
-
 const unsigned int System::getNumOfType(unsigned int a_type) const
 {
   return m_typeAtomIndices[a_type].size();
@@ -162,6 +190,19 @@ const unsigned int System::getNumOfType(unsigned int a_type) const
 const unsigned int System::getIndexOfType(unsigned int a_type, unsigned int a_idx) const
 {
   return m_typeAtomIndices[a_type][a_idx];
+}
+
+const unsigned int System::getMolecIndex(unsigned int a_type, unsigned int a_member) const
+{
+  unsigned int retVal = 0;
+  for (unsigned int i=0; i<a_type; i++)
+    {
+      for (unsigned int j=0; j<a_member; j++)
+	{
+	  retVal++;
+	}
+    }
+  return retVal;
 }
 
 const unsigned int System::getNumPairs() const
@@ -210,4 +251,14 @@ const unsigned int System::getLayer(array<double, DIM>& a_position) const
       retVal = 2;
     }
   return retVal;
+}
+
+const array<double, MAX_MEMBERS_PER_MOLEC > System::getMassesOfType(int a_type) const
+{
+  return m_masses[a_type];
+}
+
+const array<double, MAX_MEMBERS_PER_MOLEC > System::getChargesOfType(int a_type) const
+{
+  return m_charges[a_type];
 }

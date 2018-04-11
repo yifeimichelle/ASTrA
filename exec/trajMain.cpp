@@ -2,6 +2,7 @@
 #include "atom.h"
 #include "frame.h"
 #include "radialDistribution.h"
+#include "atomCounter.h"
 #include <iostream>
 #include <array>
 using namespace std;
@@ -19,17 +20,24 @@ int main(int argc, char** argv)
     string inputFile(argv[1]);
     System system(inputFile); // initialize system
     RDF rdf(system);
-    int numAtoms = system.getNumAtoms();
+    AtomCounter ac(system);
     Frame frame(system); // initialize trajectory frame reader
     cout << "Reading trajectory ..." << endl;
-    for (int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
+    for (unsigned int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
       {
 	if ( frameCounter % int(ceil(system.getNumFrames()/10.0)) == 0)
 	  {
 	    cout << frameCounter << endl;
 	  }
+	// read in step of trajectory
 	frame.readStep();
+	
+	// sample routines
 	rdf.sample(frame);
+	//ac.sample(frame);
+	//doc.sample(frame);
+
+	// clear frame memory
 	frame.clearFrame();
       }
     // normalize RDF
