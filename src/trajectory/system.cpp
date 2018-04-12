@@ -8,23 +8,6 @@
 
 using namespace std;
 
-unsigned int System::getAtomType(unsigned int a_molecType, unsigned int a_molecAtom)
-{
-  unsigned int retVal = 0;
-  for (unsigned int i=0; i<a_molecType; i++)
-    {
-      for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
-	{
-	  retVal++;
-	}
-    }
-  for (unsigned int j=0; j<a_molecAtom; j++)
-    {
-      retVal++;
-    }
-  return retVal;
-}
-
 System::System()
 {
 };
@@ -157,6 +140,12 @@ const int System::getNumAtoms() const
     return retVal;
 }
 
+const int System::getNumAtomTypes() const
+{
+  return m_numAtomTypes;
+}
+
+
 const int System::getNumMolecTypes() const
 {
   return m_numMolecTypes;
@@ -205,6 +194,17 @@ const unsigned int System::getMolecIndex(unsigned int a_type, unsigned int a_mem
   return retVal;
 }
 
+unsigned int System::getAtomType(unsigned int a_molecType, unsigned int a_molecAtom)
+{
+  unsigned int retVal = 0;
+  for (unsigned int i=0; i<a_molecType; i++)
+    {
+      retVal += m_numMembersMolec[i];
+    }
+  retVal += a_molecAtom;
+  return retVal;
+}
+
 const unsigned int System::getNumPairs() const
 {
   return m_numPairs;
@@ -224,6 +224,12 @@ const array<double, DIM > System::getBoxDims() const
 {
   return m_boxDims;
 }
+
+const double System::getBoxDim(int a_dim) const
+{
+  return m_boxDims[a_dim];
+}
+
 const unsigned int System::isPeriodic(int i) const
 {
   return m_boxPeriodic[i];
@@ -261,4 +267,28 @@ const array<double, MAX_MEMBERS_PER_MOLEC > System::getMassesOfType(int a_type) 
 const array<double, MAX_MEMBERS_PER_MOLEC > System::getChargesOfType(int a_type) const
 {
   return m_charges[a_type];
+}
+
+unsigned int System::isElectrolyte(int a_molecType, int* a_electrolyteID) const
+{
+  if (a_molecType == m_cationID-1)
+    {
+      *a_electrolyteID = 0;
+      return 1;
+    }
+  else if (a_molecType == m_anionID-1)
+    {
+      *a_electrolyteID = 1;
+      return 1;
+    }
+  else if (a_molecType == m_solventID-1)
+    {
+      *a_electrolyteID = 2;
+      return 1;
+    }
+  else
+    {
+      *a_electrolyteID = -1;
+      return 0;
+    }
 }

@@ -21,6 +21,14 @@ class AtomCounter
   void normalize();
   /// Prints the density and number of atoms to stdout.
   void print();
+  /// Returns the number of bins.
+  const int getNumBins() const;
+  /// Returns the bin size in length units.
+  const int getBinSize() const;
+  /// Bin atom.
+  void binAtom(array<double, DIM> a_position, int a_molecType, int a_molecMember);
+  /// Bin molecule COM.
+  void binElectrolyteCOM(array<double, DIM> a_position, int a_electrolyteID);
 
  private:
   System m_system;
@@ -31,8 +39,9 @@ class AtomCounter
   // Counter of ion and solvent COMs (max 3 for organic electrolyte).
   vector<array<int, 3 > > m_numIonsProfile;
   int m_numBins;
-  /// Bin atom or particle.
-  void binParticle(unsigned int a_type);
+  double m_binSize;
   /// Compute COMs
   void computeCOMs(Frame& a_frame);
+  /// Compute density profile
+  void computeDensity(Frame& a_frame);
 };

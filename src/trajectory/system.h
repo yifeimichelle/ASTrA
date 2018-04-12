@@ -28,6 +28,8 @@ class System
 	void printTypeAtomIndices() const;
 	/// Returns total number of atoms in the system.
         const int getNumAtoms() const;
+	/// Returns number of unique atom types.
+	const int getNumAtomTypes() const;
 	/// Returns number of molecule types in the system (e.g., ions, solvent, anode, cathode, cap).
 	const int getNumMolecTypes() const;
 	/// Returns number of molecules of specified type.
@@ -44,6 +46,8 @@ class System
 	const unsigned int getIndexOfType(unsigned int a_type, unsigned int a_idx) const;
 	/// Get index of molecule for COMs.
 	const unsigned int getMolecIndex(unsigned int a_type, unsigned int a_member) const;
+	/// Return one-dimensional atom type index
+	unsigned int getAtomType(unsigned int a_molecType, unsigned int a_molecAtom);
 	/// Returns number of RDF pairs to calculate, supplied in input.
 	const unsigned int getNumPairs() const;
 	/// Returns pair of atom types from list of RDF pairs.
@@ -52,6 +56,8 @@ class System
 	const unsigned int getNumFrames() const;
 	/// Return box dims.
 	const array<double, DIM > getBoxDims() const;
+	/// Return box size in specified dimension.
+	const double getBoxDim(int a_dim) const;
 	/// Return whether the selected dimemsion is periodic.
 	const unsigned int isPeriodic(int i) const;
 	/// Get number of layers (currently always returns 3, assuming anode, bulk, cathode layers).
@@ -62,6 +68,8 @@ class System
 	const array<double, MAX_MEMBERS_PER_MOLEC > getMassesOfType(int a_type) const;
 	/// Return charges of atoms in specified molecule type.
 	const array<double, MAX_MEMBERS_PER_MOLEC > getChargesOfType(int a_type) const;
+	/// Returns whether molecule is an electrolyte component and stores ID of component (cation, anion, solvent) in second argument.
+	unsigned int isElectrolyte(int a_molecType, int* a_electrolyteID) const;
  private:
         string m_trajFile;
         unsigned int m_numFrames;
@@ -93,7 +101,6 @@ class System
         array<unsigned int, DIM > m_boxPeriodic;
         array<unsigned int, MAX_NUM_TYPES > m_numMembersMolec;
         array<unsigned int, MAX_NUM_TYPES > m_numMolecs;
-	unsigned int getAtomType(unsigned int a_molecType, unsigned int a_molecAtom);
 
 };
 #endif
