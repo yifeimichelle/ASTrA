@@ -27,6 +27,8 @@ class Frame
 	/// Sets all atomic coordinates to -1.
         void clearFrame();
 	/// Returns a reference to a single atom in a frame.
+	const Atom& getAtom(int a_atomIndex) const;
+	/// Returns a reference to a single atom in a frame.
 	Atom& getAtom(int a_atomIndex);
 	/// Computes the distance between two atoms.
 	double computeDistance(int a_i, int a_j);

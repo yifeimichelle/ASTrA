@@ -47,7 +47,7 @@ class System
 	/// Get index of molecule for COMs.
 	const unsigned int getMolecIndex(unsigned int a_type, unsigned int a_member) const;
 	/// Return one-dimensional atom type index
-	unsigned int getAtomType(unsigned int a_molecType, unsigned int a_molecAtom);
+	const unsigned int getAtomType(unsigned int a_molecType, unsigned int a_molecAtom) const;
 	/// Returns number of RDF pairs to calculate, supplied in input.
 	const unsigned int getNumPairs() const;
 	/// Returns pair of atom types from list of RDF pairs.

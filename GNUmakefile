@@ -6,8 +6,8 @@ TRAJ_SRC = $(HOME)/src/trajectory
 ANALYSIS_SRC = $(HOME)/src/analysis
 CFLAGS = -Wall -I$(TRAJ_SRC) -I$(ANALYSIS_SRC) -std=c++11
 
-CXX = g++
-#CXX = clang++
+#CXX = g++
+CXX = clang++
 CPPFLAGS = -D DIM=$(DIM)
 
 TRAJ_SRCFILES:=$(wildcard $(TRAJ_SRC)/*.cpp)
@@ -17,7 +17,7 @@ ANALYSIS_OBJS:=$(patsubst %.cpp, %.o, $(ANALYSIS_SRCFILES))
 OBJS = $(TRAJ_OBJS) $(ANALYSIS_OBJS)
 
 %.o:%.cpp GNUmakefile
-	$(CXX) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
+	$(CXX) -c $(DEBUGFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@
 	$(CXX) -MM $(CFLAGS) $< > $*.d
 
 clean:

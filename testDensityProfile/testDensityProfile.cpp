@@ -26,12 +26,16 @@ int main(int argc, char** argv)
       {
 	frame.readStep();
 	array<double, DIM> testPosition = frame.getAtom(0).getPosition();
-	cout << testPosition[0] << " " << testPosition[1] << " " << testPosition[2] << endl;
+	cout << "read  : " << testPosition[0] << " " << testPosition[1] << " " << testPosition[2] << endl;
 	ac.binElectrolyteCOM(testPosition, 0);
 	ac.binAtom(testPosition, 0, 0);
 	ac.sample(frame);
+	testPosition = frame.getAtom(0).getPosition();
+	cout << "sample: " << testPosition[0] << " " << testPosition[1] << " " << testPosition[2] << endl;
 	ac.print();
 	frame.clearFrame();
+	testPosition = frame.getAtom(0).getPosition();
+	cout << "clear : " << testPosition[0] << " " << testPosition[1] << " " << testPosition[2] << endl;
 	cout << endl;
       }
     // normalize RDF

@@ -19,10 +19,10 @@ AtomCounter::AtomCounter(System& a_system)
   m_numIonsProfile.resize(m_numBins);
 };
 
-void AtomCounter::sample(Frame& a_frame)
+void AtomCounter::sample(const Frame& a_frame)
 {
-  computeCOMs(a_frame);
-  computeDensity(a_frame);
+  //computeCOMs(a_frame);
+  //computeDensity(a_frame);
   // ADD MORE STUFF HERE
   // FIXME MICHELLE
   int molecIndex = 0;
@@ -41,7 +41,7 @@ void AtomCounter::sample(Frame& a_frame)
 	      // Get position of atom
 	      array<double, DIM> position = a_frame.getAtom(atomIndex).getPosition();
 	      // Bin atom by type
-	      binAtom(position, i, j);
+	      binAtom(position, i, k);
 	      // Compute center of mass
 	      for (int l=0; l < DIM; l++)
 		{
@@ -51,7 +51,7 @@ void AtomCounter::sample(Frame& a_frame)
 	    }
 	  for (int l=0; l<DIM; l++)
 	    {
-	      com[l] /= (numMembers*totalMass);
+	      com[l] /= totalMass;
 	    }
 	  m_COMs[molecIndex]=com;
 	  int* electrolyteID = new int;
@@ -70,6 +70,14 @@ void AtomCounter::binAtom(array<double, DIM> a_position, int a_molecType, int a_
   double pos_z = a_position[2];
   int bin = floor(pos_z / m_binSize);
   int atomType = m_system.getAtomType(a_molecType, a_molecMember);
+#ifdef DEBUG
+  if ( ! (atomType < m_system.getNumAtomTypes()) )
+    {
+      cout << a_molecType << " " << a_molecMember << " " << atomType << endl;
+      cout << m_system.getNumAtomTypes() << endl;
+    }
+  assert (atomType < m_system.getNumAtomTypes()) ;
+#endif
   m_numAtomsProfile[bin][atomType]++;
 }
 

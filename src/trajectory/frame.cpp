@@ -42,6 +42,7 @@ unsigned int Frame::getStepNum()
 {
   return m_stepNum;
 }
+
 void Frame::clearFrame()
 {
   for (unsigned int i=0; i<m_numAtoms; i++)
@@ -49,6 +50,12 @@ void Frame::clearFrame()
       m_atoms[i].setPosition(-1, -1, -1);
     }
 }
+
+const Atom& Frame::getAtom(int a_atomIndex) const
+{
+  return m_atoms[a_atomIndex];
+}
+
 Atom& Frame::getAtom(int a_atomIndex)
 {
   return m_atoms[a_atomIndex];

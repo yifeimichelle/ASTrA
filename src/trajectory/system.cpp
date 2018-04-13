@@ -194,7 +194,7 @@ const unsigned int System::getMolecIndex(unsigned int a_type, unsigned int a_mem
   return retVal;
 }
 
-unsigned int System::getAtomType(unsigned int a_molecType, unsigned int a_molecAtom)
+const unsigned int System::getAtomType(unsigned int a_molecType, unsigned int a_molecAtom) const
 {
   unsigned int retVal = 0;
   for (unsigned int i=0; i<a_molecType; i++)
