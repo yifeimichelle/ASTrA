@@ -5,6 +5,7 @@
 #include "atomCounter.h"
 #include <assert.h>
 #include <iostream>
+#include "writer.h"
 
 using namespace std;
 
@@ -17,16 +18,15 @@ AtomCounter::AtomCounter(System& a_system)
   m_COMs.resize(m_system.getNumAtoms());
   m_numAtomsProfile.resize(m_numBins);
   m_numIonsProfile.resize(m_numBins);
+  m_avgIonsInLayer.resize(m_system.getNumLayers() );
 };
 
 void AtomCounter::sample(const Frame& a_frame)
 {
-  //computeCOMs(a_frame);
-  //computeDensity(a_frame);
-  // ADD MORE STUFF HERE
-  // FIXME MICHELLE
   int molecIndex = 0;
   int atomIndex = 0;
+  vector<array<int, 3> > currentIonsInLayer;
+  currentIonsInLayer.resize(m_system.getNumLayers());
   for (int i=0; i<m_system.getNumMolecTypes(); i++)
     {
       array<double , MAX_MEMBERS_PER_MOLEC > masses = m_system.getMassesOfType(i);
@@ -58,14 +58,22 @@ void AtomCounter::sample(const Frame& a_frame)
 	  if (m_system.isElectrolyte(i, electrolyteID))
 	    {
 	      binElectrolyteCOM(com, *electrolyteID);
+	      countElectrolyteInLayer(com, currentIonsInLayer, *electrolyteID);
 	    }
 	  delete electrolyteID;
 	  molecIndex++;
 	}
     }
+  for (int i=0; i<m_system.getNumLayers(); i++)
+    {
+      for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+	{
+	  m_avgIonsInLayer[i][j] += currentIonsInLayer[i][j];
+	}
+    }
 }
 
-void AtomCounter::binAtom(array<double, DIM> a_position, int a_molecType, int a_molecMember)
+void AtomCounter::binAtom(array<double, DIM>& a_position, int& a_molecType, int& a_molecMember)
 {
   double pos_z = a_position[2];
   int bin = floor(pos_z / m_binSize);
@@ -76,21 +84,52 @@ void AtomCounter::binAtom(array<double, DIM> a_position, int a_molecType, int a_
       cout << a_molecType << " " << a_molecMember << " " << atomType << endl;
       cout << m_system.getNumAtomTypes() << endl;
     }
-  assert (atomType < m_system.getNumAtomTypes()) ;
+  assert ( atomType < m_system.getNumAtomTypes() ) ;
 #endif
   m_numAtomsProfile[bin][atomType]++;
 }
 
-void AtomCounter::binElectrolyteCOM(array<double, DIM> a_position, int a_electrolyteID)
+void AtomCounter::binElectrolyteCOM(array<double, DIM>& a_position, int& a_electrolyteID)
 {
+#ifdef DEBUG
   assert(a_electrolyteID > -1);
+#endif
   double pos_z = a_position[2];
   int bin = floor(pos_z / m_binSize);
   m_numIonsProfile[bin][a_electrolyteID]++;
 }
 
+void AtomCounter::countElectrolyteInLayer(array<double, DIM>& a_position,  vector<array<int, 3> >& a_currentIonsInLayer, int& a_electrolyteID)
+{
+#ifdef DEBUG
+  assert(a_electrolyteID > -1);
+#endif
+  // Figure out what layer electrolyte molecule is in
+  unsigned int layer = m_system.getLayer(a_position);
+  // Increment count of molecule inside layer
+  a_currentIonsInLayer[layer][a_electrolyteID]++;
+}
+
 void AtomCounter::normalize()
 {
+  // Normalize average ions in layer
+  for (int i=0; i<m_system.getNumLayers(); i++)
+    {
+      for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+	{
+	  m_avgIonsInLayer[i][j] /= m_system.getNumFrames();
+	}
+      for (int j=0; j<m_system.getNumAtomTypes(); j++)
+	{
+	  m_numAtomsProfile[i][j] /= m_system.getNumFrames();
+	}
+      for (int j=0; j<m_system.getNumMolecTypes(); j++)
+	{
+	  m_numIonsProfile[i][j] /= m_system.getNumFrames();
+	}
+    }
+
+  
 }
 
 void AtomCounter::print()
@@ -108,6 +147,15 @@ void AtomCounter::print()
 	}
       cout << endl;
     }
+  cout << endl;
+  for (int i=0; i<m_system.getNumLayers(); i++)
+    {
+      for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+	{
+	  cout << m_avgIonsInLayer[i][j] << " ";
+	}
+      cout << endl;
+    }
 }
 
 const int AtomCounter::getNumBins() const
@@ -118,13 +166,4 @@ const int AtomCounter::getNumBins() const
 const int AtomCounter::getBinSize() const
 {
   return m_binSize;
-}
-
-
-void AtomCounter::computeCOMs(Frame& a_frame)
-{
-}
-
-void AtomCounter::computeDensity(Frame& a_frame)
-{ 
 }

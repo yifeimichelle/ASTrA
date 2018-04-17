@@ -27,8 +27,9 @@ int main(int argc, char** argv)
 	frame.readStep();
 	array<double, DIM> testPosition = frame.getAtom(0).getPosition();
 	cout << "read  : " << testPosition[0] << " " << testPosition[1] << " " << testPosition[2] << endl;
-	ac.binElectrolyteCOM(testPosition, 0);
-	ac.binAtom(testPosition, 0, 0);
+	int tmp=0;
+	ac.binElectrolyteCOM(testPosition, tmp);
+	ac.binAtom(testPosition, tmp, tmp);
 	ac.sample(frame);
 	testPosition = frame.getAtom(0).getPosition();
 	cout << "sample: " << testPosition[0] << " " << testPosition[1] << " " << testPosition[2] << endl;

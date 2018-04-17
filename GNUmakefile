@@ -4,7 +4,8 @@
 DIM = 3
 TRAJ_SRC = $(HOME)/src/trajectory
 ANALYSIS_SRC = $(HOME)/src/analysis
-CFLAGS = -Wall -I$(TRAJ_SRC) -I$(ANALYSIS_SRC) -std=c++11
+WRITER_SRC = $(HOME)/src/writer
+CFLAGS = -Wall -I$(TRAJ_SRC) -I$(ANALYSIS_SRC) -I$(WRITER_SRC) -std=c++11
 
 #CXX = g++
 CXX = clang++
@@ -14,7 +15,9 @@ TRAJ_SRCFILES:=$(wildcard $(TRAJ_SRC)/*.cpp)
 TRAJ_OBJS:=$(patsubst %.cpp, %.o, $(TRAJ_SRCFILES))
 ANALYSIS_SRCFILES:=$(wildcard $(ANALYSIS_SRC)/*.cpp)
 ANALYSIS_OBJS:=$(patsubst %.cpp, %.o, $(ANALYSIS_SRCFILES))
-OBJS = $(TRAJ_OBJS) $(ANALYSIS_OBJS)
+WRITER_SRCFILES:=$(wildcard $(WRITER_SRC)/*.cpp)
+WRITER_OBJS:=$(patsubst %.cpp, %.o, $(WRITER_SRCFILES))
+OBJS = $(TRAJ_OBJS) $(ANALYSIS_OBJS) $(WRITER_OBJS)
 
 %.o:%.cpp GNUmakefile
 	$(CXX) -c $(DEBUGFLAGS) $(CPPFLAGS) $(CFLAGS) $< -o $@

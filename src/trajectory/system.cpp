@@ -61,9 +61,13 @@ System::System(const string& a_inputFile)
     system >> m_solventID ;
     system >> m_capID ;
     if (m_solventID == 0) {
-      m_boolWithSolvent = 0; }
+      m_boolWithSolvent = 0;
+      m_numElectrolyteSpecies = 2;
+    }
     else {
-      m_boolWithSolvent = 1; }
+      m_boolWithSolvent = 1;
+      m_numElectrolyteSpecies = 3;
+    }
 
     if (m_capID == 0) {
       m_boolWithCap = 0; }
@@ -220,7 +224,7 @@ const unsigned int System::getNumFrames() const
   return m_numFrames;
 }
 
-const array<double, DIM > System::getBoxDims() const
+const array<double, DIM >& System::getBoxDims() const
 {
   return m_boxDims;
 }
@@ -238,6 +242,10 @@ const unsigned int System::isPeriodic(int i) const
 const unsigned int System::getNumLayers() const
 {
   return 3;
+}
+const unsigned int System::getNumElectrolyteSpecies() const
+{
+  return m_numElectrolyteSpecies;
 }
 
 const unsigned int System::getLayer(array<double, DIM>& a_position) const

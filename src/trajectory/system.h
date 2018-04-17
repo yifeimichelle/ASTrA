@@ -52,16 +52,18 @@ class System
 	const unsigned int getNumPairs() const;
 	/// Returns pair of atom types from list of RDF pairs.
 	const pair<unsigned int, unsigned int > getPairCorrelation(unsigned int a_pair) const;
-	/// Return number of frames in trajectory.
-	const unsigned int getNumFrames() const;
 	/// Return box dims.
-	const array<double, DIM > getBoxDims() const;
+	const array<double, DIM >& getBoxDims() const;
 	/// Return box size in specified dimension.
 	const double getBoxDim(int a_dim) const;
 	/// Return whether the selected dimemsion is periodic.
 	const unsigned int isPeriodic(int i) const;
 	/// Get number of layers (currently always returns 3, assuming anode, bulk, cathode layers).
 	const unsigned int getNumLayers() const;
+	/// Return number of frames in the trajectory.
+	const unsigned int getNumFrames() const;
+	/// Get number of species in electrolyte (2 if IL, 3 if organic electrolyte)
+	const unsigned int getNumElectrolyteSpecies() const;
 	/// Identify the layer that a set of coordinates is in.
 	const unsigned int getLayer(array<double, DIM>& a_position) const;
 	/// Return masses of atoms in specified molecule type.
@@ -88,6 +90,7 @@ class System
 	unsigned int m_capID;
 	unsigned int m_boolWithSolvent;
 	unsigned int m_boolWithCap;
+	unsigned int m_numElectrolyteSpecies;
 	array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_masses;
 	array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_charges;
 	vector<vector<unsigned int > > m_typeAtomIndices;

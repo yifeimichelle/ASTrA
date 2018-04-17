@@ -5,22 +5,9 @@
 #include <vector>
 #include <iostream>
 #include <assert.h>
+#include "writer.h"
 
 using namespace std;
-
-static FILE *fp = NULL;
-
-static void writeString(const char *str)
-{
-    fprintf(fp, "%s",str);
-}
-
-static void writeFloat(float val)
-{
-  char str[128];
-  sprintf(str, "%20.12e ", val);
-  fprintf(fp, "%s",str);
-}
 
 RDF::RDF()
 {
@@ -28,30 +15,32 @@ RDF::RDF()
 
 RDF::RDF(System& a_system)
 {
+  m_maxDist = 14.0;
+  m_numBins = 500;
   m_system = a_system;
+  m_numPairs = m_system.getNumPairs();
   m_numLayers = m_system.getNumLayers();
-  m_rdf.resize(m_system.getNumPairs());
+  m_rdf.resize(m_numBins);
   m_rdfLayer.resize(m_numLayers);
   m_rdfLayerClosest.resize(m_numLayers);
 
-  m_pairCounter.resize(m_system.getNumPairs());
-  m_maxDist = 14.0;
-  m_numBins = 500;
-  for (int i=0; i<m_system.getNumPairs(); i++)
+  m_pairCounter.resize(m_numPairs);
+
+  for (int i=0; i<m_numBins; i++)
     {
-      m_rdf[i].resize(m_numBins);
+      m_rdf[i].resize(m_numPairs);
     }
   for (int i=0; i<m_numLayers; i++)
     {
-      m_rdfLayer[i].resize(m_system.getNumPairs());
-      m_rdfLayerClosest[i].resize(m_system.getNumPairs());
-      for (int j=0; j<m_system.getNumPairs(); j++)
+      m_rdfLayer[i].resize(m_numBins);
+      m_rdfLayerClosest[i].resize(m_numBins);
+      for (int j=0; j<m_numBins; j++)
 	{
-	  m_rdfLayer[i][j].resize(m_numBins);
-	  m_rdfLayerClosest[i][j].resize(2);
-	  for (int k=0; k<2; k++)
+	  m_rdfLayer[i][j].resize(m_numPairs);
+	  m_rdfLayerClosest[i][j].resize(m_numPairs);
+	  for (int k=0; k<m_numPairs; k++)
 	    {
-	      m_rdfLayerClosest[i][j][k].resize(m_numBins);
+	      m_rdfLayerClosest[i][j][k].resize(2);
 	    }
 	}
     }
@@ -62,7 +51,7 @@ void RDF::sample(Frame& a_frame)
 {
   double pairDistance;
   double minDistance;
-  for (int pairIdx=0; pairIdx<m_system.getNumPairs(); pairIdx++) {
+  for (int pairIdx=0; pairIdx<m_numPairs; pairIdx++) {
     pair<unsigned int, unsigned int > tpair = m_system.getPairCorrelation(pairIdx);
     pair<unsigned int, unsigned int > layer;
     vector<double > minDistanceJ;
@@ -77,7 +66,7 @@ void RDF::sample(Frame& a_frame)
 	    pairDistance = a_frame.computeDistance(m_system.getIndexOfType(tpair.first,atomTypeI), m_system.getIndexOfType(tpair.second,atomTypeJ));
 	    if (pairDistance < m_maxDist)
 	      {
-		binPairDistance(pairIdx, pairDistance);
+		binPairDistance(pairDistance, pairIdx);
 		if (pairDistance < minDistanceJ[atomTypeJ])
 		  {
 		    minDistanceJ[atomTypeJ] = pairDistance;
@@ -92,7 +81,7 @@ void RDF::sample(Frame& a_frame)
 	if(minDistance < m_maxDist)
           {
 	    // bin distance as closest species J to species I (reference)
-            binPairDistance(pairIdx, minDistance, 0, layer.first, layer.second);
+            binPairDistance(minDistance, pairIdx, 0, layer.first, layer.second);
           }
       }
     for (int atomTypeJ=0; atomTypeJ<m_system.getNumOfType(tpair.second); atomTypeJ++)
@@ -100,33 +89,33 @@ void RDF::sample(Frame& a_frame)
 	if(minDistanceJ[atomTypeJ] < m_maxDist)
           {
 	    // bin distance as closest species I to species J (reference)
-            binPairDistance(pairIdx, minDistanceJ[atomTypeJ], 1, layer.first, layer.second);
+            binPairDistance(minDistanceJ[atomTypeJ], pairIdx, 1, layer.first, layer.second);
           }
       }
   }
 }
 
-void RDF::binPairDistance(unsigned int a_pair, double a_distance)
+void RDF::binPairDistance(double a_distance, unsigned int a_pair)
 {
   int bin = floor(a_distance / m_binSize);
-  m_rdf[a_pair][bin]++;
+  m_rdf[bin][a_pair]++;
 }
 
-void RDF::binPairDistance(unsigned int a_pair, double a_distance, unsigned int a_firstLayer, unsigned int a_secondLayer)
+void RDF::binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_firstLayer, unsigned int a_secondLayer)
 {
   int bin = floor(a_distance / m_binSize);
   if (a_firstLayer == a_secondLayer )
     {
-      m_rdfLayer[a_firstLayer][a_pair][bin]++;
+      m_rdfLayer[a_firstLayer][bin][a_pair]++;
     }
 }
 
-void RDF::binPairDistance(unsigned int a_pair, double a_distance, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer)
+void RDF::binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer)
 {
   int bin = floor(a_distance / m_binSize);
   if (a_firstLayer == a_secondLayer )
     {
-      m_rdfLayerClosest[a_firstLayer][a_pair][a_whichClosest][bin]++;
+      m_rdfLayerClosest[a_firstLayer][bin][a_pair][a_whichClosest]++;
     }
 }
 
@@ -137,17 +126,17 @@ void RDF::incrementCounter(unsigned int a_pair)
 
 void RDF::normalize()
 {
-  for (int i=0; i<m_system.getNumPairs(); i++)
+  for (int i=0; i<m_numBins; i++)
     {
-      for (int j=0; j<m_numBins; j++)
+      double normFactor = (4./3.)*M_PI*(pow(i+1,3)-pow(i,3))*pow(m_binSize,3);
+      for (int j=0; j<m_system.getNumPairs(); j++)
 	{
-	  //m_rdf[i][j] /= m_pairCounter[i];
-	  m_rdf[i][j] /= (4./3.)*M_PI*(pow(j+1,3)-pow(j,3))*pow(m_binSize,3);
+	  m_rdf[i][j] /= normFactor;
 	  for (int k=0; k<m_numLayers; k++)
 	    {
-	      m_rdfLayer[k][i][j] /= (4./3.)*M_PI*(pow(j+1,3)-pow(j,3))*pow(m_binSize,3);
-	      m_rdfLayerClosest[k][i][0][j] /= (4./3.)*M_PI*(pow(j+1,3)-pow(j,3))*pow(m_binSize,3);
-	      m_rdfLayerClosest[k][i][1][j] /= (4./3.)*M_PI*(pow(j+1,3)-pow(j,3))*pow(m_binSize,3);
+	      m_rdfLayer[k][i][j] /= normFactor;
+	      m_rdfLayerClosest[k][i][j][0] /= normFactor;
+	      m_rdfLayerClosest[k][i][j][1] /= normFactor;
 	    }
 	}
     }
@@ -156,11 +145,11 @@ void RDF::normalize()
 void RDF::print()
 {
   {
-    for (int i=0; i<m_system.getNumPairs(); i++)
+    for (int i=0; i<m_numBins; i++)
       {
-	for (int j=0; j<m_numBins; j++)
+	for (int j=0; j<m_system.getNumPairs(); j++)
 	  {
-	    cout << j*m_binSize << " " << m_rdf[i][j] << endl;
+	    cout << i*m_binSize << " " << m_rdf[i][j] << endl;
 	  }
 	cout << endl << endl;
       }
@@ -182,19 +171,19 @@ const double RDF::getBinSize() const
   return m_binSize;
 }
 
-const double RDF::getRDFElement(int a_pair, int a_distance) const
+const double RDF::getRDFElement(int a_distance, int a_pair) const
 {
-  return m_rdf[a_pair][a_distance];
+  return m_rdf[a_distance][a_pair];
 }
 
-const double RDF::getRDFLayerElement(unsigned int a_layer, int a_pair, int a_distance) const
+const double RDF::getRDFLayerElement(unsigned int a_layer, int a_distance, int a_pair) const
 {
-  return m_rdfLayer[a_layer][a_pair][a_distance];
+  return m_rdfLayer[a_layer][a_distance][a_pair];
 }
 
-const double RDF::getRDFLayerClosestElement(unsigned int a_layer, int a_pair, int a_whichClosest, int a_distance) const
+const double RDF::getRDFLayerClosestElement(unsigned int a_layer, int a_distance, int a_pair, int a_whichClosest) const
 {
-  return m_rdfLayerClosest[a_layer][a_pair][a_whichClosest][a_distance];
+  return m_rdfLayerClosest[a_layer][a_distance][a_pair][a_whichClosest];
 }
 
 const unsigned int RDF::getNumLayers() const
@@ -202,88 +191,61 @@ const unsigned int RDF::getNumLayers() const
   return m_numLayers;
 }
 
+double* RDF::getRDFAddress(int i)
+{
+  return &(m_rdf[i][0]);
+}
+
+double*** RDF::getRDFAddressLayers(int i)
+{
+  return (double***)&(m_rdfLayerClosest[i][0]); // how to typecast to pointer to pointer?
+}
+
+double** RDF::getRDFAddress(int i, int j)
+{
+  return (double**)&(m_rdfLayerClosest[i][j][0]);
+}
+
+double* RDF::getRDFAddress(int i, int j, int k)
+{
+  return &(m_rdfLayerClosest[i][j][k][0]);
+}
+
+
 const char* RDFWrite(RDF* a_rdf, const char* a_filename)
 {
-  char full_filename [1024];
-
-  if (strstr(a_filename, ".out") != NULL)
+  double binSize = a_rdf->getBinSize();
+  int numBins = a_rdf->getNumBins();
+  int varDim = a_rdf->getNumPairs();
+  const char * const headernames[] = { "nodeData" };
+  double* data[500];
+  for (int i=0; i<numBins; i++)
     {
-      strcpy(full_filename, a_filename);
+      data[i] = a_rdf->getRDFAddress(i);
     }
-  else
-    {
-      sprintf(full_filename, "%s.out", a_filename);
-    }
-
-  fp = fopen(full_filename, "w+");
-
-  for (unsigned int iBin=0; iBin<a_rdf->getNumBins(); iBin++)
-    {
-      char str[128];
-      sprintf(str, "%f", iBin*a_rdf->getBinSize());
-      writeString(str);
-      for (unsigned int jPair=0; jPair<a_rdf->getNumPairs(); jPair++)
-	{
-	  char str[128];
-	  sprintf(str, " %f", a_rdf->getRDFElement(jPair,iBin));
-	  writeString(str);
-	}
-      writeString("\n");
-    }
-  fclose(fp);
-
+  write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
   return a_filename;
 }
 
 const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename)
 {
-  unsigned int numLayers = a_rdf->getNumLayers();
-  char** full_filenames = new char * [numLayers];
-
-  if (strstr(a_filename, ".out") != NULL)
+  double binSize = a_rdf->getBinSize();
+  int numBins = a_rdf->getNumBins();
+  int varDim = a_rdf->getNumPairs();
+  int numLayers = a_rdf->getNumLayers();
+  const char * const headernames[] = { "nodeData" };
+  double*** data[3];
+  for (int i=0; i<numLayers; i++)
     {
-      for (int iLayer=0; iLayer<numLayers; iLayer++)
-	{
-	  full_filenames[iLayer] = new char [1024];
-	  strcpy(full_filenames[iLayer], a_filename);
-	}
+      data[i] = a_rdf->getRDFAddressLayers(i);
+      for (int j=0; j<numBins; j++)
+      	{
+      	  data[i][j] = a_rdf->getRDFAddress(i,j);
+	  for (int k=0; k<varDim; k++)
+	    data[i][j][k] = a_rdf->getRDFAddress(i,j,k);
+      	}
     }
-  else
-    {
-      for (int iLayer=0; iLayer<numLayers; iLayer++)
-	{
-	  full_filenames[iLayer] = new char [1024];
-	  sprintf(full_filenames[iLayer], "%s-%d.out", a_filename, iLayer);
-	}
-    }
-
-  for (int iLayer=0; iLayer<numLayers; iLayer++)
-    {
-      fp = fopen(full_filenames[iLayer], "w+");
-      writeString("#r ");
-      for (unsigned int jPair=0; jPair<a_rdf->getNumPairs(); jPair++)
-	{
-	  char str[128];
-	  sprintf(str, " %d_0 %d_1", jPair, jPair);
-	  writeString(str);
-	}
-      writeString("\n");
-      for (unsigned int iBin=0; iBin<a_rdf->getNumBins(); iBin++)
-	{
-	  char str[128];
-	  sprintf(str, "%f", iBin*a_rdf->getBinSize());
-	  writeString(str);
-	  for (unsigned int jPair=0; jPair<a_rdf->getNumPairs(); jPair++)
-	    {
-	      char str[128];
-	      sprintf(str, " %f %f", a_rdf->getRDFLayerClosestElement(iLayer,jPair, 0, iBin), a_rdf->getRDFLayerClosestElement(iLayer,jPair, 1, iBin));
-	      writeString(str);
-	    }
-	  writeString("\n");
-	}
-      fclose(fp);
-    }
+  write_binned_layered_data(a_filename, numBins, binSize, varDim, numLayers, 2, headernames, data);
   return a_filename;
-
 }
 
