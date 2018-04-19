@@ -196,17 +196,23 @@ double* RDF::getRDFAddress(int i)
   return &(m_rdf[i][0]);
 }
 
+void RDF::setRDFLayerClosestValue(int a_layer, int a_bin, int a_pair, int a_closest, double a_setVal)
+{
+    m_rdfLayerClosest[a_layer][a_bin][a_pair][a_closest] = a_setVal;
+}
+
+
 double*** RDF::getRDFAddressLayers(int i)
 {
   return (double***)&(m_rdfLayerClosest[i][0]); // how to typecast to pointer to pointer?
 }
 
-double** RDF::getRDFAddress(int i, int j)
+double** RDF::getRDFAddressLayers(int i, int j)
 {
   return (double**)&(m_rdfLayerClosest[i][j][0]);
 }
 
-double* RDF::getRDFAddress(int i, int j, int k)
+double* RDF::getRDFAddressLayers(int i, int j, int k)
 {
   return &(m_rdfLayerClosest[i][j][k][0]);
 }
@@ -234,18 +240,35 @@ const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename)
   int varDim = a_rdf->getNumPairs();
   int numLayers = a_rdf->getNumLayers();
   const char * const headernames[] = { "nodeData" };
-  double*** data[3];
+  double**** data = new double***[numLayers];
   for (int i=0; i<numLayers; i++)
     {
-      data[i] = a_rdf->getRDFAddressLayers(i);
+        data[i] = new double**[numBins];
       for (int j=0; j<numBins; j++)
       	{
-      	  data[i][j] = a_rdf->getRDFAddress(i,j);
-	  for (int k=0; k<varDim; k++)
-	    data[i][j][k] = a_rdf->getRDFAddress(i,j,k);
+            data[i][j] = new double*[varDim];
+          for (int k=0; k<varDim; k++)
+          {
+            data[i][j][k] = a_rdf->getRDFAddressLayers(i,j,k);
+          }
       	}
     }
   write_binned_layered_data(a_filename, numBins, binSize, varDim, numLayers, 2, headernames, data);
+
+  // delete array of pointers
+  for (int i=0; i<numLayers; i++)
+    {
+      for (int j=0; j<numBins; j++)
+      	{
+            delete data[i][j];
+      	}
+    }
+  for (int i=0; i<numLayers; i++)
+    {
+        delete data[i];
+    }
+  delete data;
+
   return a_filename;
 }
 

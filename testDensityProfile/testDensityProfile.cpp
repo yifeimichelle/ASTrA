@@ -22,7 +22,7 @@ int main(int argc, char** argv)
     AtomCounter ac(system);
     cout << "number of bins: " << ac.getNumBins() << endl;
     Frame frame(system); // initialize trajectory frame reader
-    for (int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
+    for (unsigned int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
       {
 	frame.readStep();
 	array<double, DIM> testPosition = frame.getAtom(0).getPosition();
@@ -39,6 +39,10 @@ int main(int argc, char** argv)
 	cout << "clear : " << testPosition[0] << " " << testPosition[1] << " " << testPosition[2] << endl;
 	cout << endl;
       }
-    // normalize RDF
+    // normalize atom count / density profile
+    ac.normalize();
     // print to a file
+    ACWriteDensity(&ac, "density");
+    ACWriteIons(&ac, "ions");
+    ACWriteIonsInLayers(&ac, "layers");
 }

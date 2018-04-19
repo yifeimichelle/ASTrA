@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 	  }
 	// read in step of trajectory
 	frame.readStep();
-	
+
 	// sample routines
 	rdf.sample(frame);
 	ac.sample(frame);
@@ -42,9 +42,18 @@ int main(int argc, char** argv)
       }
     // normalize RDF
     rdf.normalize();
+    ac.normalize();
+
+    // print to stdout
     //rdf.print();
     //ac.print();
+
     // print to a file
     RDFWrite(&rdf, "rdf");
     RDFWriteLayers(&rdf, "rdf");
+    ACWriteDensity(&ac, "density");
+    ACWriteIons(&ac, "ions");
+    ACWriteIonsInLayers(&ac, "layers");
+    //ACWriteCVs(&ac, "ionCV");
+    //DOCWrite(&doc, "doc");
 }

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstring>
 #include "writer.h"
 
 static FILE *fp = NULL;
@@ -26,7 +27,7 @@ static void close_file(void)
 }
 
 void write_binned_data(const char *a_filename, int a_numBins, double a_binSize, int a_varDim, const char * const *a_headernames, double **a_vars)
-{		    
+{
   open_file(a_filename);
   // print headers
   // print data
@@ -55,8 +56,6 @@ void write_binned_layered_data(const char *a_filename, int a_numBins, double a_b
       filenames[iLayer] = new char [1024];
       sprintf(filenames[iLayer], "%s-%d", a_filename, iLayer);
     }
-  
-  open_file(a_filename);
 
   // Write files for each layer
   for (int iLayer=0; iLayer<a_numLayers; iLayer++)
@@ -72,7 +71,7 @@ void write_binned_layered_data(const char *a_filename, int a_numBins, double a_b
   	}
       writeString("\n");
       // write data
-      for (unsigned int iBin=0; iBin<a_varDim; iBin++)
+      for (unsigned int iBin=0; iBin<a_numBins; iBin++)
   	{
   	  char str[128];
   	  sprintf(str, "%f", iBin*a_binSize);
@@ -83,28 +82,14 @@ void write_binned_layered_data(const char *a_filename, int a_numBins, double a_b
 	      for (int kValue=0; kValue<a_numValues; kValue++)
 		{
 		  sprintf(str, " %f", a_vars[iLayer][iBin][jPair][kValue]);
+                  writeString(str);
 		}
-  	      writeString(str);
   	    }
   	  writeString("\n");
   	}
       close_file();
     }
-  
-  for (unsigned int iBin=0; iBin<a_numBins; iBin++)
-    {
-      char str[128];
-      sprintf(str, "%f", iBin*a_binSize);
-      writeString(str);
-      for (unsigned int jElement=0; jElement<a_varDim; jElement++)
-	{
-	  char str[128];
-	  sprintf(str, " %f", a_vars[jElement][iBin]);
-	  writeString(str);
-	}
-      writeString("\n");
-    }
-  close_file();
+  delete filenames;
 }
 
 static void writeString(const char *str)

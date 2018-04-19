@@ -18,7 +18,9 @@ AtomCounter::AtomCounter(System& a_system)
   m_COMs.resize(m_system.getNumAtoms());
   m_numAtomsProfile.resize(m_numBins);
   m_numIonsProfile.resize(m_numBins);
-  m_avgIonsInLayer.resize(m_system.getNumLayers() );
+  m_avgIonsInLayer.resize( m_system.getNumLayers() );
+  m_numAtomTypes=m_system.getNumAtomTypes();
+  m_chargeMechParam.resize( m_system.getNumFrames() );
 };
 
 void AtomCounter::sample(const Frame& a_frame)
@@ -110,6 +112,21 @@ void AtomCounter::countElectrolyteInLayer(array<double, DIM>& a_position,  vecto
   a_currentIonsInLayer[layer][a_electrolyteID]++;
 }
 
+const int AtomCounter::getNumAtomTypes()
+{
+    return m_numAtomTypes;
+}
+
+const int AtomCounter::getNumIonTypes()
+{
+    return 3;
+}
+
+const int AtomCounter::getNumLayers()
+{
+    return m_system.getNumLayers();
+}
+
 void AtomCounter::normalize()
 {
   // Normalize average ions in layer
@@ -129,7 +146,7 @@ void AtomCounter::normalize()
 	}
     }
 
-  
+
 }
 
 void AtomCounter::print()
@@ -166,4 +183,74 @@ const int AtomCounter::getNumBins() const
 const int AtomCounter::getBinSize() const
 {
   return m_binSize;
+}
+
+double* AtomCounter::getACAtomsAddress(int i)
+{
+  return &(m_numAtomsProfile[i][0]);
+}
+
+double* AtomCounter::getACIonsAddress(int i)
+{
+  return &(m_numIonsProfile[i][0]);
+}
+
+double* AtomCounter::getACIonsLayersAddress(int i)
+{
+  return &(m_avgIonsInLayer[i][0]);
+}
+
+const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename)
+{
+  double binSize = a_ac->getBinSize();
+  int numBins = a_ac->getNumBins();
+  int varDim = a_ac->getNumAtomTypes();
+  const char * const headernames[] = { "nodeData" };
+  double** data;
+  data = new double* [numBins];
+  for (int i=0; i<numBins; i++)
+    {
+      data[i] = a_ac->getACAtomsAddress(i);
+    }
+  write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
+  delete data;
+  return a_filename;
+}
+
+const char* ACWriteIons(AtomCounter* a_ac, const char* a_filename)
+{
+  double binSize = a_ac->getBinSize();
+  int numBins = a_ac->getNumBins();
+  int varDim = a_ac->getNumIonTypes();
+  const char * const headernames[] = { "nodeData" };
+  double** data;
+  data = new double* [numBins];
+  for (int i=0; i<numBins; i++)
+    {
+      data[i] = a_ac->getACIonsAddress(i);
+    }
+  write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
+  delete data;
+  return a_filename;
+}
+
+const char* ACWriteIonsInLayers(AtomCounter* a_ac, const char* a_filename)
+{
+  double binSize = a_ac->getBinSize();
+  int numBins = a_ac->getNumLayers();
+  int varDim = a_ac->getNumIonTypes();
+  const char * const headernames[] = { "nodeData" };
+  double** data;
+  data = new double* [numBins];
+  for (int i=0; i<numBins; i++)
+    {
+      data[i] = a_ac->getACIonsLayersAddress(i);
+    }
+  write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
+  delete data;
+  return a_filename;
+}
+
+const char* ACWriteCollectiveVars(AtomCounter* a_ac, const char* a_filename)
+{
 }

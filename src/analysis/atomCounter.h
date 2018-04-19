@@ -32,26 +32,37 @@ class AtomCounter
   void binAtom(array<double, DIM>& a_position, int& a_molecType, int& a_molecMember);
   /// Bin molecule COM.
   void binElectrolyteCOM(array<double, DIM>& a_position, int& a_electrolyteID);
+  /// Count number of electrolyte species in given layer of electrode (cathode, anode, liquid)
   void countElectrolyteInLayer(array<double, DIM>& a_position,  vector<array<int, 3> >& a_IonsInLayer, int& a_electrolyteID);
+  /// Return number of atom types in system.
+  const int getNumAtomTypes();
+  const int getNumIonTypes();
+  const int getNumLayers();
+  double* getACAtomsAddress(int i);
+  double* getACIonsAddress(int i);
+  double* getACIonsLayersAddress(int i);
 
  private:
   System m_system;
   // Center of masses for this timestep.
   vector<array<double, DIM > > m_COMs;
   // Counter of all atoms in bins.
-  vector<array<int, MAX_NUM_TYPES > > m_numAtomsProfile;
+  vector<array<double, MAX_NUM_TYPES > > m_numAtomsProfile;
   // Counter of ion and solvent COMs in bins.
-  vector<array<int, 3 > > m_numIonsProfile;
+  vector<array<double, 3 > > m_numIonsProfile;
   // Counter of ion and solvent COMs in layers (anode, cathode, liquid).
-  vector<array<int, 3 > > m_avgIonsInLayer;
+  vector<array<double, 3 > > m_avgIonsInLayer;
   // Collective variables for atom and COM counts.
   vector<int > m_excessAnionsInCathode, m_excessCationsInAnode;
   vector<double > m_chargMechParam;
   int m_numBins;
   double m_binSize;
+  int m_numAtomTypes;
 };
 
-const char* ACWrite(AtomCounter* a_ac, const char* a_filename);
-const char* ACWriteLayers(AtomCounter* a_ac, const char* a_filename);
+const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename);
+const char* ACWriteIons(AtomCounter* a_ac, const char* a_filename);
+const char* ACWriteIonsInLayers(AtomCounter* a_ac, const char* a_filename);
+const char* ACWriteCollecVars(AtomCounter* a_ac, const char* a_filename);
 
 #endif

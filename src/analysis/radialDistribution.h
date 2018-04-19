@@ -42,9 +42,11 @@ class RDF
 	/// Get address of first element in RDF
 	double*** getRDFAddressLayers(int i);
 	/// Get address of first element in 3d RDF
-	double** getRDFAddress(int i, int j);
+	double** getRDFAddressLayers(int i, int j);
 	/// Get address of first element in 4d RDF
-	double* getRDFAddress(int i, int j, int k);
+	double* getRDFAddressLayers(int i, int j, int k);
+        /// Set value of element in RDF (for DEBUGGING ONLY)
+        void setRDFLayerClosestValue(int a_layer, int a_bin, int a_pair, int a_closest, double a_setVal);
 
 private:
 	System m_system;

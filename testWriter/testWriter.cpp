@@ -30,6 +30,28 @@ int main(int argc, char** argv)
       }
     // normalize RDF
     rdf.normalize();
+
+    // test indexing
+    //double* rdfPtr = rdf.getRDFAddressLayers(0,0,0);
+    //int idx;
+    //cout << "testing RDF indexing ..." << endl;
+    //rdf.setRDFLayerClosestValue(0,0,0,1,0.5);
+    //cout << "0 0 0 1 value: " << rdf.getRDFLayerClosestElement(0,0,0,1) << endl;
+    //idx = 1;
+    //cout << "direct indexing " << rdfPtr[idx] << endl << endl;
+    //rdf.setRDFLayerClosestValue(0,0,1,1,0.8);
+    //cout << "0 0 1 1 value: " << rdf.getRDFLayerClosestElement(0,0,1,1) << endl;
+    //idx = 1*2+1;
+    //cout << "direct indexing " << rdfPtr[idx] << endl << endl;
+    //rdf.setRDFLayerClosestValue(1,1,1,1,0.75);
+    //cout << "1 1 1 1 value: " << rdf.getRDFLayerClosestElement(1,1,1,1) << endl;
+    //idx = 1*(500*rdf.getNumPairs()*2) + 1*rdf.getNumPairs()*2 + 1*2 + 1;
+    //cout << "direct indexing " << rdfPtr[idx] << endl << endl;
+    //rdf.setRDFLayerClosestValue(2,10,5,1,1.5);
+    //cout << "2 10 5 1 value: " << rdf.getRDFLayerClosestElement(2,10,5,1) << endl;
+    //idx = 2*(500*rdf.getNumPairs()*2) + 10*rdf.getNumPairs()*2 + 5*2 + 1;
+    //cout << "direct indexing " << rdfPtr[idx] << endl << endl;
+
     // print to a file
     RDFWrite(&rdf, "rdf");
     RDFWriteLayers(&rdf, "rdf");
