@@ -28,7 +28,7 @@ class AtomCounter
   /// Returns the number of bins.
   const int getNumBins() const;
   /// Returns the bin size in length units.
-  const int getBinSize() const;
+  const double getBinSize() const;
   /// Bin atom.
   void binAtom(array<double, DIM>& a_position, int& a_molecType, int& a_molecMember);
   /// Bin molecule COM.

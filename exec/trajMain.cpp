@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 	frame.readStep();
 
 	// sample routines
-	rdf.sample(frame);
+        //rdf.sample(frame);
 	ac.sample(frame);
 	//doc.sample(frame);
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 	frame.clearFrame();
       }
     // normalize RDF
-    rdf.normalize();
+    //rdf.normalize();
     ac.normalize();
 
     // print to stdout
@@ -49,8 +49,8 @@ int main(int argc, char** argv)
     //ac.print();
 
     // print to a file
-    RDFWrite(&rdf, "rdf");
-    RDFWriteLayers(&rdf, "rdf");
+    //RDFWrite(&rdf, "rdf");
+    //RDFWriteLayers(&rdf, "rdf");
     ACWriteDensity(&ac, "density");
     ACWriteIons(&ac, "ions");
     ACWriteIonsInLayers(&ac, "layers");

@@ -34,7 +34,7 @@ void write_binned_data(const char *a_filename, int a_numBins, double a_binSize, 
   for (unsigned int iBin=0; iBin<a_numBins; iBin++)
     {
       char str[128];
-      sprintf(str, "%f", iBin*a_binSize);
+      sprintf(str, "%f", 1.0*iBin*a_binSize);
       writeString(str);
       for (unsigned int jElement=0; jElement<a_varDim; jElement++)
 	{
@@ -74,7 +74,7 @@ void write_binned_layered_data(const char *a_filename, int a_numBins, double a_b
       for (unsigned int iBin=0; iBin<a_numBins; iBin++)
   	{
   	  char str[128];
-  	  sprintf(str, "%f", iBin*a_binSize);
+  	  sprintf(str, "%f", 1.0*iBin*a_binSize);
   	  writeString(str);
   	  for (unsigned int jPair=0; jPair<a_varDim; jPair++)
   	    {

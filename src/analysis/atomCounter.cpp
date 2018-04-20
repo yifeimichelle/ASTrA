@@ -183,7 +183,7 @@ const int AtomCounter::getNumBins() const
   return m_numBins;
 }
 
-const int AtomCounter::getBinSize() const
+const double AtomCounter::getBinSize() const
 {
   return m_binSize;
 }
