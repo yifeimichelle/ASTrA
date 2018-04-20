@@ -38,7 +38,7 @@ void Frame::readStep()
     }
 }
 
-unsigned int Frame::getStepNum()
+const unsigned int Frame::getStepNum() const
 {
   return m_stepNum;
 }

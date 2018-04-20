@@ -23,7 +23,7 @@ class Frame
 	/// Reads a step. Stores atom positions and increments m_stepNum.
         void readStep();
 	/// Returns step number of the current frame.
-	unsigned int getStepNum();
+	const unsigned int getStepNum() const;
 	/// Sets all atomic coordinates to -1.
         void clearFrame();
 	/// Returns a reference to a single atom in a frame.

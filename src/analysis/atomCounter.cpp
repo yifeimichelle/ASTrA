@@ -12,23 +12,25 @@ using namespace std;
 AtomCounter::AtomCounter(System& a_system)
 {
   m_system = a_system;
-  m_binSize = 1;
+  m_binSize = 0.05;
   m_numBins = ceil(m_system.getBoxDim(2) / m_binSize );
+  m_numLayers = m_system.getNumLayers();
   // resize vectors
   m_COMs.resize(m_system.getNumAtoms());
   m_numAtomsProfile.resize(m_numBins);
   m_numIonsProfile.resize(m_numBins);
-  m_avgIonsInLayer.resize( m_system.getNumLayers() );
+  m_avgIonsInLayer.resize( m_numLayers );
   m_numAtomTypes=m_system.getNumAtomTypes();
-  m_chargeMechParam.resize( m_system.getNumFrames() );
+  m_chargingParam.resize( m_system.getNumFrames() );
 };
 
 void AtomCounter::sample(const Frame& a_frame)
 {
   int molecIndex = 0;
   int atomIndex = 0;
-  vector<array<int, 3> > currentIonsInLayer;
-  currentIonsInLayer.resize(m_system.getNumLayers());
+  int stepNum = a_frame.getStepNum();
+  vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
+  currentIonsInLayer.resize(m_numLayers);
   for (int i=0; i<m_system.getNumMolecTypes(); i++)
     {
       array<double , MAX_MEMBERS_PER_MOLEC > masses = m_system.getMassesOfType(i);
@@ -66,13 +68,14 @@ void AtomCounter::sample(const Frame& a_frame)
 	  molecIndex++;
 	}
     }
-  for (int i=0; i<m_system.getNumLayers(); i++)
+  for (int i=0; i<m_numLayers; i++)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
 	{
 	  m_avgIonsInLayer[i][j] += currentIonsInLayer[i][j];
 	}
     }
+  //computeChargingParam(currentIonsInLayer);
 }
 
 void AtomCounter::binAtom(array<double, DIM>& a_position, int& a_molecType, int& a_molecMember)
@@ -101,7 +104,7 @@ void AtomCounter::binElectrolyteCOM(array<double, DIM>& a_position, int& a_elect
   m_numIonsProfile[bin][a_electrolyteID]++;
 }
 
-void AtomCounter::countElectrolyteInLayer(array<double, DIM>& a_position,  vector<array<int, 3> >& a_currentIonsInLayer, int& a_electrolyteID)
+void AtomCounter::countElectrolyteInLayer(array<double, DIM>& a_position,  vector<array<int, NUM_ION_TYPES> >& a_currentIonsInLayer, int& a_electrolyteID)
 {
 #ifdef DEBUG
   assert(a_electrolyteID > -1);
@@ -119,18 +122,18 @@ const int AtomCounter::getNumAtomTypes()
 
 const int AtomCounter::getNumIonTypes()
 {
-    return 3;
+    return NUM_ION_TYPES;
 }
 
 const int AtomCounter::getNumLayers()
 {
-    return m_system.getNumLayers();
+    return m_numLayers;
 }
 
 void AtomCounter::normalize()
 {
   // Normalize average ions in layer
-  for (int i=0; i<m_system.getNumLayers(); i++)
+  for (int i=0; i<m_numLayers; i++)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
 	{
@@ -158,14 +161,14 @@ void AtomCounter::print()
 	{
 	  cout << " " << m_numAtomsProfile[i][j];
 	}
-      for (int j=0; j<3; j++)
+      for (int j=0; j<NUM_ION_TYPES; j++)
 	{
 	  cout << " " << m_numIonsProfile[i][j];
 	}
       cout << endl;
     }
   cout << endl;
-  for (int i=0; i<m_system.getNumLayers(); i++)
+  for (int i=0; i<m_numLayers; i++)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
 	{
@@ -198,6 +201,29 @@ double* AtomCounter::getACIonsAddress(int i)
 double* AtomCounter::getACIonsLayersAddress(int i)
 {
   return &(m_avgIonsInLayer[i][0]);
+}
+
+double AtomCounter::computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer)
+{
+
+    // FIXME HERE!! COMPUTE CHARGING PARAMETER FOR CATHODE ANDA NODE SEPARATELY
+    // FIXME        MAKE ROBUST WAY OF ACCESSING INDICES FOR CAT/ANODE AND CAT/ANIONS
+    // FIXME        MICHELLE
+
+  // N(V) total number of in-pore ions at charging voltage V
+  int NV = a_ionsInLayer[0][0] + a_ionsInLayer[0][1];
+  // N(V0) total number of in-pore ions at initial voltage V0
+  int NV0 = 0.0;
+  // Ncounter(V) number of in-pore counter-ions
+  int NcounterV = a_ionsInLayer[0][0];
+  int NcoV = a_ionsInLayer[0][1];
+  // Nco(V) number of in-pore co-ions
+  int NcounterV0 = 0.0;
+  int NcoV0 = 0.0;
+  double retVal = NcounterV-NcoV - NcounterV0+NcoV0;
+  retVal = 1./retVal;
+  retVal = retVal * (NV - NV0);
+  return retVal;
 }
 
 const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename)
