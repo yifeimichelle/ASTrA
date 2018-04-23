@@ -23,15 +23,17 @@ class AtomCounter
   void sample(const Frame& a_frame);
   /// Normalizes the density profiles and CVs.
   void normalize();
-  /// Prints the density and number of atoms to stdout.
+  /// Prints the number of atoms to stdout.
   void print();
+  /// Prints density profile
+  void printDensity();
   /// Returns the number of bins.
   const int getNumBins() const;
   /// Returns the bin size in length units.
   const double getBinSize() const;
   /// Bin atom.
-  void binAtom(array<double, DIM>& a_position, int& a_molecType, int& a_molecMember);
-  /// Bin molecule COM.
+  void binAtomDensity(array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass);
+  /// Add to density of bin.
   void binElectrolyteCOM(array<double, DIM>& a_position, int& a_electrolyteID);
   /// Count number of electrolyte species in given layer of electrode (cathode, anode, liquid)
   void countElectrolyteInLayer(array<double, DIM>& a_position,  vector<array<int, 3> >& a_IonsInLayer, int& a_electrolyteID);
@@ -43,6 +45,8 @@ class AtomCounter
   const int getNumLayers();
   /// Gets the address of the first element in the vector of binned atom counts.
   double* getACAtomsAddress(int i);
+  /// Gets the address of the first element in the vector of binned density.
+  double* getACDensityAddress(int i);
   /// Gets the address of the first element in the vector of binned ion counts.
   double* getACIonsAddress(int i);
   /// Gets the address of the first element in the vector of ion counts per layer.
@@ -56,6 +60,8 @@ class AtomCounter
   vector<array<double, DIM > > m_COMs;
   // Counter of all atoms in bins.
   vector<array<double, MAX_NUM_TYPES > > m_numAtomsProfile;
+  // Stores density (from atom profile)
+  vector<double > m_densityProfile;
   // Counter of ion and solvent COMs in bins.
   vector<array<double, NUM_ION_TYPES > > m_numIonsProfile;
   // Counter of ion and solvent COMs in layers (anode, cathode, liquid).
@@ -69,6 +75,7 @@ class AtomCounter
   int m_numLayers;
 };
 
+const char* ACWriteAtomCounts(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIons(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIonsInLayers(AtomCounter* a_ac, const char* a_filename);

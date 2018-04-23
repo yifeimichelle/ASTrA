@@ -36,11 +36,20 @@ void write_binned_data(const char *a_filename, int a_numBins, double a_binSize, 
       char str[128];
       sprintf(str, "%f", 1.0*iBin*a_binSize);
       writeString(str);
-      for (unsigned int jElement=0; jElement<a_varDim; jElement++)
+      if (a_varDim == 1)
 	{
 	  char str[128];
-	  sprintf(str, " %f", a_vars[iBin][jElement]);
+	  sprintf(str, " %f", a_vars[0][iBin]);
 	  writeString(str);
+	}
+      else
+	{
+	  for (unsigned int jElement=0; jElement<a_varDim; jElement++)
+	    {
+	      char str[128];
+	      sprintf(str, " %f", a_vars[iBin][jElement]);
+	      writeString(str);
+	    }
 	}
       writeString("\n");
     }

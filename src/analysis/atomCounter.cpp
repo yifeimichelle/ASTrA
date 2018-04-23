@@ -18,6 +18,7 @@ AtomCounter::AtomCounter(System& a_system)
   // resize vectors
   m_COMs.resize(m_system.getNumAtoms());
   m_numAtomsProfile.resize(m_numBins);
+  m_densityProfile.resize(m_numBins);
   m_numIonsProfile.resize(m_numBins);
   m_avgIonsInLayer.resize( m_numLayers );
   m_numAtomTypes=m_system.getNumAtomTypes();
@@ -37,30 +38,48 @@ void AtomCounter::sample(const Frame& a_frame)
       for (int j=0; j < m_system.getNumMolecsOfType(i); j++)
 	{
 	  array<double, DIM > com;
+	  com.fill(0);
 	  int numMembers = m_system.getNumMembersMolec(i);
 	  double totalMass = 0;
+#ifdef DEBUG
+	  cout << "initial com: " << com[0] << " " << com[1] << " " << com[2] << endl;
+#endif
 	  for (int k=0; k < numMembers; k++)
 	    {
 	      totalMass += masses[k];
 	      // Get position of atom
 	      array<double, DIM> position = a_frame.getAtom(atomIndex).getPosition();
-	      // Bin atom by type
-	      binAtom(position, i, k);
+	      // Bin atom by type and add to density
+	      binAtomDensity(position, i, k, masses[k]);
 	      // Compute center of mass
 	      for (int l=0; l < DIM; l++)
 		{
 		  com[l] += position[l]*masses[k];
 		}
 	      atomIndex++;
+#ifdef DEBUG
+	      cout << masses[k] << endl;
+	      cout << position[0] << " " << position[1] << " " << position[2] << endl;
+#endif
 	    }
+#ifdef DEBUG
+	  cout << com[0] << " " << com[1] << " " << com[2] << endl;
+#endif
 	  for (int l=0; l<DIM; l++)
 	    {
 	      com[l] /= totalMass;
 	    }
+#ifdef DEBUG
+	  cout << totalMass << endl;
+#endif
 	  m_COMs[molecIndex]=com;
 	  int* electrolyteID = new int;
 	  if (m_system.isElectrolyte(i, electrolyteID))
 	    {
+#ifdef DEBUG
+	      cout << stepNum << " ";
+	      cout << j << " " << i << endl;
+#endif
 	      binElectrolyteCOM(com, *electrolyteID);
 	      countElectrolyteInLayer(com, currentIonsInLayer, *electrolyteID);
 	    }
@@ -78,7 +97,7 @@ void AtomCounter::sample(const Frame& a_frame)
   //computeChargingParam(currentIonsInLayer);
 }
 
-void AtomCounter::binAtom(array<double, DIM>& a_position, int& a_molecType, int& a_molecMember)
+void AtomCounter::binAtomDensity(array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass)
 {
   double pos_z = a_position[2];
   int bin = floor(pos_z / m_binSize);
@@ -92,15 +111,29 @@ void AtomCounter::binAtom(array<double, DIM>& a_position, int& a_molecType, int&
   assert ( atomType < m_system.getNumAtomTypes() ) ;
 #endif
   m_numAtomsProfile[bin][atomType]++;
+  int* electrolyteID = new int;
+  if (m_system.isElectrolyte(a_molecType, electrolyteID))
+    {
+      m_densityProfile[bin] += a_mass;
+    }
+  delete electrolyteID;
 }
+
 
 void AtomCounter::binElectrolyteCOM(array<double, DIM>& a_position, int& a_electrolyteID)
 {
-#ifdef DEBUG
+#ifdef DEBGU
   assert(a_electrolyteID > -1);
+  assert(a_electrolyteID < 3);
 #endif
   double pos_z = a_position[2];
   int bin = floor(pos_z / m_binSize);
+#ifdef DEBUG
+  cout << bin << " " << m_numBins << endl;
+  double x = pos_z / m_system.getBoxDim(2);
+  cout << pos_z << " " << a_electrolyteID << endl;
+  assert( bin < m_numBins );
+#endif
   m_numIonsProfile[bin][a_electrolyteID]++;
 }
 
@@ -132,7 +165,9 @@ const int AtomCounter::getNumLayers()
 
 void AtomCounter::normalize()
 {
-  // Normalize average ions in layer
+  // Normalize average ions in layer:
+  // Divide by number of frames read
+  // Convert density to g/ml
   for (int i=0; i<m_numLayers; i++)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
@@ -147,10 +182,12 @@ void AtomCounter::normalize()
 	{
 	  m_numIonsProfile[i][j] /= m_system.getNumFrames();
 	}
+      m_densityProfile[i] /= m_system.getNumFrames();
     }
 
 
 }
+
 
 void AtomCounter::print()
 {
@@ -178,6 +215,15 @@ void AtomCounter::print()
     }
 }
 
+void AtomCounter::printDensity()
+{
+  for (int i=0; i<m_numBins; i++)
+    {
+      cout << i*getBinSize() << " " << m_densityProfile[i] << endl;
+    }
+  cout << endl;
+}
+
 const int AtomCounter::getNumBins() const
 {
   return m_numBins;
@@ -191,6 +237,11 @@ const double AtomCounter::getBinSize() const
 double* AtomCounter::getACAtomsAddress(int i)
 {
   return &(m_numAtomsProfile[i][0]);
+}
+
+double* AtomCounter::getACDensityAddress(int i)
+{
+  return &(m_densityProfile[0]);
 }
 
 double* AtomCounter::getACIonsAddress(int i)
@@ -226,7 +277,7 @@ double AtomCounter::computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_i
   return retVal;
 }
 
-const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename)
+const char* ACWriteAtomCounts(AtomCounter* a_ac, const char* a_filename)
 {
   double binSize = a_ac->getBinSize();
   int numBins = a_ac->getNumBins();
@@ -242,6 +293,24 @@ const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename)
   delete data;
   return a_filename;
 }
+
+const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename)
+{
+  double binSize = a_ac->getBinSize();
+  int numBins = a_ac->getNumBins();
+  int varDim = 1;
+  const char * const headernames[] = { "nodeData" };
+  double** data;
+  data = new double* [numBins];
+  for (int i=0; i<numBins; i++)
+    {
+      data[i] = a_ac->getACDensityAddress(i);
+    }
+  write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
+  delete data;
+  return a_filename;
+}
+
 
 const char* ACWriteIons(AtomCounter* a_ac, const char* a_filename)
 {
