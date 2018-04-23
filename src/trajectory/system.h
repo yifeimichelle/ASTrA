@@ -36,6 +36,8 @@ class System
 	const int getNumMolecsOfType(unsigned int a_molecType) const;
 	/// Returns number of member atoms comprising a molecule.
 	const int getNumMembersMolec(unsigned int a_molecType) const;
+	/// Get total number of molecules in the system (including mobile and immobile)
+	const unsigned int getNumMolecules() const;
 	/// Return real time of current frame;
         const float getFrameTime() const;
 	/// Returns the name of the trajectory file.
@@ -64,6 +66,8 @@ class System
 	const unsigned int getNumFrames() const;
 	/// Get number of species in electrolyte (2 if IL, 3 if organic electrolyte)
 	const unsigned int getNumElectrolyteSpecies() const;
+	/// Get total number of molecules of electrolytes
+	const unsigned int getNumElectrolyteMolecs() const;
 	/// Identify the layer that a set of coordinates is in.
 	const unsigned int getLayer(array<double, DIM>& a_position) const;
 	/// Return masses of atoms in specified molecule type.
@@ -76,6 +80,7 @@ class System
         string m_trajFile;
         unsigned int m_numFrames;
         unsigned int m_numMolecTypes;
+	unsigned int m_numAtoms;
 	unsigned int m_numAtomTypes;
         unsigned int m_stepInterval;
 	unsigned int m_numPairs;
@@ -91,6 +96,8 @@ class System
 	unsigned int m_boolWithSolvent;
 	unsigned int m_boolWithCap;
 	unsigned int m_numElectrolyteSpecies;
+	unsigned int m_numElectrolyteMolecs;
+	unsigned int m_numMolecules;
 	array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_masses;
 	array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_charges;
 	vector<vector<unsigned int > > m_typeAtomIndices;

@@ -20,7 +20,7 @@ System::System(const string& a_inputFile)
 
     system >> m_trajFile;
     system >> m_numFrames;
-
+    
     for (int i=0; i<DIM; i++) {
         system >> m_boxDims[i];
     }
@@ -40,13 +40,15 @@ System::System(const string& a_inputFile)
     for (unsigned int i=0; i<m_numMolecTypes; i++)
     {
         system >> m_numMolecs[i] >> m_numMembersMolec[i];
+	m_numMolecules += m_numMolecs[i];
 	m_numAtomTypes += m_numMembersMolec[i];
+	m_numAtoms += m_numMolecs[i]*m_numMembersMolec[i];
 	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
 	{
 	  system >> m_masses[i][j] >> m_charges[i][j];
 	}
     }
-    system >> m_cationID >> m_anionID >> m_lowerElecID >> m_upperElecID ;
+    system >> m_cationID >> m_anionID >> m_lowerElecID >> m_upperElecID;
     system >> m_anodeIsLower ;
     if (m_anodeIsLower)
       {
@@ -63,10 +65,13 @@ System::System(const string& a_inputFile)
     if (m_solventID == 0) {
       m_boolWithSolvent = 0;
       m_numElectrolyteSpecies = 2;
+      m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID);
     }
     else {
       m_boolWithSolvent = 1;
       m_numElectrolyteSpecies = 3;
+      m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID) + getNumMolecsOfType(m_solventID);
+
     }
 
     if (m_capID == 0) {
@@ -137,11 +142,7 @@ void System::printTypeAtomIndices() const
 
 const int System::getNumAtoms() const
 {
-    int retVal = 0;
-    for (unsigned int i=0; i<m_numMolecTypes; i++) {
-        retVal += m_numMolecs[i]*m_numMembersMolec[i];
-    }
-    return retVal;
+  return m_numAtoms;
 }
 
 const int System::getNumAtomTypes() const
@@ -163,6 +164,11 @@ const int System::getNumMolecsOfType(unsigned int a_molecType) const
 const int System::getNumMembersMolec(unsigned int a_molecType) const
 {
   return m_numMembersMolec[a_molecType];
+}
+
+const unsigned int System::getNumMolecules() const
+{
+  return m_numMolecules;
 }
 
 const float System::getFrameTime() const
@@ -247,6 +253,12 @@ const unsigned int System::getNumElectrolyteSpecies() const
 {
   return m_numElectrolyteSpecies;
 }
+
+const unsigned int System::getNumElectrolyteMolecs() const
+{
+  return m_numElectrolyteMolecs;
+}
+
 
 const unsigned int System::getLayer(array<double, DIM>& a_position) const
 {

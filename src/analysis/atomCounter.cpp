@@ -16,7 +16,7 @@ AtomCounter::AtomCounter(System& a_system)
   m_numBins = ceil(m_system.getBoxDim(2) / m_binSize );
   m_numLayers = m_system.getNumLayers();
   // resize vectors
-  m_COMs.resize(m_system.getNumAtoms());
+  m_COMs.resize(m_system.getNumMolecules());
   m_numAtomsProfile.resize(m_numBins);
   m_densityProfile.resize(m_numBins);
   m_numIonsProfile.resize(m_numBins);
@@ -38,12 +38,9 @@ void AtomCounter::sample(const Frame& a_frame)
       for (int j=0; j < m_system.getNumMolecsOfType(i); j++)
 	{
 	  array<double, DIM > com;
-	  com.fill(0);
+	  com.fill(0); // fill with zeros, otherwise will keep same data as before
 	  int numMembers = m_system.getNumMembersMolec(i);
 	  double totalMass = 0;
-#ifdef DEBUG
-	  cout << "initial com: " << com[0] << " " << com[1] << " " << com[2] << endl;
-#endif
 	  for (int k=0; k < numMembers; k++)
 	    {
 	      totalMass += masses[k];
@@ -57,29 +54,15 @@ void AtomCounter::sample(const Frame& a_frame)
 		  com[l] += position[l]*masses[k];
 		}
 	      atomIndex++;
-#ifdef DEBUG
-	      cout << masses[k] << endl;
-	      cout << position[0] << " " << position[1] << " " << position[2] << endl;
-#endif
 	    }
-#ifdef DEBUG
-	  cout << com[0] << " " << com[1] << " " << com[2] << endl;
-#endif
 	  for (int l=0; l<DIM; l++)
 	    {
 	      com[l] /= totalMass;
 	    }
-#ifdef DEBUG
-	  cout << totalMass << endl;
-#endif
 	  m_COMs[molecIndex]=com;
 	  int* electrolyteID = new int;
 	  if (m_system.isElectrolyte(i, electrolyteID))
 	    {
-#ifdef DEBUG
-	      cout << stepNum << " ";
-	      cout << j << " " << i << endl;
-#endif
 	      binElectrolyteCOM(com, *electrolyteID);
 	      countElectrolyteInLayer(com, currentIonsInLayer, *electrolyteID);
 	    }
