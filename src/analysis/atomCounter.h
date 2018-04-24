@@ -4,8 +4,6 @@
 #include "system.h"
 #include "atom.h"
 #include <vector>
-#define DENSITYCONV
-#define NUM_ION_TYPES 3
 
 using namespace std;
 /// A class calculating atom counts and densities.
@@ -42,7 +40,7 @@ class AtomCounter
   /// Returns the number of ion types (anion, cation, solvent) in the system.
   const int getNumIonTypes();
   /// Returns the number of layers in the system (typically 3: anode, cathode, liquid).
-  const int getNumLayers();
+  const int getNumLayers() const;
   /// Gets the address of the first element in the vector of binned atom counts.
   double* getACAtomsAddress(int i);
   /// Gets the address of the first element in the vector of binned density.
@@ -52,7 +50,14 @@ class AtomCounter
   /// Gets the address of the first element in the vector of ion counts per layer.
   double* getACIonsLayersAddress(int i);
   /// Computes the charging mechanisms parameter from Forse 2016 "New perspectives on the charging mechanisms of supercapacitors".
+  double* getACIonsLayersTimeAddress(int i, int j);
   double computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer);
+  /// Returns system
+  const System& getSystem() const;
+  /// Returns interval for saving frames in time-sequence data
+  const int getSaveFrameInterval() const;
+  /// Returns total number of saved frames
+  const int getNumSavedFrames() const;
 
  private:
   System m_system;
@@ -67,8 +72,11 @@ class AtomCounter
   // Counter of ion and solvent COMs in layers (anode, cathode, liquid).
   vector<array<double, NUM_ION_TYPES > > m_avgIonsInLayer;
   // Collective variables for atom and COM counts.
+  vector<vector<array<double, NUM_ION_TYPES > > > m_numIonsInLayerTime;
   vector<int > m_excessAnionsInCathode, m_excessCationsInAnode;
   vector<double > m_chargingParam;
+  int m_saveFrameEvery;
+  int m_numSavedFrames;
   int m_numBins;
   double m_binSize;
   int m_numAtomTypes;
@@ -80,5 +88,7 @@ const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIons(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIonsInLayers(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteCollecVars(AtomCounter* a_ac, const char* a_filename);
+const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename);
+
 
 #endif

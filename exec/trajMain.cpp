@@ -24,6 +24,7 @@ int main(int argc, char** argv)
     RDF rdf(system);
     AtomCounter ac(system);
     Frame frame(system); // initialize trajectory frame reader
+
     cout << "Reading trajectory ..." << endl;
     for (unsigned int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
       {
@@ -58,6 +59,7 @@ int main(int argc, char** argv)
     ACWriteDensity(&ac, "density");
     ACWriteIons(&ac, "ions");
     ACWriteIonsInLayers(&ac, "layers");
+    ACWriteIonsInLayersTime(&ac, "numionslayers");
     //ACWriteCVs(&ac, "ionCV");
     //DOCWrite(&doc, "doc");
 }

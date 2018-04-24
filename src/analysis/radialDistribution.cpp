@@ -223,7 +223,7 @@ const char* RDFWrite(RDF* a_rdf, const char* a_filename)
   double binSize = a_rdf->getBinSize();
   int numBins = a_rdf->getNumBins();
   int varDim = a_rdf->getNumPairs();
-  const char * const headernames[] = { "nodeData" };
+  const char * const headernames[] = { "z[A]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14", "15", "16", "17", "18", "19", "20" };
   double* data[500];
   for (int i=0; i<numBins; i++)
     {
@@ -243,17 +243,17 @@ const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename)
   double**** data = new double***[numLayers];
   for (int i=0; i<numLayers; i++)
     {
-        data[i] = new double**[numBins];
+      data[i] = new double**[numBins];
       for (int j=0; j<numBins; j++)
       	{
-            data[i][j] = new double*[varDim];
+	  data[i][j] = new double*[varDim];
           for (int k=0; k<varDim; k++)
-          {
-            data[i][j][k] = a_rdf->getRDFAddressLayers(i,j,k);
-          }
+	    {
+	      data[i][j][k] = a_rdf->getRDFAddressLayers(i,j,k);
+	    }
       	}
     }
-  write_binned_layered_data(a_filename, numBins, binSize, varDim, numLayers, 2, headernames, data);
+  write_binned_layered_multival_data(a_filename, numBins, binSize, varDim, numLayers, 2, headernames, data);
 
   // delete array of pointers
   for (int i=0; i<numLayers; i++)

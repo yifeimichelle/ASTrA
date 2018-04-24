@@ -12,6 +12,7 @@ using namespace std;
 AtomCounter::AtomCounter(System& a_system)
 {
   m_system = a_system;
+  m_saveFrameEvery = 1;
   m_binSize = 0.05;
   m_numBins = ceil(m_system.getBoxDim(2) / m_binSize );
   m_numLayers = m_system.getNumLayers();
@@ -21,6 +22,12 @@ AtomCounter::AtomCounter(System& a_system)
   m_densityProfile.resize(m_numBins);
   m_numIonsProfile.resize(m_numBins);
   m_avgIonsInLayer.resize( m_numLayers );
+  m_numSavedFrames = ceil(m_system.getNumFrames() / m_saveFrameEvery) + 1;
+  m_numIonsInLayerTime.resize(m_numSavedFrames);
+  for (int i=0; i<m_numSavedFrames; i++)
+    {
+      m_numIonsInLayerTime[i].resize( m_numLayers );
+    }
   m_numAtomTypes=m_system.getNumAtomTypes();
   m_chargingParam.resize( m_system.getNumFrames() );
 };
@@ -77,6 +84,17 @@ void AtomCounter::sample(const Frame& a_frame)
 	  m_avgIonsInLayer[i][j] += currentIonsInLayer[i][j];
 	}
     }
+  if ( (a_frame.getStepNum() % m_saveFrameEvery == 0) || ( a_frame.getStepNum() == m_system.getNumFrames() ) )
+    {
+      for (int i=0; i<m_numLayers; i++)
+	{
+	  for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+	    {
+	      int timeIndex = (ceil)( ((double)a_frame.getStepNum()) / ((double)m_saveFrameEvery) );
+	      m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j];
+	    }
+	}
+    }
   //computeChargingParam(currentIonsInLayer);
 }
 
@@ -86,17 +104,15 @@ void AtomCounter::binAtomDensity(array<double, DIM>& a_position, int& a_molecTyp
   int bin = floor(pos_z / m_binSize);
   int atomType = m_system.getAtomType(a_molecType, a_molecMember);
 #ifdef DEBUG
-  if ( ! (atomType < m_system.getNumAtomTypes()) )
-    {
-      cout << a_molecType << " " << a_molecMember << " " << atomType << endl;
-      cout << m_system.getNumAtomTypes() << endl;
-    }
   assert ( atomType < m_system.getNumAtomTypes() ) ;
 #endif
+  // Increment number of atoms in bin
   m_numAtomsProfile[bin][atomType]++;
   int* electrolyteID = new int;
   if (m_system.isElectrolyte(a_molecType, electrolyteID))
     {
+      // Increment density of electrolyte in bin
+      // FIXME this could be more efficient
       m_densityProfile[bin] += a_mass;
     }
   delete electrolyteID;
@@ -105,16 +121,16 @@ void AtomCounter::binAtomDensity(array<double, DIM>& a_position, int& a_molecTyp
 
 void AtomCounter::binElectrolyteCOM(array<double, DIM>& a_position, int& a_electrolyteID)
 {
-#ifdef DEBGU
+#ifdef DEBUG
   assert(a_electrolyteID > -1);
   assert(a_electrolyteID < 3);
 #endif
   double pos_z = a_position[2];
   int bin = floor(pos_z / m_binSize);
 #ifdef DEBUG
-  cout << bin << " " << m_numBins << endl;
+  cout << "bin " << bin << " of " << m_numBins << " bins" << endl;
   double x = pos_z / m_system.getBoxDim(2);
-  cout << pos_z << " " << a_electrolyteID << endl;
+  cout << "z position " << pos_z << " of electrolyte " << a_electrolyteID << endl;
   assert( bin < m_numBins );
 #endif
   m_numIonsProfile[bin][a_electrolyteID]++;
@@ -141,7 +157,7 @@ const int AtomCounter::getNumIonTypes()
     return NUM_ION_TYPES;
 }
 
-const int AtomCounter::getNumLayers()
+const int AtomCounter::getNumLayers() const
 {
     return m_numLayers;
 }
@@ -149,26 +165,30 @@ const int AtomCounter::getNumLayers()
 void AtomCounter::normalize()
 {
   // Normalize average ions in layer:
+  double avogadro = 6.022140857;
   // Divide by number of frames read
+  double numFrames = m_system.getNumFrames();
   // Convert density to g/ml
+  double normDensity = numFrames * m_binSize * m_system.getBoxDim(0) * m_system.getBoxDim(1) * 10. / avogadro;
   for (int i=0; i<m_numLayers; i++)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
 	{
-	  m_avgIonsInLayer[i][j] /= m_system.getNumFrames();
+	  m_avgIonsInLayer[i][j] /= numFrames;
 	}
-      for (int j=0; j<m_system.getNumAtomTypes(); j++)
-	{
-	  m_numAtomsProfile[i][j] /= m_system.getNumFrames();
-	}
-      for (int j=0; j<m_system.getNumMolecTypes(); j++)
-	{
-	  m_numIonsProfile[i][j] /= m_system.getNumFrames();
-	}
-      m_densityProfile[i] /= m_system.getNumFrames();
     }
-
-
+    for (int i=0; i<m_numBins; i++)
+      {
+	for (int j=0; j<m_system.getNumAtomTypes(); j++)
+	  {
+	    m_numAtomsProfile[i][j] /= numFrames;
+	  }
+	for (int j=0; j<getNumIonTypes(); j++)
+	  {
+	    m_numIonsProfile[i][j] /= numFrames;
+	  }
+	m_densityProfile[i] /= normDensity ;
+      }
 }
 
 
@@ -195,6 +215,18 @@ void AtomCounter::print()
 	  cout << m_avgIonsInLayer[i][j] << " ";
 	}
       cout << endl;
+    }
+  cout << endl;
+  for (int i=0; i<m_numSavedFrames; i++)
+    {
+      for (int j=0; j<m_numLayers; j++)
+  	{
+  	  for (int k=0; k<m_system.getNumElectrolyteSpecies(); k++)
+  	    {
+  	      cout << m_numIonsInLayerTime[i][j][k] << " ";
+  	    }
+  	  cout << endl;
+  	}
     }
 }
 
@@ -224,7 +256,7 @@ double* AtomCounter::getACAtomsAddress(int i)
 
 double* AtomCounter::getACDensityAddress(int i)
 {
-  return &(m_densityProfile[0]);
+  return &(m_densityProfile[i]);
 }
 
 double* AtomCounter::getACIonsAddress(int i)
@@ -237,10 +269,16 @@ double* AtomCounter::getACIonsLayersAddress(int i)
   return &(m_avgIonsInLayer[i][0]);
 }
 
+double* AtomCounter::getACIonsLayersTimeAddress(int i, int j)
+{
+  return &(m_numIonsInLayerTime[i][j][0]);
+}
+
+
 double AtomCounter::computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer)
 {
 
-    // FIXME HERE!! COMPUTE CHARGING PARAMETER FOR CATHODE ANDA NODE SEPARATELY
+    // FIXME HERE!! COMPUTE CHARGING PARAMETER FOR CATHODE AND ANODE SEPARATELY
     // FIXME        MAKE ROBUST WAY OF ACCESSING INDICES FOR CAT/ANODE AND CAT/ANIONS
     // FIXME        MICHELLE
 
@@ -248,10 +286,10 @@ double AtomCounter::computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_i
   int NV = a_ionsInLayer[0][0] + a_ionsInLayer[0][1];
   // N(V0) total number of in-pore ions at initial voltage V0
   int NV0 = 0.0;
-  // Ncounter(V) number of in-pore counter-ions
+  // Nco,Ncounter(V) number of in-pore co- and counter-ions at charging voltage V
   int NcounterV = a_ionsInLayer[0][0];
   int NcoV = a_ionsInLayer[0][1];
-  // Nco(V) number of in-pore co-ions
+  // Nco,Ncounter(V0) number of in-pore co- and counter-ions at initial voltage V0
   int NcounterV0 = 0.0;
   int NcoV0 = 0.0;
   double retVal = NcounterV-NcoV - NcounterV0+NcoV0;
@@ -260,12 +298,28 @@ double AtomCounter::computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_i
   return retVal;
 }
 
+const System& AtomCounter::getSystem() const
+{
+  return m_system;
+}
+
+const int AtomCounter::getSaveFrameInterval() const
+{
+  return m_saveFrameEvery;
+}
+
+const int AtomCounter::getNumSavedFrames() const
+{
+  return m_numSavedFrames;
+}
+
+
 const char* ACWriteAtomCounts(AtomCounter* a_ac, const char* a_filename)
 {
   double binSize = a_ac->getBinSize();
   int numBins = a_ac->getNumBins();
   int varDim = a_ac->getNumAtomTypes();
-  const char * const headernames[] = { "nodeData" };
+  const char * const headernames[] = { "z[A]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14" };
   double** data;
   data = new double* [numBins];
   for (int i=0; i<numBins; i++)
@@ -282,7 +336,7 @@ const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename)
   double binSize = a_ac->getBinSize();
   int numBins = a_ac->getNumBins();
   int varDim = 1;
-  const char * const headernames[] = { "nodeData" };
+  const char * const headernames[] = { "z[A]", "dens[g/ml]" };
   double** data;
   data = new double* [numBins];
   for (int i=0; i<numBins; i++)
@@ -294,13 +348,12 @@ const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename)
   return a_filename;
 }
 
-
 const char* ACWriteIons(AtomCounter* a_ac, const char* a_filename)
 {
   double binSize = a_ac->getBinSize();
   int numBins = a_ac->getNumBins();
   int varDim = a_ac->getNumIonTypes();
-  const char * const headernames[] = { "nodeData" };
+  const char * const headernames[] = { "z[A]", "cation", "anion", "solvent" };
   double** data;
   data = new double* [numBins];
   for (int i=0; i<numBins; i++)
@@ -314,17 +367,42 @@ const char* ACWriteIons(AtomCounter* a_ac, const char* a_filename)
 
 const char* ACWriteIonsInLayers(AtomCounter* a_ac, const char* a_filename)
 {
-  double binSize = a_ac->getBinSize();
-  int numBins = a_ac->getNumLayers();
+  int numLayers = a_ac->getNumLayers();
+  double* layers;
+  layers = new double[numLayers];
+  a_ac->getSystem().getLayerUpperBounds(numLayers,layers);
   int varDim = a_ac->getNumIonTypes();
-  const char * const headernames[] = { "nodeData" };
+  const char * const headernames[] = { "z[A]", "cation", "anion", "solvent" };
   double** data;
-  data = new double* [numBins];
-  for (int i=0; i<numBins; i++)
+  data = new double* [numLayers];
+  for (int i=0; i<numLayers; i++)
     {
       data[i] = a_ac->getACIonsLayersAddress(i);
     }
-  write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
+  write_layered_data(a_filename, numLayers, layers, varDim, headernames, data);
+  delete data, layers;
+  return a_filename;
+}
+
+const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename)
+{
+  int numFrames = a_ac->getNumSavedFrames();
+  int saveFrameEvery = a_ac->getSaveFrameInterval();
+  int numLayers = a_ac->getNumLayers();
+  int varDim = a_ac->getNumIonTypes();
+  const char * const headernames[] = { "t", "data" };
+  double*** data;
+  data = new double** [numFrames];
+  for (int i=0; i<numFrames; i++)
+    {
+      // FIXME need better way to access pointers than doing this every time, it is very tedious
+      data[i] = new double* [numLayers];
+      for (int j=0; j<numLayers; j++)
+	{
+	  data[i][j] = a_ac->getACIonsLayersTimeAddress(i,j);
+	}
+    }
+  write_layered_time_data_by_var(a_filename, numFrames, saveFrameEvery, numLayers, varDim, headernames, data);
   delete data;
   return a_filename;
 }

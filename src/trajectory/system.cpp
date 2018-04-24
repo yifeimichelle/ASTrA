@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include "system.h"
+#include <assert.h>
 
 using namespace std;
 
@@ -12,7 +13,132 @@ System::System()
 {
 };
 
+// Reads input to get information on
+// system size, number of atoms, type information, etc.
+// as well as information on the RDF pairs to compute
 System::System(const string& a_inputFile)
+{
+    readInputOld(a_inputFile);
+
+    m_frameTime = m_stepInterval * m_stepTime;
+    m_typeAtomIndices.resize(m_numAtomTypes);
+    m_molecMembersOfType.resize(m_numAtomTypes);
+    unsigned int atomTypeCounter=0;
+    for (unsigned int i=0; i<m_numMolecTypes; i++)
+      {
+	for (unsigned int j=0; j<m_numMolecs[i]; j++)
+	  {
+	    for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
+	      {
+		m_typeAtomIndices[getAtomType(i,k)].push_back(atomTypeCounter);
+		atomTypeCounter++;
+	      }
+	  }
+      }
+    for (unsigned int i=0; i<m_numMolecTypes; i++)
+      {
+	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
+	  {
+	    m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
+	  }
+      }
+
+};
+
+void System::printPairCorrelations() const
+{
+  for (unsigned int i=0; i<m_numPairs; i++)
+    {
+      cout << "pair " << i << " : ";
+      cout << m_rdfPairs[i].first << " " << m_rdfPairs[i].second << endl;
+      
+    }
+}
+
+void System::printTypeAtomIndices() const
+{
+  for (unsigned int i=0; i<m_numAtomTypes; i++)
+    {
+      cout << "type " << i << " : " << endl;
+      for (unsigned int j=0; j<m_typeAtomIndices[i].size() ; j++)
+	{
+	  cout << m_typeAtomIndices[i][j] << " ";
+	}
+      cout << endl;
+    }
+}
+
+void System::setInput(vector<vector<string > > a_inputs)
+{
+  int inpRow = 0;
+  m_trajFile = a_inputs[0][0];
+  for (int i=0; i<DIM; i++)
+    {
+      m_boxDims[i] = stod(a_inputs[2][i]);
+    }
+}
+
+
+vector<vector<string > > System::readInput(const string& a_inputFile)
+{
+  // read string
+  ifstream system(a_inputFile.c_str());
+  string delimiter=" ";
+  vector<vector<string > > inputs;
+  char inputline[256];
+  while ( ! system.eof() )
+    {
+      system.getline(inputline,256);
+      //inputs.push_back(readNextLine(inputline, delimiter));
+      vector<string > newLine = readNextLine(inputline, delimiter);
+      if( newLine.size() > 0 )
+	{
+	  inputs.push_back(newLine);
+	}
+   }
+  // for (int i=0; i<inputs.size(); i++)
+  //   {
+  //     for(int j=0; j<inputs[i].size(); j++)
+  // 	{
+  // 	  cout << inputs[i][j] << " ";
+  // 	}
+  //     cout << endl;
+  //   }
+ 
+  return inputs;
+}
+
+vector<string > System::readNextLine(char* a_inputline, string& a_delimiter)
+{
+  char ignoreChar[] = "#";
+  if( strncmp(a_inputline,ignoreChar,1) != 0 )
+    {
+      return lineToString(a_inputline, a_delimiter);
+    }
+  else
+    {
+      //cout << "comment found!" << endl;
+      vector<string > newVector;
+      //return null;
+      return newVector;
+    }
+}
+
+vector<string > System::lineToString(char* a_inputline, string& a_delimiter)
+{
+  vector<string > retVector;
+  string s(a_inputline);
+  size_t pos = 0;
+  std::string token;
+  while ((pos = s.find(a_delimiter)) != string::npos) {
+    token = s.substr(0, pos);
+    retVector.push_back(token);
+    s.erase(0, pos + a_delimiter.length());
+  }
+  retVector.push_back(s);
+  return retVector;
+}
+void System::readInputOld(const string& a_inputFile)
 {
     ifstream system(a_inputFile.c_str());
     cout << "Reading input file ";
@@ -71,7 +197,6 @@ System::System(const string& a_inputFile)
       m_boolWithSolvent = 1;
       m_numElectrolyteSpecies = 3;
       m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID) + getNumMolecsOfType(m_solventID);
-
     }
 
     if (m_capID == 0) {
@@ -91,54 +216,9 @@ System::System(const string& a_inputFile)
       cout << i << " " << atomTypeA << " " << atomTypeB << endl;
       m_rdfPairs[i] = make_pair(atomTypeA, atomTypeB);
     }
-
-    m_frameTime = m_stepInterval * m_stepTime;
-    m_typeAtomIndices.resize(m_numAtomTypes);
-    m_molecMembersOfType.resize(m_numAtomTypes);
-    unsigned int atomTypeCounter=0;
-    for (unsigned int i=0; i<m_numMolecTypes; i++)
-      {
-	for (unsigned int j=0; j<m_numMolecs[i]; j++)
-	  {
-	    for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
-	      {
-		m_typeAtomIndices[getAtomType(i,k)].push_back(atomTypeCounter);
-		atomTypeCounter++;
-	      }
-	  }
-      }
-    for (unsigned int i=0; i<m_numMolecTypes; i++)
-      {
-	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
-	  {
-	    m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
-	  }
-      }
     
-};
-
-void System::printPairCorrelations() const
-{
-  for (unsigned int i=0; i<m_numPairs; i++)
-    {
-      cout << "pair " << i << " : ";
-      cout << m_rdfPairs[i].first << " " << m_rdfPairs[i].second << endl;
-      
-    }
 }
 
-void System::printTypeAtomIndices() const
-{
-  for (unsigned int i=0; i<m_numAtomTypes; i++)
-    {
-      cout << "type " << i << " : " << endl;
-      for (unsigned int j=0; j<m_typeAtomIndices[i].size() ; j++)
-	{
-	  cout << m_typeAtomIndices[i][j] << " ";
-	}
-      cout << endl;
-    }
-}
 
 const int System::getNumAtoms() const
 {
@@ -311,4 +391,12 @@ unsigned int System::isElectrolyte(int a_molecType, int* a_electrolyteID) const
       *a_electrolyteID = -1;
       return 0;
     }
+}
+
+void System::getLayerUpperBounds(int a_numLayers, double* a_layers) const
+{
+  assert(a_numLayers == 3);
+  a_layers[0] = m_lowerElecTop;
+  a_layers[1] = m_upperElecBot;
+  a_layers[2] = m_boxDims[2];
 }

@@ -36,27 +36,88 @@ void write_binned_data(const char *a_filename, int a_numBins, double a_binSize, 
       char str[128];
       sprintf(str, "%f", 1.0*iBin*a_binSize);
       writeString(str);
-      if (a_varDim == 1)
+      for (unsigned int jElement=0; jElement<a_varDim; jElement++)
 	{
 	  char str[128];
-	  sprintf(str, " %f", a_vars[0][iBin]);
+	  sprintf(str, " %f", a_vars[iBin][jElement]);
 	  writeString(str);
-	}
-      else
-	{
-	  for (unsigned int jElement=0; jElement<a_varDim; jElement++)
-	    {
-	      char str[128];
-	      sprintf(str, " %f", a_vars[iBin][jElement]);
-	      writeString(str);
-	    }
 	}
       writeString("\n");
     }
   close_file();
 }
 
-void write_binned_layered_data(const char *a_filename, int a_numBins, double a_binSize, int a_varDim, int a_numLayers, int a_numValues, const char * const *a_headernames, double ****a_vars)
+void write_layered_data(const char *a_filename, int a_numLayers, double *a_layers, int a_varDim, const char * const *a_headernames, double **a_vars)
+{
+  open_file(a_filename);
+  // print headers
+  for (unsigned int iHeader=0; iHeader<a_varDim+1; iHeader++)
+    {
+      char str[128];
+      sprintf(str, " %s", a_headernames[iHeader]);
+      writeString(str);
+    }
+  writeString("\n");
+  // print data
+  for (unsigned int iLayer=0; iLayer<a_numLayers; iLayer++)
+    {
+      char str[128];
+      sprintf(str, "%f", a_layers[iLayer]);
+      writeString(str);
+      for (unsigned int jElement=0; jElement<a_varDim; jElement++)
+	{
+	  char str[128];
+	  sprintf(str, " %f", a_vars[iLayer][jElement]);
+	  writeString(str);
+	}
+      writeString("\n");
+    }
+  close_file();
+}
+
+void write_layered_time_data_by_var(const char *a_filename, int a_numFrames, int a_saveFrameEvery, int a_numLayers, int a_varDim, const char * const *a_headernames, double ***a_vars)
+{
+  char ** filenames = new char * [a_varDim];
+  // compose filanemes for each layer
+  for (int iVar=0; iVar<a_varDim; iVar++)
+    {
+      filenames[iVar] = new char [1024];
+      sprintf(filenames[iVar], "%s-%d", a_filename, iVar);
+    }
+
+  // Write files for each layer
+  for (int iVar=0; iVar<a_varDim; iVar++)
+    {
+      open_file(filenames[iVar]);
+      // write headers
+      writeString("#t ");
+      for (unsigned int jLayer=0; jLayer<a_numLayers; jLayer++)
+	{
+	  char str[128];
+	  sprintf(str, " %d", jLayer);
+	  writeString(str);
+	}
+      writeString("\n");
+      // write data
+      for (unsigned int iTime=0; iTime<a_numFrames; iTime++)
+	{
+	  char str[128];
+	  sprintf(str, "%d", iTime*a_saveFrameEvery);
+	  writeString(str);
+	  for (unsigned int jLayer=0; jLayer<a_numLayers; jLayer++)
+	    {
+	      char str[128];
+	      sprintf(str, " %f", a_vars[iTime][jLayer][iVar]);
+	      writeString(str);
+	    }
+	  writeString("\n");
+	}
+      close_file();
+    }
+}
+
+/// Writes binned data with multiple values per bin, to a different file for each layer
+void write_binned_layered_multival_data(const char *a_filename, int a_numBins, double a_binSize, int a_varDim, int a_numLayers, int a_numValues, const char * const *a_headernames, double ****a_vars)
 {
   char** filenames = new char * [a_numLayers];
   // compose filenames for each layer
@@ -72,11 +133,14 @@ void write_binned_layered_data(const char *a_filename, int a_numBins, double a_b
       open_file(filenames[iLayer]);
       // write headers
       writeString("#r ");
-      for (unsigned int jPair=0; jPair<a_varDim; jPair++)
+      for (unsigned int jVar=0; jVar<a_varDim; jVar++)
   	{
-  	  char str[128];
-  	  sprintf(str, " %d_0 %d_1", jPair, jPair);
-  	  writeString(str);
+	  for (unsigned int kValue=0; kValue<a_numValues; kValue++)
+	    {
+	      char str[128];
+	      sprintf(str, " %d_%d", jVar, kValue);
+	      writeString(str);
+	    }
   	}
       writeString("\n");
       // write data
@@ -85,12 +149,12 @@ void write_binned_layered_data(const char *a_filename, int a_numBins, double a_b
   	  char str[128];
   	  sprintf(str, "%f", 1.0*iBin*a_binSize);
   	  writeString(str);
-  	  for (unsigned int jPair=0; jPair<a_varDim; jPair++)
+  	  for (unsigned int jVar=0; jVar<a_varDim; jVar++)
   	    {
-  	      char str[128];
 	      for (int kValue=0; kValue<a_numValues; kValue++)
 		{
-		  sprintf(str, " %f", a_vars[iLayer][iBin][jPair][kValue]);
+		  char str[128];
+		  sprintf(str, " %f", a_vars[iLayer][iBin][jVar][kValue]);
                   writeString(str);
 		}
   	    }

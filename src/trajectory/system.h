@@ -9,6 +9,7 @@
 #include <string>
 #define MAX_NUM_TYPES 10
 #define MAX_MEMBERS_PER_MOLEC 3
+#define NUM_ION_TYPES 3
 
 using namespace std;
 /// A class describing the system (either for MD or MC).
@@ -19,9 +20,12 @@ using namespace std;
 class System
 {
     public:
+        /// Default constructor.
         System();
         /// Constructor from input file.
-        System(const std::string& a_inputFile);
+        System(const string& a_inputFile);
+	/// New constructor.
+	//System(const string& a_inputFile, int a_
 	/// Prints pairs specified in input to stdout (useful for debugging).
 	void printPairCorrelations() const;
 	/// Prints atom types and indices to stdout (useful for debugging).
@@ -76,7 +80,13 @@ class System
 	const array<double, MAX_MEMBERS_PER_MOLEC > getChargesOfType(int a_type) const;
 	/// Returns whether molecule is an electrolyte component and stores ID of component (cation, anion, solvent) in second argument.
 	unsigned int isElectrolyte(int a_molecType, int* a_electrolyteID) const;
+	/// Inserts layers into array pointer
+	void getLayerUpperBounds(int a_numLayers, double* a_layers) const;
+	/// New routine to read input file
+	vector<vector<string > > readInput(const string& a_inputFile);
+	void setInput(vector<vector<string > > a_inputs);
  private:
+	void readInputOld(const string& a_inputFile);
         string m_trajFile;
         unsigned int m_numFrames;
         unsigned int m_numMolecTypes;
@@ -111,6 +121,9 @@ class System
         array<unsigned int, DIM > m_boxPeriodic;
         array<unsigned int, MAX_NUM_TYPES > m_numMembersMolec;
         array<unsigned int, MAX_NUM_TYPES > m_numMolecs;
+	vector<string > lineToString(char* a_inputline, string& a_delimiter);
+	vector<string > readNextLine(char* a_inputline, string& a_delimiter);
+
 
 };
 #endif
