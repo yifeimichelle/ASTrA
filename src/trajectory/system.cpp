@@ -1,5 +1,6 @@
 #include <math.h>
 #include <iostream>
+#include <sstream>
 #include <cstring>
 #include <array>
 #include <fstream>
@@ -18,30 +19,10 @@ System::System()
 // as well as information on the RDF pairs to compute
 System::System(const string& a_inputFile)
 {
-    readInputOld(a_inputFile);
+    readInput(a_inputFile);
+    setInput();
 
-    m_frameTime = m_stepInterval * m_stepTime;
-    m_typeAtomIndices.resize(m_numAtomTypes);
-    m_molecMembersOfType.resize(m_numAtomTypes);
-    unsigned int atomTypeCounter=0;
-    for (unsigned int i=0; i<m_numMolecTypes; i++)
-      {
-	for (unsigned int j=0; j<m_numMolecs[i]; j++)
-	  {
-	    for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
-	      {
-		m_typeAtomIndices[getAtomType(i,k)].push_back(atomTypeCounter);
-		atomTypeCounter++;
-	      }
-	  }
-      }
-    for (unsigned int i=0; i<m_numMolecTypes; i++)
-      {
-	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
-	  {
-	    m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
-	  }
-      }
+ 
 
 };
 
@@ -68,33 +49,186 @@ void System::printTypeAtomIndices() const
     }
 }
 
-//void System::getInput(
+template <typename T>
+T convert_to (const std::string &a_str)
+{
+    istringstream ss(a_str);
+    T retVal;
+    ss >> retVal;
+    return retVal;
+}
+
+template <typename T>
+void System::getInput(T* a_value, int a_col)
+{
+  *a_value = convert_to<T>(m_inputs[m_inputRow][a_col]);
+}
+
+template <typename T1, typename T2>
+void System::getInputs2(T1* a_value1, T2* a_value2)
+{
+  *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0]);
+  *a_value2 = convert_to<T2>(m_inputs[m_inputRow][1]);
+}
+
+
+template <typename T1, typename T2, typename T3>
+void System::getInputs3(T1* a_value1, T2* a_value2, T3* a_value3)
+{
+  *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0]);
+  *a_value2 = convert_to<T2>(m_inputs[m_inputRow][1]);
+  *a_value3 = convert_to<T3>(m_inputs[m_inputRow][3]);
+}
+
+template <typename T1, typename T2>
+void System::getInputs2(T1* a_value1, T2* a_value2, int a_offset)
+{
+  *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0+a_offset]);
+  *a_value2 = convert_to<T2>(m_inputs[m_inputRow][1+a_offset]);
+}
+
+template <typename T1, typename T2, typename T3>
+void System::getInputs3(T1* a_value1, T2* a_value2, T3* a_value3, int a_offset)
+{
+  *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0+a_offset]);
+  *a_value2 = convert_to<T2>(m_inputs[m_inputRow][1+a_offset]);
+  *a_value3 = convert_to<T3>(m_inputs[m_inputRow][3+a_offset]);
+}
+
+
+void System::nextRow()
+{
+  m_inputRow++;
+}
+
 void System::setInput()
 {
-  int inpRow = 0;
-  m_trajFile = m_inputs[inpRow][0];
+  m_inputRow = 0;
+  getInput(&m_trajFile, 0);
 
-  inpRow++;
-  m_numFrames = stoi(m_inputs[inpRow][0]);
-
-  inpRow++;
+  nextRow();
+  getInput(&m_numFrames,0);
+  
+  nextRow();
   for (int i=0; i<DIM; i++)
     {
-      m_boxDims[i] = stod(m_inputs[2][i]);
+      getInput(&m_boxDims[i],i);
     }
-  for (int i=0; i<DIM; i++) {
-    m_boxPeriodic[i] = stoi(m_inputs[2][i+2]);
-  }
-
-  inpRow++;
-  //m_inputs[3]
-    cout << m_trajFile << endl;
-    cout << "Box dims: ";
-    for (int i=0; i<DIM; i++) {
-        cout << m_boxDims[i] << " ";
+  for (int i=0; i<DIM; i++)
+    {
+      getInput(&m_boxPeriodic[i],i+2);
     }
-    cout << endl;
 
+  nextRow();
+  getInputs2(&m_lowerElecTop,&m_upperElecBot);
+
+  nextRow();
+  getInput(&m_numMolecTypes,0);
+
+  m_numAtomTypes = 0;
+  m_numMolecules = 0;
+  m_numAtoms = 0;
+  for (unsigned int i=0; i<m_numMolecTypes; i++)
+    {
+      nextRow();
+      getInputs2(&m_numMolecs[i],&m_numMembersMolec[i]);
+      m_numMolecules += m_numMolecs[i];
+      m_numAtomTypes += m_numMembersMolec[i];
+      m_numAtoms += m_numMolecs[i]*m_numMembersMolec[i];
+
+      for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
+	{
+	  nextRow();
+	  getInputs2(&m_masses[i][j], &m_charges[i][j]);
+	}
+    }
+
+  nextRow();
+  getInputs2(&m_cationID, &m_anionID);
+  getInputs2(&m_lowerElecID,&m_upperElecID,2);
+
+  nextRow();
+  getInput(&m_anodeIsLower,0);
+  if (m_anodeIsLower)
+    {
+      m_anodeID = m_lowerElecID;
+      m_cathodeID = m_upperElecID;
+    }
+  else
+    {
+      m_anodeID = m_upperElecID;
+      m_cathodeID = m_lowerElecID;
+    }
+
+  nextRow();
+  getInput(&m_solventID,0);
+  if (m_solventID == 0)
+    {
+      m_boolWithSolvent = 0;
+      m_numElectrolyteSpecies = 2;
+      m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID);
+    }
+  else
+    {
+      m_boolWithSolvent = 1;
+      m_numElectrolyteSpecies = 3;
+      m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID) + getNumMolecsOfType(m_solventID);
+    }
+
+  nextRow();
+  getInput(&m_capID,0);
+  if (m_capID == 0) m_boolWithCap = 0;
+  else m_boolWithCap = 0;
+
+  cout << "number of atom types: " << m_numAtomTypes << endl;
+
+  nextRow();
+  getInput(&m_stepInterval,0);
+
+  nextRow();
+  getInput(&m_stepTime,0);
+
+  nextRow();
+  getInput(&m_numPairs,0);
+  m_rdfPairs.resize(m_numPairs);
+
+  cout << "Pair correlations:" << endl;
+
+  for (unsigned int i=0; i<m_numPairs; i++)
+    {
+      unsigned int molecA, atomA, molecB, atomB;
+
+      nextRow();
+      getInputs2(&molecA,&atomA);
+      getInputs2(&molecB,&atomB,2);
+      unsigned int atomTypeA = getAtomType(molecA-1, atomA-1);
+      unsigned int atomTypeB = getAtomType(molecB-1, atomB-1);
+      cout << i << " " << atomTypeA << " " << atomTypeB << endl;
+      m_rdfPairs[i] = make_pair(atomTypeA, atomTypeB);
+    }
+    
+   m_frameTime = m_stepInterval * m_stepTime;
+    m_typeAtomIndices.resize(m_numAtomTypes);
+    m_molecMembersOfType.resize(m_numAtomTypes);
+    unsigned int atomTypeCounter=0;
+    for (unsigned int i=0; i<m_numMolecTypes; i++)
+      {
+	for (unsigned int j=0; j<m_numMolecs[i]; j++)
+	  {
+	    for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
+	      {
+		m_typeAtomIndices[getAtomType(i,k)].push_back(atomTypeCounter);
+		atomTypeCounter++;
+	      }
+	  }
+      }
+    for (unsigned int i=0; i<m_numMolecTypes; i++)
+      {
+	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
+	  {
+	    m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
+	  }
+      }
 }
 
 

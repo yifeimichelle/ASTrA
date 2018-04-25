@@ -82,13 +82,24 @@ class System
 	unsigned int isElectrolyte(int a_molecType, int* a_electrolyteID) const;
 	/// Inserts layers into array pointer
 	void getLayerUpperBounds(int a_numLayers, double* a_layers) const;
-	/// New routine to read input file
+ private:
 	void readInput(const string& a_inputFile);
 	void setInput();
- private:
+	template <typename T>
+	  void getInput(T* a_value, int a_col);
+	template <typename T1, typename T2>
+	  void getInputs2(T1* a_value1, T2* a_value2);
+	template <typename T1, typename T2, typename T3>
+	  void getInputs3(T1* a_value1, T2* a_value2, T3* a_value3);
+	template <typename T1, typename T2>
+	  void getInputs2(T1* a_value1, T2* a_value2, int a_offset);
+	template <typename T1, typename T2, typename T3>
+	  void getInputs3(T1* a_value1, T2* a_value2, T3* a_value3, int a_offset);
 	vector<vector<string > > m_inputs;
 	void readInputOld(const string& a_inputFile);
-        string m_trajFile;
+	void nextRow();
+	unsigned int m_inputRow;
+	string m_trajFile;
         unsigned int m_numFrames;
         unsigned int m_numMolecTypes;
 	unsigned int m_numAtoms;

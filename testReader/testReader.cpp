@@ -32,13 +32,11 @@ int main(int argc, char** argv)
     // read inputs
     cout << "reading inputs..." << endl;
     string inputFile(argv[1]);
-    System system = System(); // declare system
-    system.readInput(inputFile); // read system input
-    system.setInput();
-    
+    System system = System(inputFile); // declare system
+ 
     cout << system.getTrajFile() << endl;
     //cout << m_inputs[2][2] << endl;
     cout << system.getBoxDim(2) << endl;
-    //cout << system.getNumMolecsOfType(4) << endl;
+    cout << system.getNumMolecsOfType(4) << endl;
 
 }
