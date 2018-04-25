@@ -68,23 +68,41 @@ void System::printTypeAtomIndices() const
     }
 }
 
-void System::setInput(vector<vector<string > > a_inputs)
+//void System::getInput(
+void System::setInput()
 {
   int inpRow = 0;
-  m_trajFile = a_inputs[0][0];
+  m_trajFile = m_inputs[inpRow][0];
+
+  inpRow++;
+  m_numFrames = stoi(m_inputs[inpRow][0]);
+
+  inpRow++;
   for (int i=0; i<DIM; i++)
     {
-      m_boxDims[i] = stod(a_inputs[2][i]);
+      m_boxDims[i] = stod(m_inputs[2][i]);
     }
+  for (int i=0; i<DIM; i++) {
+    m_boxPeriodic[i] = stoi(m_inputs[2][i+2]);
+  }
+
+  inpRow++;
+  //m_inputs[3]
+    cout << m_trajFile << endl;
+    cout << "Box dims: ";
+    for (int i=0; i<DIM; i++) {
+        cout << m_boxDims[i] << " ";
+    }
+    cout << endl;
+
 }
 
 
-vector<vector<string > > System::readInput(const string& a_inputFile)
+void System::readInput(const string& a_inputFile)
 {
   // read string
   ifstream system(a_inputFile.c_str());
   string delimiter=" ";
-  vector<vector<string > > inputs;
   char inputline[256];
   while ( ! system.eof() )
     {
@@ -93,19 +111,20 @@ vector<vector<string > > System::readInput(const string& a_inputFile)
       vector<string > newLine = readNextLine(inputline, delimiter);
       if( newLine.size() > 0 )
 	{
-	  inputs.push_back(newLine);
+	  m_inputs.push_back(newLine);
 	}
    }
-  // for (int i=0; i<inputs.size(); i++)
-  //   {
-  //     for(int j=0; j<inputs[i].size(); j++)
-  // 	{
-  // 	  cout << inputs[i][j] << " ";
-  // 	}
-  //     cout << endl;
-  //   }
+#ifdef DEBUG
+  for (int i=0; i<m_inputs.size(); i++)
+    {
+      for(int j=0; j<m_inputs[i].size(); j++)
+  	{
+  	  cout << m_inputs[i][j] << " ";
+  	}
+      cout << endl;
+    }
+#endif
  
-  return inputs;
 }
 
 vector<string > System::readNextLine(char* a_inputline, string& a_delimiter)

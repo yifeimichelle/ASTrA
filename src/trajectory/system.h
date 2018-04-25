@@ -83,9 +83,10 @@ class System
 	/// Inserts layers into array pointer
 	void getLayerUpperBounds(int a_numLayers, double* a_layers) const;
 	/// New routine to read input file
-	vector<vector<string > > readInput(const string& a_inputFile);
-	void setInput(vector<vector<string > > a_inputs);
+	void readInput(const string& a_inputFile);
+	void setInput();
  private:
+	vector<vector<string > > m_inputs;
 	void readInputOld(const string& a_inputFile);
         string m_trajFile;
         unsigned int m_numFrames;
