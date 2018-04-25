@@ -19,8 +19,6 @@ int main(int argc, char** argv)
     // read inputs
     string inputFile(argv[1]);
     System system(inputFile); // initialize system
-    // cout << system.getNumMolecules() << endl;
-    // cout << system.getNumAtoms() << endl;
     RDF rdf(system);
     AtomCounter ac(system);
     Frame frame(system); // initialize trajectory frame reader
@@ -36,16 +34,16 @@ int main(int argc, char** argv)
 	frame.readStep();
 
 	// sample routines
-        //rdf.sample(frame);
 	ac.sample(frame);
+        rdf.sample(frame);
 	//doc.sample(frame);
 
 	// clear frame memory
 	frame.clearFrame();
       }
     // normalize RDF
-    //rdf.normalize();
-    ac.printDensity();
+    rdf.normalize();
+    //ac.printDensity();
     ac.normalize();
 
     // print to stdout
@@ -53,8 +51,10 @@ int main(int argc, char** argv)
     //ac.print();
 
     // print to a file
-    //RDFWrite(&rdf, "rdf");
-    //RDFWriteLayers(&rdf, "rdf");
+    RDFWrite(&rdf, "rdf");
+    RDFWriteLayers(&rdf, "rdf");
+    RDFMolecWrite(&rdf, "rdfmol");
+    RDFMolecWriteLayers(&rdf, "rdfmol");
     ACWriteAtomCounts(&ac, "atoms");
     ACWriteDensity(&ac, "density");
     ACWriteIons(&ac, "ions");

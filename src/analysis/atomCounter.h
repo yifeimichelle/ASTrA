@@ -18,23 +18,17 @@ class AtomCounter
   /// Constructor
   AtomCounter(System& a_system);
   /// Calculates COMs and computes density and number-of-atoms CVs given the current frame.
-  void sample(const Frame& a_frame);
+  void sample(Frame& a_frame);
   /// Normalizes the density profiles and CVs.
   void normalize();
   /// Prints the number of atoms to stdout.
   void print();
-  /// Prints density profile
+  /// Prints density profile 
   void printDensity();
   /// Returns the number of bins.
   const int getNumBins() const;
   /// Returns the bin size in length units.
   const double getBinSize() const;
-  /// Bin atom.
-  void binAtomDensity(array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass);
-  /// Add to density of bin.
-  void binElectrolyteCOM(array<double, DIM>& a_position, int& a_electrolyteID);
-  /// Count number of electrolyte species in given layer of electrode (cathode, anode, liquid)
-  void countElectrolyteInLayer(array<double, DIM>& a_position,  vector<array<int, 3> >& a_IonsInLayer, int& a_electrolyteID);
   /// Returns the number of atom types in system.
   const int getNumAtomTypes();
   /// Returns the number of ion types (anion, cation, solvent) in the system.
@@ -51,27 +45,34 @@ class AtomCounter
   double* getACIonsLayersAddress(int i);
   /// Computes the charging mechanisms parameter from Forse 2016 "New perspectives on the charging mechanisms of supercapacitors".
   double* getACIonsLayersTimeAddress(int i, int j);
-  double computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer);
-  /// Returns system
+  /// Returns system.
   const System& getSystem() const;
-  /// Returns interval for saving frames in time-sequence data
+  /// Returns interval for saving frames in time-sequence data.
   const int getSaveFrameInterval() const;
   /// Returns total number of saved frames
   const int getNumSavedFrames() const;
+  /// Returns vector of COMs.
+  //const vector<array<double, DIM > > getCOMs() const;
 
  private:
+  /// Compute charging parameter.
+  double computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer);
+  /// Bin and layer atom, and add to density profile.
+  void binAtom(Frame& a_frame, int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte);
+  /// Bin and layer electrolyte COM.
+  void binElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, 3> >& a_IonsInLayer,  int& a_electrolyteID, int& a_isElectrolyte);
   System m_system;
-  // Center of masses for this timestep.
+  /// Center of masses for this timestep.
   vector<array<double, DIM > > m_COMs;
-  // Counter of all atoms in bins.
+  /// Counter of all atoms in bins.
   vector<array<double, MAX_NUM_TYPES > > m_numAtomsProfile;
-  // Stores density (from atom profile)
+  /// Stores density (from atom profile)
   vector<double > m_densityProfile;
-  // Counter of ion and solvent COMs in bins.
+  /// Counter of ion and solvent COMs in bins.
   vector<array<double, NUM_ION_TYPES > > m_numIonsProfile;
-  // Counter of ion and solvent COMs in layers (anode, cathode, liquid).
+  /// Counter of ion and solvent COMs in layers (anode, cathode, liquid).
   vector<array<double, NUM_ION_TYPES > > m_avgIonsInLayer;
-  // Collective variables for atom and COM counts.
+  /// Collective variables for atom and COM counts.
   vector<vector<array<double, NUM_ION_TYPES > > > m_numIonsInLayerTime;
   vector<int > m_excessAnionsInCathode, m_excessCationsInAnode;
   vector<double > m_chargingParam;

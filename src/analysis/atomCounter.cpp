@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <iostream>
 #include "writer.h"
-
+ 
 using namespace std;
 
 AtomCounter::AtomCounter(System& a_system)
@@ -32,29 +32,43 @@ AtomCounter::AtomCounter(System& a_system)
   m_chargingParam.resize( m_system.getNumFrames() );
 };
 
-void AtomCounter::sample(const Frame& a_frame)
+void AtomCounter::sample(Frame& a_frame)
 {
   int molecIndex = 0;
   int atomIndex = 0;
+  int isElectrolyte = 0;
+  array<double, DIM > com;
   int stepNum = a_frame.getStepNum();
   vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
   currentIonsInLayer.resize(m_numLayers);
   for (int i=0; i<m_system.getNumMolecTypes(); i++)
     {
+      int numMembers = m_system.getNumMembersMolec(i);
+      int* electrolyteID = new int;
+      if (m_system.isElectrolyte(i, electrolyteID))
+	{
+	  isElectrolyte = 1;
+	}
+      else
+	{
+	  isElectrolyte = 0;
+	}
+
       array<double , MAX_MEMBERS_PER_MOLEC > masses = m_system.getMassesOfType(i);
+      double totalMass = 0;
+      for (int k=0; k < numMembers; k++)
+	{
+	  totalMass += masses[k];
+	}
       for (int j=0; j < m_system.getNumMolecsOfType(i); j++)
 	{
-	  array<double, DIM > com;
 	  com.fill(0); // fill with zeros, otherwise will keep same data as before
-	  int numMembers = m_system.getNumMembersMolec(i);
-	  double totalMass = 0;
 	  for (int k=0; k < numMembers; k++)
 	    {
-	      totalMass += masses[k];
 	      // Get position of atom
 	      array<double, DIM> position = a_frame.getAtom(atomIndex).getPosition();
 	      // Bin atom by type and add to density
-	      binAtomDensity(position, i, k, masses[k]);
+	      binAtom(a_frame, atomIndex, position, i, k, masses[k], isElectrolyte);
 	      // Compute center of mass
 	      for (int l=0; l < DIM; l++)
 		{
@@ -67,15 +81,10 @@ void AtomCounter::sample(const Frame& a_frame)
 	      com[l] /= totalMass;
 	    }
 	  m_COMs[molecIndex]=com;
-	  int* electrolyteID = new int;
-	  if (m_system.isElectrolyte(i, electrolyteID))
-	    {
-	      binElectrolyteCOM(com, *electrolyteID);
-	      countElectrolyteInLayer(com, currentIonsInLayer, *electrolyteID);
-	    }
-	  delete electrolyteID;
+	  binElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte);
 	  molecIndex++;
 	}
+      delete electrolyteID;
     }
   for (int i=0; i<m_numLayers; i++)
     {
@@ -95,10 +104,11 @@ void AtomCounter::sample(const Frame& a_frame)
 	    }
 	}
     }
-  //computeChargingParam(currentIonsInLayer);
+  a_frame.setCOMs(m_COMs);
+  // compute charging parameter
 }
 
-void AtomCounter::binAtomDensity(array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass)
+void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte)
 {
   double pos_z = a_position[2];
   int bin = floor(pos_z / m_binSize);
@@ -108,43 +118,38 @@ void AtomCounter::binAtomDensity(array<double, DIM>& a_position, int& a_molecTyp
 #endif
   // Increment number of atoms in bin
   m_numAtomsProfile[bin][atomType]++;
-  int* electrolyteID = new int;
-  if (m_system.isElectrolyte(a_molecType, electrolyteID))
+  if (a_isElectrolyte)
     {
       // Increment density of electrolyte in bin
-      // FIXME this could be more efficient
       m_densityProfile[bin] += a_mass;
     }
-  delete electrolyteID;
-}
-
-
-void AtomCounter::binElectrolyteCOM(array<double, DIM>& a_position, int& a_electrolyteID)
-{
-#ifdef DEBUG
-  assert(a_electrolyteID > -1);
-  assert(a_electrolyteID < 3);
-#endif
-  double pos_z = a_position[2];
-  int bin = floor(pos_z / m_binSize);
-#ifdef DEBUG
-  cout << "bin " << bin << " of " << m_numBins << " bins" << endl;
-  double x = pos_z / m_system.getBoxDim(2);
-  cout << "z position " << pos_z << " of electrolyte " << a_electrolyteID << endl;
-  assert( bin < m_numBins );
-#endif
-  m_numIonsProfile[bin][a_electrolyteID]++;
-}
-
-void AtomCounter::countElectrolyteInLayer(array<double, DIM>& a_position,  vector<array<int, NUM_ION_TYPES> >& a_currentIonsInLayer, int& a_electrolyteID)
-{
-#ifdef DEBUG
-  assert(a_electrolyteID > -1);
-#endif
-  // Figure out what layer electrolyte molecule is in
   unsigned int layer = m_system.getLayer(a_position);
-  // Increment count of molecule inside layer
-  a_currentIonsInLayer[layer][a_electrolyteID]++;
+  a_frame.assignAtomToLayer(a_atomIndex, atomType, layer);
+}
+
+void AtomCounter::binElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, NUM_ION_TYPES> >& a_currentIonsInLayer, int& a_electrolyteID, int& a_isElectrolyte)
+{
+  unsigned int layer = m_system.getLayer(a_position);
+  a_frame.assignAtomToLayer(a_molecIndex, a_molecType, layer);
+  if(a_isElectrolyte)
+    {
+#ifdef DEBUG
+      assert(a_electrolyteID > -1);
+      assert(a_electrolyteID < 3);
+#endif
+      double pos_z = a_position[2];
+      int bin = floor(pos_z / m_binSize);
+#ifdef DEBUG
+      cout << "bin " << bin << " of " << m_numBins << " bins" << endl;
+      double x = pos_z / m_system.getBoxDim(2);
+      cout << "z position " << pos_z << " of electrolyte " << a_electrolyteID << endl;
+      assert( bin < m_numBins );
+#endif
+      m_numIonsProfile[bin][a_electrolyteID]++;
+      // Figure out what layer electrolyte molecule is in
+      // Increment count of molecule inside layer
+      a_currentIonsInLayer[layer][a_electrolyteID]++;
+    }
 }
 
 const int AtomCounter::getNumAtomTypes()
@@ -312,6 +317,11 @@ const int AtomCounter::getNumSavedFrames() const
 {
   return m_numSavedFrames;
 }
+
+// const vector<array<double, DIM >  > AtomCounter::getCOMs() const
+// {
+//   return m_COMs;
+// }
 
 
 const char* ACWriteAtomCounts(AtomCounter* a_ac, const char* a_filename)

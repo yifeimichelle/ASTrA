@@ -15,16 +15,20 @@ class RDF
 {
     public:
         RDF();
-        /// Constructor
+        /// Constructor 
         RDF(System& a_system);
 	/// Computes radial distribution functions given the current frame.
-	void sample(Frame& a_frame);
+	void sample(const Frame& a_frame);
+	/// OLD: Computes radial distribution functions given the current frame.
+	void sampleOld(Frame& a_frame);
 	/// Normalizes the rdf by bin volume.
 	void normalize();
 	/// Prints the rdf to stdout.
 	void print();
 	/// Get number of pairs for which pair correlations must be computed.
 	const unsigned int getNumPairs() const;
+	/// Get number of molecule-molecule COM pairs for which pair correlations must be computed.
+	const unsigned int getNumMolecPairs() const;
 	/// Get number of bins over which pair correlations are computed.
 	const unsigned int getNumBins() const;
 	/// Get size of bins (in length units).
@@ -45,7 +49,15 @@ class RDF
 	double** getRDFAddressLayers(int i, int j);
 	/// Get address of first element in 4d RDF
 	double* getRDFAddressLayers(int i, int j, int k);
-        /// Set value of element in RDF (for DEBUGGING ONLY)
+	/// Get address of first element in molecule-molecule RDF
+	double* getMolecRDFAddress(int i);
+	/// Get address of first element in molecule-molecule RDF
+	double*** getMolecRDFAddressLayers(int i);
+	/// Get address of first element in 3d molecule-molecule RDF
+	double** getMolecRDFAddressLayers(int i, int j);
+	/// Get address of first element in 4d molecule-molecule RDF
+	double* getMolecRDFAddressLayers(int i, int j, int k);
+	/// Set value of element in RDF (for DEBUGGING ONLY)
         void setRDFLayerClosestValue(int a_layer, int a_bin, int a_pair, int a_closest, double a_setVal);
 
 private:
@@ -54,22 +66,37 @@ private:
 	vector<vector<vector<double > > > m_rdfLayer;
 	vector<vector<vector<vector<double > > > > m_rdfLayerClosest;
 	vector<int > m_pairCounter;
+	vector<vector< double > > m_rdfMolec;
+	vector<vector<vector<double > > > m_rdfMolecLayer;
+	vector<vector<vector<vector<double > > > > m_rdfMolecLayerClosest;
+	vector<int > m_pairMolecCounter;
 	double m_maxDist;
 	int m_numLayers;
 	int m_numPairs;
+	int m_numMolecPairs;
 	int m_numBins;
 	double m_binSize;
-	/// Puts pair distance into a bin.
+	/// Puts atom-atom pair distance into a bin.
 	void binPairDistance(double a_distance, unsigned int a_pair);
-	/// Puts pair distance into a bin based on the layer that the distance is contained in.
+	/// Puts atom-atom pair distance into a bin based on the layer.
 	void binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_firstLayer, unsigned int a_secondLayer);
-	/// Puts pair distance into a bin based on layer and reference species.
+	/// Puts atom-atom pair distance into a bin based on layer and reference species.
 	void binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer);
-	/// Increment count of pairs in standard RDF.
+	/// Puts molecule-molecule COM pair distance into a bin.
+	void binMolecPairDistance(double a_distance, unsigned int a_pair);
+	/// Puts molecule-molecule COM pair distance into a bin based on the layer.
+	void binMolecPairDistance(double a_distance, unsigned int a_pair, unsigned int a_firstLayer, unsigned int a_secondLayer);
+	/// Puts molecule-molecule COM pair distance into a bin based on layer and reference species.
+	void binMolecPairDistance(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer);
+	/// Increment count of atom-atom pairs in standard RDF.
 	void incrementCounter(unsigned int a_pair);
+	/// Increment count of molecule-molecule pairs in standard RDF.
+	void incrementMolecCounter(unsigned int a_pair);
 };
 
 const char* RDFWrite(RDF* a_rdf, const char* a_filename);
 const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename);
+const char* RDFMolecWrite(RDF* a_rdf, const char* a_filename);
+const char* RDFMolecWriteLayers(RDF* a_rdf, const char* a_filename);
 
 #endif

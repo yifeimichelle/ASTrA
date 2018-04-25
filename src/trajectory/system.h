@@ -10,6 +10,7 @@
 #define MAX_NUM_TYPES 10
 #define MAX_MEMBERS_PER_MOLEC 3
 #define NUM_ION_TYPES 3
+#define NUM_LAYERS 3
 
 using namespace std;
 /// A class describing the system (either for MD or MC).
@@ -54,10 +55,14 @@ class System
 	const unsigned int getMolecIndex(unsigned int a_type, unsigned int a_member) const;
 	/// Return one-dimensional atom type index
 	const unsigned int getAtomType(unsigned int a_molecType, unsigned int a_molecAtom) const;
-	/// Returns number of RDF pairs to calculate, supplied in input.
+	/// Returns number of RDF atom-atom pairs to calculate, supplied in input.
 	const unsigned int getNumPairs() const;
-	/// Returns pair of atom types from list of RDF pairs.
+	/// Returns pair of atom types from list of RDF atom-atom pairs.
 	const pair<unsigned int, unsigned int > getPairCorrelation(unsigned int a_pair) const;
+	/// Returns number of RDF molecule-molecule pairs to calculate, supplied in input.
+	const unsigned int getNumMolecPairs() const;
+	/// Returns pair of molecule types from list of RDF molecule-molecule pairs.
+	const pair<unsigned int, unsigned int > getMolecPairCorrelation(unsigned int a_pair) const;
 	/// Return box dims.
 	const array<double, DIM >& getBoxDims() const;
 	/// Return box size in specified dimension.
@@ -106,6 +111,7 @@ class System
 	unsigned int m_numAtomTypes;
         unsigned int m_stepInterval;
 	unsigned int m_numPairs;
+	unsigned int m_numMolecPairs;
 	unsigned int m_cationID;
 	unsigned int m_anionID;
 	unsigned int m_anodeID;
@@ -125,6 +131,7 @@ class System
 	vector<vector<unsigned int > > m_typeAtomIndices;
 	vector<pair<unsigned int, unsigned int > > m_molecMembersOfType;
 	vector<pair<unsigned int, unsigned int > > m_rdfPairs;
+	vector<pair<unsigned int, unsigned int > > m_rdfMolecPairs;
         float m_stepTime;
         float m_frameTime;
 	double m_lowerElecTop;
@@ -135,7 +142,5 @@ class System
         array<unsigned int, MAX_NUM_TYPES > m_numMolecs;
 	vector<string > lineToString(char* a_inputline, string& a_delimiter);
 	vector<string > readNextLine(char* a_inputline, string& a_delimiter);
-
-
 };
 #endif

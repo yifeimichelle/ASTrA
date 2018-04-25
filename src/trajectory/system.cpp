@@ -10,6 +10,15 @@
 
 using namespace std;
 
+template <typename T>
+T convert_to (const std::string &a_str)
+{
+    istringstream ss(a_str);
+    T retVal;
+    ss >> retVal;
+    return retVal;
+}
+
 System::System()
 {
 };
@@ -19,11 +28,8 @@ System::System()
 // as well as information on the RDF pairs to compute
 System::System(const string& a_inputFile)
 {
-    readInput(a_inputFile);
-    setInput();
-
- 
-
+  readInput(a_inputFile);
+  setInput();
 };
 
 void System::printPairCorrelations() const
@@ -49,14 +55,6 @@ void System::printTypeAtomIndices() const
     }
 }
 
-template <typename T>
-T convert_to (const std::string &a_str)
-{
-    istringstream ss(a_str);
-    T retVal;
-    ss >> retVal;
-    return retVal;
-}
 
 template <typename T>
 void System::getInput(T* a_value, int a_col)
@@ -192,7 +190,7 @@ void System::setInput()
   getInput(&m_numPairs,0);
   m_rdfPairs.resize(m_numPairs);
 
-  cout << "Pair correlations:" << endl;
+  cout << "Atom-atom pair correlations:" << endl;
 
   for (unsigned int i=0; i<m_numPairs; i++)
     {
@@ -206,7 +204,23 @@ void System::setInput()
       cout << i << " " << atomTypeA << " " << atomTypeB << endl;
       m_rdfPairs[i] = make_pair(atomTypeA, atomTypeB);
     }
-    
+
+  nextRow();
+  getInput(&m_numMolecPairs,0);
+  m_rdfMolecPairs.resize(m_numMolecPairs);
+
+  cout << "Molecule-molecule COM pair correlations:" << endl;
+
+  for (unsigned int i=0; i<m_numMolecPairs; i++)
+    {
+      unsigned int molecA, molecB;
+      nextRow();
+      getInputs2(&molecA,&molecB);
+      cout << i << " " << molecA << " " << molecB << endl;
+      m_rdfMolecPairs[i] = make_pair(molecA, molecB);
+    }
+	      
+  
    m_frameTime = m_stepInterval * m_stepTime;
     m_typeAtomIndices.resize(m_numAtomTypes);
     m_molecMembersOfType.resize(m_numAtomTypes);
@@ -235,30 +249,18 @@ void System::setInput()
 void System::readInput(const string& a_inputFile)
 {
   // read string
-  ifstream system(a_inputFile.c_str());
+  ifstream ssystem(a_inputFile.c_str());
   string delimiter=" ";
   char inputline[256];
-  while ( ! system.eof() )
+  while ( ! ssystem.eof() )
     {
-      system.getline(inputline,256);
-      //inputs.push_back(readNextLine(inputline, delimiter));
+      ssystem.getline(inputline,256);
       vector<string > newLine = readNextLine(inputline, delimiter);
       if( newLine.size() > 0 )
 	{
 	  m_inputs.push_back(newLine);
 	}
    }
-#ifdef DEBUG
-  for (int i=0; i<m_inputs.size(); i++)
-    {
-      for(int j=0; j<m_inputs[i].size(); j++)
-  	{
-  	  cout << m_inputs[i][j] << " ";
-  	}
-      cout << endl;
-    }
-#endif
- 
 }
 
 vector<string > System::readNextLine(char* a_inputline, string& a_delimiter)
@@ -291,6 +293,7 @@ vector<string > System::lineToString(char* a_inputline, string& a_delimiter)
   retVector.push_back(s);
   return retVector;
 }
+
 void System::readInputOld(const string& a_inputFile)
 {
     ifstream system(a_inputFile.c_str());
@@ -369,6 +372,29 @@ void System::readInputOld(const string& a_inputFile)
       cout << i << " " << atomTypeA << " " << atomTypeB << endl;
       m_rdfPairs[i] = make_pair(atomTypeA, atomTypeB);
     }
+
+    m_frameTime = m_stepInterval * m_stepTime;
+    m_typeAtomIndices.resize(m_numAtomTypes);
+    m_molecMembersOfType.resize(m_numAtomTypes);
+    unsigned int atomTypeCounter=0;
+    for (unsigned int i=0; i<m_numMolecTypes; i++)
+      {
+	for (unsigned int j=0; j<m_numMolecs[i]; j++)
+	  {
+	    for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
+	      {
+		m_typeAtomIndices[getAtomType(i,k)].push_back(atomTypeCounter);
+		atomTypeCounter++;
+	      }
+	  }
+      }
+    for (unsigned int i=0; i<m_numMolecTypes; i++)
+      {
+	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
+	  {
+	    m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
+	  }
+      }
     
 }
 
@@ -458,6 +484,17 @@ const pair<unsigned int, unsigned int > System::getPairCorrelation(unsigned int 
   return m_rdfPairs[a_pair];
 }
 
+const unsigned int System::getNumMolecPairs() const
+{
+  return m_numMolecPairs;
+}
+
+const pair<unsigned int, unsigned int > System::getMolecPairCorrelation(unsigned int a_pair) const
+{
+  return m_rdfMolecPairs[a_pair];
+}
+
+
 const unsigned int System::getNumFrames() const
 {
   return m_numFrames;
@@ -480,7 +517,7 @@ const unsigned int System::isPeriodic(int i) const
 
 const unsigned int System::getNumLayers() const
 {
-  return 3;
+  return NUM_LAYERS ;
 }
 const unsigned int System::getNumElectrolyteSpecies() const
 {

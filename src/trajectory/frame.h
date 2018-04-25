@@ -7,6 +7,7 @@
 #include <fstream>
 #include "system.h"
 #include "atom.h"
+#include <list>
 
 using namespace std;
 /// A class describing a single frame (snapshot) of a trajectory
@@ -30,15 +31,29 @@ class Frame
 	const Atom& getAtom(int a_atomIndex) const;
 	/// Returns a reference to a single atom in a frame.
 	Atom& getAtom(int a_atomIndex);
-	/// Computes the distance between two atoms.
-	double computeDistance(int a_i, int a_j);
+	/// Computes the distance between two atoms. 
+	const double computeDistance(int a_i, int a_j) const;
+	/// Computes the distance between two molecules.
+	const double computeMolecDistance(int a_i, int a_j) const;
 	/// Identify the layer an atom is in
-	unsigned int getLayerOf(unsigned int a_index);
-    private:
+	const unsigned int getLayerOf(unsigned int a_index) const;
+	/// Identify the layer a molecule is in
+	const unsigned int getLayerOfMolec(unsigned int a_index) const;
+	/// Get COMs of molecules from AtomCounter
+	void setCOMs(vector<array<double, DIM > > a_COMs);
+	/// Assign atom to layer.
+	void assignAtomToLayer(unsigned int a_index, unsigned int a_type, unsigned int a_layer);
+	/// Assign electrolyte COM to layer.
+	void assignIonToLayer(unsigned int a_index, unsigned int a_type, unsigned int a_layer);
+     private:
 	System m_system;
         unsigned int m_stepNum;
         unsigned int m_numAtoms;
+        unsigned int m_numMolecs;
         vector<Atom > m_atoms;
+	vector<Atom > m_COMs;
+	array<array<list<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_atomLayers;
+	array<array<list<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_COMLayers;
         ifstream m_traj;
 };
 #endif
