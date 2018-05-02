@@ -204,7 +204,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
   for (int layIdx = 0; layIdx < m_numLayers; layIdx++)
     {
       // Get list of molecules in this layer
-      list<int>* molecsInLayer = a_frame.getMoleculesInLayer(layIdx); 
+      list<int>* molecsInLayer = a_frame.getMoleculesInLayer(layIdx);
       // For each pair
       for (int pairIdx = 0; pairIdx < m_numMolecPairs; pairIdx++)
 	{
@@ -266,12 +266,12 @@ void RDF::sampleAtoms(const Frame& a_frame)
   //   For each layer
   //     Iterate through atoms (or ions) in layer
   //       Compute distance and bin
-  
+
   // For each layer
   for (int layIdx = 0; layIdx < m_numLayers; layIdx++)
     {
       // Get list of atoms in this layer
-      list<int>* atomsInLayer = a_frame.getAtomsInLayer(layIdx); 
+      list<int>* atomsInLayer = a_frame.getAtomsInLayer(layIdx);
       // For each pair
       for (int pairIdx = 0; pairIdx < m_numPairs; pairIdx++)
 	{
