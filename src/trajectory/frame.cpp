@@ -145,3 +145,52 @@ void Frame::assignIonToLayer(unsigned int a_index, unsigned int a_type, unsigned
 {
   m_COMLayers[a_layer][a_type].push_back(a_index);
 }
+
+list<int>* Frame::getAtomsInLayer(int a_layerIdx) const
+{
+  return (list<int>* )&m_atomLayers[a_layerIdx][0];
+}
+
+void Frame::printAtomsInLayer(unsigned int a_layer)
+{
+  cout << "Atom indices in layer " << a_layer <<":" << endl;
+  for (int type = 0; type < m_system.getNumAtomTypes(); type++)
+    {
+      cout << "  Type " << type << ":";
+      for (list<int>::iterator it = m_atomLayers[a_layer][type].begin(); it != m_atomLayers[a_layer][type].end(); it++)
+	{
+	  cout << " " << *it;
+	}
+      cout << endl;
+    }
+}
+
+void Frame::printAtomsInLayerCheck(unsigned int a_layer)
+{
+  array<list<int >, MAX_NUM_TYPES > retVals;
+  for (int type=0; type < m_system.getNumAtomTypes(); type++)
+    {
+    for (int atom=0; atom<m_system.getNumOfType(type); atom++)
+      {
+	int index = m_system.getIndexOfType(type, atom);
+	int layer = getLayerOf(index);
+	if (layer == a_layer)
+	  {
+	    retVals[type].push_back(index);
+	  }
+      }
+    }
+  cout << "Atom indices in layer " << a_layer << " (debug purposes):" << endl;
+  for (int type = 0; type < m_system.getNumAtomTypes(); type++)
+    {
+      cout << "  Type " << type << ":";
+      for (list<int>::iterator it = retVals[type].begin(); it != retVals[type].end(); it++)
+	{
+	  cout << " " << *it;
+	}
+      cout << endl;
+    }
+
+}
+
+

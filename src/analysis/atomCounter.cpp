@@ -130,7 +130,7 @@ void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>&
 void AtomCounter::binElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, NUM_ION_TYPES> >& a_currentIonsInLayer, int& a_electrolyteID, int& a_isElectrolyte)
 {
   unsigned int layer = m_system.getLayer(a_position);
-  a_frame.assignAtomToLayer(a_molecIndex, a_molecType, layer);
+  a_frame.assignIonToLayer(a_molecIndex, a_molecType, layer);
   if(a_isElectrolyte)
     {
 #ifdef DEBUG

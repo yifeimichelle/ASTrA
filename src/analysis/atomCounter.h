@@ -19,6 +19,8 @@ class AtomCounter
   AtomCounter(System& a_system);
   /// Calculates COMs and computes density and number-of-atoms CVs given the current frame.
   void sample(Frame& a_frame);
+  /// Old sample routine.
+  void sampleOld(Frame& a_frame);
   /// Normalizes the density profiles and CVs.
   void normalize();
   /// Prints the number of atoms to stdout.

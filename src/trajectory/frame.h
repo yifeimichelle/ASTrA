@@ -45,6 +45,12 @@ class Frame
 	void assignAtomToLayer(unsigned int a_index, unsigned int a_type, unsigned int a_layer);
 	/// Assign electrolyte COM to layer.
 	void assignIonToLayer(unsigned int a_index, unsigned int a_type, unsigned int a_layer);
+	/// Print atoms in layer.
+	void printAtomsInLayer(unsigned int a_layer);
+	/// Print atoms in layer other way (for debugging only)
+	void printAtomsInLayerCheck(unsigned int a_layer);
+	/// Get pointer to atoms in layer.
+	list<int>* getAtomsInLayer(int a_layerIdx) const;
      private:
 	System m_system;
         unsigned int m_stepNum;
@@ -52,6 +58,8 @@ class Frame
         unsigned int m_numMolecs;
         vector<Atom > m_atoms;
 	vector<Atom > m_COMs;
+	// record of which layer atoms and molecule COMs are in
+	// access by ARRAY[layer][type] -> list it
 	array<array<list<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_atomLayers;
 	array<array<list<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_COMLayers;
         ifstream m_traj;

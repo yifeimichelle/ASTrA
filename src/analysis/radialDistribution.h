@@ -78,6 +78,8 @@ private:
 	double m_binSize;
 	/// Puts atom-atom pair distance into a bin.
 	void binPairDistance(double a_distance, unsigned int a_pair);
+	/// Puts atom-atom pair distance into a layer-bin
+	void binPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer);
 	/// Puts atom-atom pair distance into a bin based on the layer.
 	void binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_firstLayer, unsigned int a_secondLayer);
 	/// Puts atom-atom pair distance into a bin based on layer and reference species.
