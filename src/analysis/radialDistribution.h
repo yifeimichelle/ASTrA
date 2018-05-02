@@ -19,6 +19,10 @@ class RDF
         RDF(System& a_system);
 	/// Computes radial distribution functions given the current frame.
 	void sample(const Frame& a_frame);
+	/// Computes atom-atom radial distribution functions given the current frame.
+	void sampleAtoms(const Frame& a_frame);
+	/// Computes molecule-molecule COM radial distribution functions given the current frame.
+	void sampleMolecules(const Frame& a_frame);
 	/// OLD: Computes radial distribution functions given the current frame.
 	void sampleOld(Frame& a_frame);
 	/// Normalizes the rdf by bin volume.
@@ -78,7 +82,7 @@ private:
 	double m_binSize;
 	/// Puts atom-atom pair distance into a bin.
 	void binPairDistance(double a_distance, unsigned int a_pair);
-	/// Puts atom-atom pair distance into a layer-bin
+	/// Puts atom-atom pair distance into a bin for the specified layer.
 	void binPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer);
 	/// Puts atom-atom pair distance into a bin based on the layer.
 	void binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_firstLayer, unsigned int a_secondLayer);
@@ -86,6 +90,8 @@ private:
 	void binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer);
 	/// Puts molecule-molecule COM pair distance into a bin.
 	void binMolecPairDistance(double a_distance, unsigned int a_pair);
+	/// Puts molecule-molecule COM pair distance into a bin for the specified layer.
+	void binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer);
 	/// Puts molecule-molecule COM pair distance into a bin based on the layer.
 	void binMolecPairDistance(double a_distance, unsigned int a_pair, unsigned int a_firstLayer, unsigned int a_secondLayer);
 	/// Puts molecule-molecule COM pair distance into a bin based on layer and reference species.

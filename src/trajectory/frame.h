@@ -51,6 +51,8 @@ class Frame
 	void printAtomsInLayerCheck(unsigned int a_layer);
 	/// Get pointer to atoms in layer.
 	list<int>* getAtomsInLayer(int a_layerIdx) const;
+	/// Get pointer to molecule COMs in layer.
+	list<int>* getMoleculesInLayer(int a_layerIdx) const;
      private:
 	System m_system;
         unsigned int m_stepNum;

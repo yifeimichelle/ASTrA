@@ -7,8 +7,8 @@ HOME = ./..
 # By including that file, you have all the definitions you need.
 
 include $(HOME)/GNUmakefile
-#CFLAGS += -O3
-CFLAGS += -g
+CFLAGS += -O3
+#CFLAGS += -g
 
 trajAnalyzer: GNUmakefile $(OBJS) trajMain.cpp
 	  $(CXX) $(CPPFLAGS) $(CFLAGS) -o trajAnalyzer.exe trajMain.cpp  $(OBJS)

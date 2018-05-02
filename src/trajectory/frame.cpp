@@ -151,6 +151,12 @@ list<int>* Frame::getAtomsInLayer(int a_layerIdx) const
   return (list<int>* )&m_atomLayers[a_layerIdx][0];
 }
 
+list<int>* Frame::getMoleculesInLayer(int a_layerIdx) const
+{
+  return (list<int>* )&m_COMLayers[a_layerIdx][0];
+}
+
+
 void Frame::printAtomsInLayer(unsigned int a_layer)
 {
   cout << "Atom indices in layer " << a_layer <<":" << endl;
