@@ -73,6 +73,11 @@ RDF::RDF(System& a_system)
   m_binSize = m_maxDist / m_numBins;
 };
 
+void RDF::sampleZP(Frame& a_frame)
+{
+  // FIXME : Michelle
+  // Do I need this routine?
+}
 
 void RDF::sampleOld(Frame& a_frame)
 {

@@ -25,6 +25,8 @@ class RDF
 	void sampleMolecules(const Frame& a_frame);
 	/// OLD: Computes radial distribution functions given the current frame.
 	void sampleOld(Frame& a_frame);
+	/// Samples zero-potential part of trajectory.
+	void sampleZP(Frame& a_frame);
 	/// Normalizes the rdf by bin volume.
 	void normalize();
 	/// Prints the rdf to stdout.

@@ -43,14 +43,14 @@ int main(int argc, char** argv)
 	cout << position[0] << " " << position[1] << " " << position[2] << endl;
 	cout << endl;
 	
-	frame.printAtomsInLayer(0);
-	frame.printAtomsInLayer(1);
-	frame.printAtomsInLayer(2);
+	frame.printMolecsInLayer(0);
+	frame.printMolecsInLayer(1);
+	frame.printMolecsInLayer(2);
 	cout << endl;
 		
-	frame.printAtomsInLayerCheck(0);
-	frame.printAtomsInLayerCheck(1);
-	frame.printAtomsInLayerCheck(2);
+	// frame.printAtomsInLayerCheck(0);
+	// frame.printAtomsInLayerCheck(1);
+	// frame.printAtomsInLayerCheck(2);
 	//doc.sample(frame);
 
 	// clear frame memory
@@ -69,8 +69,8 @@ int main(int argc, char** argv)
     // print to a file
     RDFWrite(&rdf, "rdf");
     RDFWriteLayers(&rdf, "rdf");
-    // RDFMolecWrite(&rdf, "rdfmol");
-    // RDFMolecWriteLayers(&rdf, "rdfmol");
+    RDFMolecWrite(&rdf, "rdfmol");
+    RDFMolecWriteLayers(&rdf, "rdfmol");
     RDFWrite(&rdfOld, "rdfOld");
     RDFWriteLayers(&rdfOld, "rdfOld");
     // RDFMolecWrite(&rdfOld, "rdfmolOld");

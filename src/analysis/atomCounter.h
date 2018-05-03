@@ -21,9 +21,15 @@ class AtomCounter
   void sample(Frame& a_frame);
   /// Old sample routine.
   void sampleOld(Frame& a_frame);
+  /// Samples zero-potential part of trajectory.
+  void sampleZP(Frame& a_frame);
+  /// Samples skipped part of trajectory, counting COMs and ions in layer vs. time only.
+  void sampleSkip(Frame& a_frame);
   /// Normalizes the density profiles and CVs.
   void normalize();
-  /// Prints the number of atoms to stdout.
+  /// Normalizes the density profiles and CVs from the zero-potential, zero-Q run.
+  void normalizeZP();
+   /// Prints the number of atoms to stdout.
   void print();
   /// Prints density profile 
   void printDensity();
@@ -59,6 +65,10 @@ class AtomCounter
  private:
   /// Compute charging parameter.
   double computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer);
+  /// Bin and layer atom, and add to density profile, during zero-P, zero-Q run.
+  void binZPAtom(Frame& a_frame, int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte);
+  /// Bin and layer electrolyte COM, during zero-P, zero-Q run.
+  void binZPElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, 3> >& a_IonsInLayer,  int& a_electrolyteID, int& a_isElectrolyte);
   /// Bin and layer atom, and add to density profile.
   void binAtom(Frame& a_frame, int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte);
   /// Bin and layer electrolyte COM.
@@ -66,16 +76,26 @@ class AtomCounter
   System m_system;
   /// Center of masses for this timestep.
   vector<array<double, DIM > > m_COMs;
+  /// Collective variables for atom and COM counts, during entire trajectory (Z-P/Q and C-P/Q).
+  vector<vector<array<double, NUM_ION_TYPES > > > m_numIonsInLayerTime;
+  
   /// Counter of all atoms in bins.
   vector<array<double, MAX_NUM_TYPES > > m_numAtomsProfile;
-  /// Stores density (from atom profile)
+  /// Stores density (from atom profile).
   vector<double > m_densityProfile;
   /// Counter of ion and solvent COMs in bins.
   vector<array<double, NUM_ION_TYPES > > m_numIonsProfile;
   /// Counter of ion and solvent COMs in layers (anode, cathode, liquid).
   vector<array<double, NUM_ION_TYPES > > m_avgIonsInLayer;
-  /// Collective variables for atom and COM counts.
-  vector<vector<array<double, NUM_ION_TYPES > > > m_numIonsInLayerTime;
+
+  /// Counter of all atoms in bins, during zero-P, zero-Q run.
+  vector<array<double, MAX_NUM_TYPES > > m_numZPAtomsProfile;
+  /// Stores density (from atom profile), during zero-P, zero-Q run.
+  vector<double > m_ZPdensityProfile;
+  /// Counter of ion and solvent COMs in bins, during zero-P, zero-Q run.
+  vector<array<double, NUM_ION_TYPES > > m_numZPIonsProfile;
+  /// Counter of ion and solvent COMs in layers (anode, cathode, liquid), during zero-P, zero-Q run.
+  vector<array<double, NUM_ION_TYPES > > m_avgZPIonsInLayer;
   vector<int > m_excessAnionsInCathode, m_excessCationsInAnode;
   vector<double > m_chargingParam;
   int m_saveFrameEvery;

@@ -11,10 +11,13 @@ using namespace std;
 
 Frame::Frame() {
 };
+
 Frame::Frame(System& a_system)
 {
   m_system = a_system;
   m_stepNum = -1;
+  m_totalStepNum = -1;
+  m_zpStepNum = -1;
   m_numAtoms = a_system.getNumAtoms();
   m_numMolecs = a_system.getNumMolecules();
   m_traj.open(a_system.getTrajFile());
@@ -25,10 +28,43 @@ Frame::Frame(System& a_system)
   m_COMs.resize(m_numMolecs);
   m_traj.seekg(0, m_traj.beg);
 };
+
+void Frame::skipStep()
+{
+  m_totalStepNum++;
+  char tmp[256];
+  m_traj >> tmp >> tmp >> tmp >> tmp;
+}
+
+void Frame::skipSteps()
+{
+  for (int i=0; i<m_system.getNumSkipFrames(); i++)
+    {
+      skipStep();
+    }
+}
+
+void Frame::readZPStep()
+{
+  // read step from traj file
+  m_zpStepNum++;
+  m_totalStepNum++;
+  char tmp[256];
+  m_traj >> tmp >> tmp >> tmp >> tmp;
+  string atomName;
+  double x, y, z;
+  for (unsigned int i=0; i<m_numAtoms; i++)
+    {
+      m_traj >> atomName >> x >> y >> z;
+      m_atoms[i].setPosition(x,y,z);
+    }
+}
+
 void Frame::readStep()
 {
   // read step from traj file
   m_stepNum++;
+  m_totalStepNum++;
   char tmp[256];
   m_traj >> tmp >> tmp >> tmp >> tmp;
   string atomName;
@@ -43,6 +79,16 @@ void Frame::readStep()
 const unsigned int Frame::getStepNum() const
 {
   return m_stepNum;
+}
+
+const unsigned int Frame::getTotalStepNum() const
+{
+  return m_totalStepNum;
+}
+
+const unsigned int Frame::getZPStepNum() const
+{
+  return m_zpStepNum;
 }
 
 void Frame::clearFrame()
@@ -61,6 +107,8 @@ void Frame::clearFrame()
 	{
 	  m_atomLayers[i][j].clear();
 	  m_COMLayers[i][j].clear();
+	  m_ZPatomLayers[i][j].clear();
+	  m_ZPCOMLayers[i][j].clear();
 	}
     }
 }
@@ -136,6 +184,16 @@ void Frame::setCOMs(vector<array<double, DIM >  > a_COMs)
 }
 
 
+void Frame::assignZPAtomToLayer(unsigned int a_index, unsigned int a_type, unsigned int a_layer)
+{
+  m_ZPatomLayers[a_layer][a_type].push_back(a_index);
+}
+
+void Frame::assignZPIonToLayer(unsigned int a_index, unsigned int a_type, unsigned int a_layer)
+{
+  m_ZPCOMLayers[a_layer][a_type].push_back(a_index);
+}
+
 void Frame::assignAtomToLayer(unsigned int a_index, unsigned int a_type, unsigned int a_layer)
 {
   m_atomLayers[a_layer][a_type].push_back(a_index);
@@ -198,5 +256,20 @@ void Frame::printAtomsInLayerCheck(unsigned int a_layer)
     }
 
 }
+
+void Frame::printMolecsInLayer(unsigned int a_layer)
+{
+  cout << "Molecule indices in layer " << a_layer <<":" << endl;
+  for (int type = 0; type < m_system.getNumMolecTypes(); type++)
+    {
+      cout << "  Type " << type << ":";
+      for (list<int>::iterator it = m_COMLayers[a_layer][type].begin(); it != m_COMLayers[a_layer][type].end(); it++)
+	{
+	  cout << " " << *it;
+	}
+      cout << endl;
+    }
+}
+
 
 

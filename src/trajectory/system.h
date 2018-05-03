@@ -73,6 +73,12 @@ class System
 	const unsigned int getNumLayers() const;
 	/// Return number of frames in the trajectory.
 	const unsigned int getNumFrames() const;
+	/// Return total number of frames in the trajectory.
+	const unsigned int getNumTotalFrames() const;
+	/// Return number of zero-potential, uncharged frames in the trajectory.
+	const unsigned int getNumZPFrames() const;
+	/// Return number of skipped equilibration frames in the trajectory.
+	const unsigned int getNumSkipFrames() const;
 	/// Get number of species in electrolyte (2 if IL, 3 if organic electrolyte)
 	const unsigned int getNumElectrolyteSpecies() const;
 	/// Get total number of molecules of electrolytes
@@ -105,7 +111,12 @@ class System
 	void nextRow();
 	unsigned int m_inputRow;
 	string m_trajFile;
-        unsigned int m_numFrames;
+	unsigned int m_totalFrames;
+        unsigned int m_numFramesInclSkip; // Number of constant-P or constant-Q "production" frames.
+        unsigned int m_numFrames; // Number of constant-P or constant-Q "production" frames.
+        unsigned int m_zpFramesInclSkip;
+        unsigned int m_zpFrames;
+        unsigned int m_skipFrames;
         unsigned int m_numMolecTypes;
 	unsigned int m_numAtoms;
 	unsigned int m_numAtomTypes;

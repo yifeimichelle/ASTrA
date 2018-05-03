@@ -24,15 +24,44 @@ int main(int argc, char** argv)
     Frame frame(system); // initialize trajectory frame reader
 
     cout << "Reading trajectory ..." << endl;
+
+    // Skip frames
+    frame.skipSteps();
+
+    cout << "Analyzing zero-P, zero-Q run of " << system.getNumZPFrames() << " steps..." << endl;
+
+    // Read zero-potential, zero-charge frames
+    for (unsigned int frameCounter = 0; frameCounter<system.getNumZPFrames(); frameCounter++)
+      {
+	frame.readZPStep();
+
+	if (frame.getZPStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
+	  {
+	    cout << frame.getZPStepNum() << endl;
+	  }
+
+	//ac.sampleZP(frame);
+	//rdf.sampleZP(frame);
+      	frame.clearFrame();
+      }
+    ac.normalizeZP();
+    
+    // Skip frames (potential or charge turned out)
+    frame.skipSteps();
+
+    cout << "Analyzing constant-P or -Q run of " << system.getNumFrames() << " steps..." << endl;
+
+    // Read constant-potential or constant-charge frames
     for (unsigned int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
       {
-	if ( frameCounter % int(ceil(system.getNumFrames()/10.0)) == 0)
-	  {
-	    cout << frameCounter << endl;
-	  }
 	// read in step of trajectory
 	frame.readStep();
 
+	if ( frame.getStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
+	  {
+	    cout << frame.getStepNum() << endl;
+	  }
+	
 	// sample routines
 	ac.sample(frame);
         rdf.sample(frame);

@@ -105,7 +105,10 @@ void System::setInput()
   getInput(&m_trajFile, 0);
 
   nextRow();
-  getInput(&m_numFrames,0);
+  getInput(&m_totalFrames,0);
+
+  nextRow();
+  getInputs2(&m_zpFramesInclSkip,&m_skipFrames);
   
   nextRow();
   for (int i=0; i<DIM; i++)
@@ -216,33 +219,36 @@ void System::setInput()
       unsigned int molecA, molecB;
       nextRow();
       getInputs2(&molecA,&molecB);
-      cout << i << " " << molecA << " " << molecB << endl;
-      m_rdfMolecPairs[i] = make_pair(molecA, molecB);
+      cout << i << " " << molecA-1 << " " << molecB-1 << endl;
+      m_rdfMolecPairs[i] = make_pair(molecA-1, molecB-1);
     }
-	      
+    
+  m_numFramesInclSkip = m_totalFrames - m_zpFramesInclSkip;
+  m_numFrames = m_numFramesInclSkip - m_skipFrames;
+  m_zpFrames = m_zpFramesInclSkip - m_skipFrames;
   
-   m_frameTime = m_stepInterval * m_stepTime;
-    m_typeAtomIndices.resize(m_numAtomTypes);
-    m_molecMembersOfType.resize(m_numAtomTypes);
-    unsigned int atomTypeCounter=0;
-    for (unsigned int i=0; i<m_numMolecTypes; i++)
-      {
-	for (unsigned int j=0; j<m_numMolecs[i]; j++)
-	  {
-	    for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
-	      {
-		m_typeAtomIndices[getAtomType(i,k)].push_back(atomTypeCounter);
-		atomTypeCounter++;
-	      }
-	  }
-      }
-    for (unsigned int i=0; i<m_numMolecTypes; i++)
-      {
-	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
-	  {
-	    m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
-	  }
-      }
+  m_frameTime = m_stepInterval * m_stepTime;
+  m_typeAtomIndices.resize(m_numAtomTypes);
+  m_molecMembersOfType.resize(m_numAtomTypes);
+  unsigned int atomTypeCounter=0;
+  for (unsigned int i=0; i<m_numMolecTypes; i++)
+    {
+      for (unsigned int j=0; j<m_numMolecs[i]; j++)
+	{
+	  for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
+	    {
+	      m_typeAtomIndices[getAtomType(i,k)].push_back(atomTypeCounter);
+	      atomTypeCounter++;
+	    }
+	}
+    }
+  for (unsigned int i=0; i<m_numMolecTypes; i++)
+    {
+      for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
+	{
+	  m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
+	}
+    }
 }
 
 
@@ -499,6 +505,23 @@ const unsigned int System::getNumFrames() const
 {
   return m_numFrames;
 }
+
+const unsigned int System::getNumTotalFrames() const
+{
+  return m_totalFrames;
+}
+
+const unsigned int System::getNumZPFrames() const
+{
+  return m_zpFrames;
+}
+
+const unsigned int System::getNumSkipFrames() const
+{
+  return m_skipFrames;
+}
+
+
 
 const array<double, DIM >& System::getBoxDims() const
 {

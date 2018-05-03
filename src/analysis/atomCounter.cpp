@@ -13,38 +13,50 @@ AtomCounter::AtomCounter(System& a_system)
 {
   m_system = a_system;
   m_saveFrameEvery = 1;
+  m_numSavedFrames = ceil(m_system.getNumTotalFrames() / m_saveFrameEvery) + 1;
+
   m_binSize = 0.05;
   m_numBins = ceil(m_system.getBoxDim(2) / m_binSize );
   m_numLayers = m_system.getNumLayers();
   // resize vectors
   m_COMs.resize(m_system.getNumMolecules());
+
   m_numAtomsProfile.resize(m_numBins);
   m_densityProfile.resize(m_numBins);
   m_numIonsProfile.resize(m_numBins);
   m_avgIonsInLayer.resize( m_numLayers );
-  m_numSavedFrames = ceil(m_system.getNumFrames() / m_saveFrameEvery) + 1;
   m_numIonsInLayerTime.resize(m_numSavedFrames);
   for (int i=0; i<m_numSavedFrames; i++)
     {
       m_numIonsInLayerTime[i].resize( m_numLayers );
     }
+  m_numZPAtomsProfile.resize(m_numBins);
+  m_ZPdensityProfile.resize(m_numBins);
+  m_numZPIonsProfile.resize(m_numBins);
+  m_avgZPIonsInLayer.resize( m_numLayers );
+
+
   m_numAtomTypes=m_system.getNumAtomTypes();
   m_chargingParam.resize( m_system.getNumFrames() );
 };
 
 void AtomCounter::sample(Frame& a_frame)
 {
+
+  // setup
   int molecIndex = 0;
   int atomIndex = 0;
   int isElectrolyte = 0;
   array<double, DIM > com;
-  int stepNum = a_frame.getStepNum();
   vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
   currentIonsInLayer.resize(m_numLayers);
+  // Starting loop...
+  // For each molecule type
   for (int i=0; i<m_system.getNumMolecTypes(); i++)
     {
       int numMembers = m_system.getNumMembersMolec(i);
       int* electrolyteID = new int;
+      // Detect whether molecule is electrolyte or not (affects binning routines later on)
       if (m_system.isElectrolyte(i, electrolyteID))
 	{
 	  isElectrolyte = 1;
@@ -53,16 +65,18 @@ void AtomCounter::sample(Frame& a_frame)
 	{
 	  isElectrolyte = 0;
 	}
-
+      // Get masses of molecule members, and molecule's total mass, to calculate COM
       array<double , MAX_MEMBERS_PER_MOLEC > masses = m_system.getMassesOfType(i);
       double totalMass = 0;
       for (int k=0; k < numMembers; k++)
 	{
 	  totalMass += masses[k];
 	}
+      // For each molecule of type
       for (int j=0; j < m_system.getNumMolecsOfType(i); j++)
 	{
 	  com.fill(0); // fill with zeros, otherwise will keep same data as before
+	  // For each molecule member
 	  for (int k=0; k < numMembers; k++)
 	    {
 	      // Get position of atom
@@ -93,19 +107,162 @@ void AtomCounter::sample(Frame& a_frame)
 	  m_avgIonsInLayer[i][j] += currentIonsInLayer[i][j];
 	}
     }
-  if ( (a_frame.getStepNum() % m_saveFrameEvery == 0) || ( a_frame.getStepNum() == m_system.getNumFrames() ) )
+  if ( (a_frame.getTotalStepNum() % m_saveFrameEvery == 0) || ( a_frame.getTotalStepNum() == m_system.getNumTotalFrames() ) )
     {
       for (int i=0; i<m_numLayers; i++)
 	{
 	  for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
 	    {
-	      int timeIndex = (ceil)( ((double)a_frame.getStepNum()) / ((double)m_saveFrameEvery) );
-	      m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j];
+	      int timeIndex = (ceil)( ((double)a_frame.getTotalStepNum()) / ((double)m_saveFrameEvery) );
+	      m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // FIXME: keep same for ZP but check that this is being computed correctly!! also do it during skip steps, just for tracking
 	    }
 	}
     }
   a_frame.setCOMs(m_COMs);
   // compute charging parameter
+  //m_chargingParam[a_frame.getStepNum()] = computeChargingParam(currentIonsInLayer);
+}
+
+void AtomCounter::sampleZP(Frame& a_frame)
+{
+  // FIXME : Michelle
+  // Here goes:
+  // - Calculate COMs
+  // - Calculate number of ions in electrodes during ZP for charging parameter
+  // - numIonsInLayerTime
+  // (would be nice)
+  // - Calculate zero-P density profile
+
+  
+  // setup
+  int molecIndex = 0;
+  int atomIndex = 0;
+  int isElectrolyte = 0;
+  array<double, DIM > com;
+  vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
+  currentIonsInLayer.resize(m_numLayers);
+  // Starting loop...
+  // For each molecule type
+  for (int i=0; i<m_system.getNumMolecTypes(); i++)
+    {
+      int numMembers = m_system.getNumMembersMolec(i);
+      int* electrolyteID = new int;
+      // Detect whether molecule is electrolyte or not (affects binning routines later on)
+      if (m_system.isElectrolyte(i, electrolyteID))
+	{
+	  isElectrolyte = 1;
+	}
+      else
+	{
+	  isElectrolyte = 0;
+	}
+      // Get masses of molecule members, and molecule's total mass, to calculate COM
+      array<double , MAX_MEMBERS_PER_MOLEC > masses = m_system.getMassesOfType(i);
+      double totalMass = 0;
+      for (int k=0; k < numMembers; k++)
+	{
+	  totalMass += masses[k];
+	}
+      // For each molecule of type
+      for (int j=0; j < m_system.getNumMolecsOfType(i); j++)
+	{
+	  com.fill(0); // fill with zeros, otherwise will keep same data as before
+	  // For each molecule member
+	  for (int k=0; k < numMembers; k++)
+	    {
+	      // Get position of atom
+	      array<double, DIM> position = a_frame.getAtom(atomIndex).getPosition();
+	      // Bin atom by type and add to density
+	      binZPAtom(a_frame, atomIndex, position, i, k, masses[k], isElectrolyte);
+	      // Compute center of mass
+	      for (int l=0; l < DIM; l++)
+		{
+		  com[l] += position[l]*masses[k];
+		}
+	      atomIndex++;
+	    }
+	  for (int l=0; l<DIM; l++)
+	    {
+	      com[l] /= totalMass;
+	    }
+	  m_COMs[molecIndex]=com;
+	  binZPElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte);
+	  molecIndex++;
+	}
+      delete electrolyteID;
+    }
+  for (int i=0; i<m_numLayers; i++)
+    {
+      for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+	{
+	  m_avgZPIonsInLayer[i][j] += currentIonsInLayer[i][j];
+	}
+    }
+  if ( (a_frame.getTotalStepNum() % m_saveFrameEvery == 0) || ( a_frame.getTotalStepNum() == m_system.getNumTotalFrames() ) )
+    {
+      for (int i=0; i<m_numLayers; i++)
+	{
+	  for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+	    {
+	      int timeIndex = (ceil)( ((double)a_frame.getTotalStepNum()) / ((double)m_saveFrameEvery) );
+	      m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // FIXME: keep same for ZP but check that this is being computed correctly!! also do it during skip steps, just for tracking
+	    }
+	}
+    }
+  a_frame.setCOMs(m_COMs);
+}
+
+void AtomCounter::sampleSkip(Frame& a_frame)
+{
+  // FIXME : Michelle
+  // Here goes:
+  // - Calculate COMs
+  // - numIonsInLayerTime
+}
+
+
+void AtomCounter::binZPAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte)
+{
+  double pos_z = a_position[2];
+  int bin = floor(pos_z / m_binSize);
+  int atomType = m_system.getAtomType(a_molecType, a_molecMember);
+#ifdef DEBUG
+  assert ( atomType < m_system.getNumAtomTypes() ) ;
+#endif
+  // Increment number of atoms in bin
+  m_numZPAtomsProfile[bin][atomType]++;
+  if (a_isElectrolyte)
+    {
+      // Increment density of electrolyte in bin
+      m_ZPdensityProfile[bin] += a_mass;
+    }
+  unsigned int layer = m_system.getLayer(a_position);
+  a_frame.assignZPAtomToLayer(a_atomIndex, atomType, layer);
+}
+
+void AtomCounter::binZPElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, NUM_ION_TYPES> >& a_currentIonsInLayer, int& a_electrolyteID, int& a_isElectrolyte)
+{
+  unsigned int layer = m_system.getLayer(a_position);
+  a_frame.assignZPIonToLayer(a_molecIndex, a_molecType, layer);
+  if(a_isElectrolyte)
+    {
+#ifdef DEBUG
+      assert(a_electrolyteID > -1);
+      assert(a_electrolyteID < 3);
+#endif
+      double pos_z = a_position[2];
+      int bin = floor(pos_z / m_binSize);
+#ifdef DEBUG
+      cout << "bin " << bin << " of " << m_numBins << " bins" << endl;
+      double x = pos_z / m_system.getBoxDim(2);
+      cout << "z position " << pos_z << " of electrolyte " << a_electrolyteID << endl;
+      assert( bin < m_numBins );
+#endif
+      m_numZPIonsProfile[bin][a_electrolyteID]++;
+      // Figure out what layer electrolyte molecule is in
+      // Increment count of molecule inside layer
+      a_currentIonsInLayer[layer][a_electrolyteID]++;
+    }
 }
 
 void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte)
@@ -165,6 +322,35 @@ const int AtomCounter::getNumIonTypes()
 const int AtomCounter::getNumLayers() const
 {
     return m_numLayers;
+}
+
+void AtomCounter::normalizeZP()
+{
+  // Normalize average ions in layer:
+  double avogadro = 6.022140857;
+  // Divide by number of frames read
+  double numFrames = m_system.getNumZPFrames();
+  // Convert density to g/ml
+  double normDensity = numFrames * m_binSize * m_system.getBoxDim(0) * m_system.getBoxDim(1) * 10. / avogadro;
+  for (int i=0; i<m_numLayers; i++)
+    {
+      for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+	{
+	  m_avgZPIonsInLayer[i][j] /= numFrames;
+	}
+    }
+    for (int i=0; i<m_numBins; i++)
+      {
+	for (int j=0; j<m_system.getNumAtomTypes(); j++)
+	  {
+	    m_numZPAtomsProfile[i][j] /= numFrames;
+	  }
+	for (int j=0; j<getNumIonTypes(); j++)
+	  {
+	    m_numZPIonsProfile[i][j] /= numFrames;
+	  }
+	m_ZPdensityProfile[i] /= normDensity ;
+      }
 }
 
 void AtomCounter::normalize()
@@ -290,13 +476,13 @@ double AtomCounter::computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_i
   // N(V) total number of in-pore ions at charging voltage V
   int NV = a_ionsInLayer[0][0] + a_ionsInLayer[0][1];
   // N(V0) total number of in-pore ions at initial voltage V0
-  int NV0 = 0.0;
+  int NV0 = m_avgZPIonsInLayer[0][0] + m_avgZPIonsInLayer[0][1];
   // Nco,Ncounter(V) number of in-pore co- and counter-ions at charging voltage V
   int NcounterV = a_ionsInLayer[0][0];
   int NcoV = a_ionsInLayer[0][1];
   // Nco,Ncounter(V0) number of in-pore co- and counter-ions at initial voltage V0
-  int NcounterV0 = 0.0;
-  int NcoV0 = 0.0;
+  int NcounterV0 = m_avgZPIonsInLayer[0][0];
+  int NcoV0 = m_avgZPIonsInLayer[0][1];
   double retVal = NcounterV-NcoV - NcounterV0+NcoV0;
   retVal = 1./retVal;
   retVal = retVal * (NV - NV0);
