@@ -26,8 +26,12 @@ int main(int argc, char** argv)
     cout << "Reading trajectory ..." << endl;
 
     // Skip frames
-    frame.skipSteps();
-
+    for (int i=0; i<system.getNumSkipFrames(); i++)
+      {
+	frame.skipStep();
+	ac.sampleSkip(frame);
+      }
+    
     cout << "Analyzing zero-P, zero-Q run of " << system.getNumZPFrames() << " steps..." << endl;
 
     // Read zero-potential, zero-charge frames
@@ -40,15 +44,19 @@ int main(int argc, char** argv)
 	    cout << frame.getZPStepNum() << endl;
 	  }
 
-	//ac.sampleZP(frame);
+	ac.sampleZP(frame);
 	//rdf.sampleZP(frame);
       	frame.clearFrame();
       }
     ac.normalizeZP();
     
-    // Skip frames (potential or charge turned out)
-    frame.skipSteps();
-
+    // Skip frames (potential or charge turned on)
+    for (int i=0; i<system.getNumSkipFrames(); i++)
+      {
+	frame.skipStep();
+	ac.sampleSkip(frame);
+      }
+    
     cout << "Analyzing constant-P or -Q run of " << system.getNumFrames() << " steps..." << endl;
 
     // Read constant-potential or constant-charge frames

@@ -34,13 +34,12 @@ void Frame::skipStep()
   m_totalStepNum++;
   char tmp[256];
   m_traj >> tmp >> tmp >> tmp >> tmp;
-}
-
-void Frame::skipSteps()
-{
-  for (int i=0; i<m_system.getNumSkipFrames(); i++)
+  string atomName;
+  double x, y, z;
+  for (unsigned int i=0; i<m_numAtoms; i++)
     {
-      skipStep();
+      m_traj >> atomName >> x >> y >> z;
+      m_atoms[i].setPosition(x,y,z);
     }
 }
 

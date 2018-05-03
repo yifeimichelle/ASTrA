@@ -27,8 +27,6 @@ class Frame
         void readStep();
 	/// Skips a step. Doesn't store anything. Only increments m_totalStepNum.
 	void skipStep();
-	/// Skips all of the "skip steps" at once.
-	void skipSteps();
 	/// Returns total step number (counting from beginning of trajectory and not skipping any steps).
 	const unsigned int getTotalStepNum() const;
 	/// Returns step number of the current frame in the constant-P or -Q window.

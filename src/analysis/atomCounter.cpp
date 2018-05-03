@@ -218,6 +218,83 @@ void AtomCounter::sampleSkip(Frame& a_frame)
   // Here goes:
   // - Calculate COMs
   // - numIonsInLayerTime
+
+  // setup
+  int molecIndex = 0;
+  int atomIndex = 0;
+  int isElectrolyte = 0;
+  array<double, DIM > com;
+  vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
+  currentIonsInLayer.resize(m_numLayers);
+  // Starting loop...
+  // For each molecule type
+  for (int i=0; i<m_system.getNumMolecTypes(); i++)
+    {
+      int numMembers = m_system.getNumMembersMolec(i);
+      int* electrolyteID = new int;
+      // Detect whether molecule is electrolyte or not (affects binning routines later on)
+      if (m_system.isElectrolyte(i, electrolyteID))
+	{
+	  isElectrolyte = 1;
+	}
+      else
+	{
+	  isElectrolyte = 0;
+	}
+      // Get masses of molecule members, and molecule's total mass, to calculate COM
+      array<double , MAX_MEMBERS_PER_MOLEC > masses = m_system.getMassesOfType(i);
+      double totalMass = 0;
+      for (int k=0; k < numMembers; k++)
+	{
+	  totalMass += masses[k];
+	}
+      // For each molecule of type
+      for (int j=0; j < m_system.getNumMolecsOfType(i); j++)
+	{
+	  com.fill(0); // fill with zeros, otherwise will keep same data as before
+	  // For each molecule member
+	  for (int k=0; k < numMembers; k++)
+	    {
+	      // Get position of atom
+	      array<double, DIM> position = a_frame.getAtom(atomIndex).getPosition();
+
+	      // Compute center of mass
+	      for (int l=0; l < DIM; l++)
+		{
+		  com[l] += position[l]*masses[k];
+		}
+	      atomIndex++;
+	    }
+	  for (int l=0; l<DIM; l++)
+	    {
+	      com[l] /= totalMass;
+	    }
+	  m_COMs[molecIndex]=com;
+	  binSkipElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte);
+	  molecIndex++;
+	}
+      delete electrolyteID;
+    }
+  for (int i=0; i<m_numLayers; i++)
+    {
+      for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+	{
+	  m_avgZPIonsInLayer[i][j] += currentIonsInLayer[i][j];
+	}
+    }
+  if ( (a_frame.getTotalStepNum() % m_saveFrameEvery == 0) || ( a_frame.getTotalStepNum() == m_system.getNumTotalFrames() ) )
+    {
+      for (int i=0; i<m_numLayers; i++)
+	{
+	  for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+	    {
+	      int timeIndex = (ceil)( ((double)a_frame.getTotalStepNum()) / ((double)m_saveFrameEvery) );
+	      m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // FIXME: keep same for ZP but check that this is being computed correctly!! also do it during skip steps, just for tracking
+	    }
+	}
+    }
+  a_frame.setCOMs(m_COMs);
+
 }
 
 
@@ -265,6 +342,16 @@ void AtomCounter::binZPElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<d
     }
 }
 
+void AtomCounter::binSkipElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, NUM_ION_TYPES> >& a_currentIonsInLayer, int& a_electrolyteID, int& a_isElectrolyte)
+{
+  unsigned int layer = m_system.getLayer(a_position);
+  if(a_isElectrolyte)
+    {
+      // Figure out what layer electrolyte molecule is in
+      // Increment count of molecule inside layer
+      a_currentIonsInLayer[layer][a_electrolyteID]++;
+    }
+}
 void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte)
 {
   double pos_z = a_position[2];
