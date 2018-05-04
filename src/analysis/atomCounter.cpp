@@ -120,7 +120,7 @@ void AtomCounter::sample(Frame& a_frame)
     }
   a_frame.setCOMs(m_COMs);
   // compute charging parameter
-  //m_chargingParam[a_frame.getStepNum()] = computeChargingParam(currentIonsInLayer);
+  m_chargingParam[a_frame.getStepNum()] = computeChargingParam(currentIonsInLayer);
 }
 
 void AtomCounter::sampleZP(Frame& a_frame)
@@ -275,13 +275,7 @@ void AtomCounter::sampleSkip(Frame& a_frame)
 	}
       delete electrolyteID;
     }
-  for (int i=0; i<m_numLayers; i++)
-    {
-      for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
-	{
-	  m_avgZPIonsInLayer[i][j] += currentIonsInLayer[i][j];
-	}
-    }
+
   if ( (a_frame.getTotalStepNum() % m_saveFrameEvery == 0) || ( a_frame.getTotalStepNum() == m_system.getNumTotalFrames() ) )
     {
       for (int i=0; i<m_numLayers; i++)
@@ -289,7 +283,7 @@ void AtomCounter::sampleSkip(Frame& a_frame)
 	  for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
 	    {
 	      int timeIndex = (ceil)( ((double)a_frame.getTotalStepNum()) / ((double)m_saveFrameEvery) );
-	      m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // FIXME: keep same for ZP but check that this is being computed correctly!! also do it during skip steps, just for tracking
+	      m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // during skip steps, just for tracking
 	    }
 	}
     }
@@ -426,18 +420,18 @@ void AtomCounter::normalizeZP()
 	  m_avgZPIonsInLayer[i][j] /= numFrames;
 	}
     }
-    for (int i=0; i<m_numBins; i++)
-      {
-	for (int j=0; j<m_system.getNumAtomTypes(); j++)
-	  {
-	    m_numZPAtomsProfile[i][j] /= numFrames;
-	  }
-	for (int j=0; j<getNumIonTypes(); j++)
-	  {
-	    m_numZPIonsProfile[i][j] /= numFrames;
-	  }
-	m_ZPdensityProfile[i] /= normDensity ;
-      }
+  for (int i=0; i<m_numBins; i++)
+    {
+      for (int j=0; j<m_system.getNumAtomTypes(); j++)
+	{
+	  m_numZPAtomsProfile[i][j] /= numFrames;
+	}
+      for (int j=0; j<getNumIonTypes(); j++)
+	{
+	  m_numZPIonsProfile[i][j] /= numFrames;
+	}
+      m_ZPdensityProfile[i] /= normDensity ;
+    }
 }
 
 void AtomCounter::normalize()
@@ -455,18 +449,18 @@ void AtomCounter::normalize()
 	  m_avgIonsInLayer[i][j] /= numFrames;
 	}
     }
-    for (int i=0; i<m_numBins; i++)
-      {
-	for (int j=0; j<m_system.getNumAtomTypes(); j++)
-	  {
-	    m_numAtomsProfile[i][j] /= numFrames;
-	  }
-	for (int j=0; j<getNumIonTypes(); j++)
-	  {
-	    m_numIonsProfile[i][j] /= numFrames;
-	  }
-	m_densityProfile[i] /= normDensity ;
-      }
+  for (int i=0; i<m_numBins; i++)
+    {
+      for (int j=0; j<m_system.getNumAtomTypes(); j++)
+	{
+	  m_numAtomsProfile[i][j] /= numFrames;
+	}
+      for (int j=0; j<getNumIonTypes(); j++)
+	{
+	  m_numIonsProfile[i][j] /= numFrames;
+	}
+      m_densityProfile[i] /= normDensity ;
+    }
 }
 
 
@@ -552,28 +546,42 @@ double* AtomCounter::getACIonsLayersTimeAddress(int i, int j)
   return &(m_numIonsInLayerTime[i][j][0]);
 }
 
-
-double AtomCounter::computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer)
+double* AtomCounter::getChargingParamAddress(int i)
 {
+  return &(m_chargingParam[i][0]);
+}
 
-    // FIXME HERE!! COMPUTE CHARGING PARAMETER FOR CATHODE AND ANODE SEPARATELY
-    // FIXME        MAKE ROBUST WAY OF ACCESSING INDICES FOR CAT/ANODE AND CAT/ANIONS
-    // FIXME        MICHELLE
-
-  // N(V) total number of in-pore ions at charging voltage V
-  int NV = a_ionsInLayer[0][0] + a_ionsInLayer[0][1];
-  // N(V0) total number of in-pore ions at initial voltage V0
-  int NV0 = m_avgZPIonsInLayer[0][0] + m_avgZPIonsInLayer[0][1];
-  // Nco,Ncounter(V) number of in-pore co- and counter-ions at charging voltage V
-  int NcounterV = a_ionsInLayer[0][0];
-  int NcoV = a_ionsInLayer[0][1];
-  // Nco,Ncounter(V0) number of in-pore co- and counter-ions at initial voltage V0
-  int NcounterV0 = m_avgZPIonsInLayer[0][0];
-  int NcoV0 = m_avgZPIonsInLayer[0][1];
-  double retVal = NcounterV-NcoV - NcounterV0+NcoV0;
-  retVal = 1./retVal;
-  retVal = retVal * (NV - NV0);
-  return retVal;
+array<double, 2> AtomCounter::computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer)
+{
+  array<double, 2> retArray;
+  array<array<int, 3>, 2> indices;
+  indices[0][0]=0;
+  indices[0][1]=0;
+  indices[0][2]=1;
+  indices[1][0]=2;
+  indices[1][1]=1;
+  indices[1][2]=0;
+  for (int i=0; i<2; i++)
+    {
+      int layer=indices[i][0];
+      int counter=indices[i][1];
+      int co=indices[i][2];
+      // N(V) total number of in-pore ions at charging voltage V
+      int NV = a_ionsInLayer[layer][co] + a_ionsInLayer[layer][counter];
+      // N(V0) total number of in-pore ions at initial voltage V0
+      int NV0 = m_avgZPIonsInLayer[layer][co] + m_avgZPIonsInLayer[layer][counter];
+      // Nco,Ncounter(V) number of in-pore co- and counter-ions at charging voltage V
+      int NcounterV = a_ionsInLayer[layer][counter];
+      int NcoV = a_ionsInLayer[layer][co];
+      // Nco,Ncounter(V0) number of in-pore co- and counter-ions at initial voltage V0
+      int NcounterV0 = m_avgZPIonsInLayer[layer][counter];
+      int NcoV0 = m_avgZPIonsInLayer[layer][co];
+      double retVal = NcounterV-NcoV - NcounterV0+NcoV0;
+      retVal = 1./retVal;
+      retVal = retVal * (NV - NV0);
+      retArray[i] = retVal;
+    }
+  return retArray;
 }
 
 const System& AtomCounter::getSystem() const
@@ -590,6 +598,12 @@ const int AtomCounter::getNumSavedFrames() const
 {
   return m_numSavedFrames;
 }
+
+const int AtomCounter::getNumCVFrames() const
+{
+  return m_system.getNumFrames();
+}
+
 
 // const vector<array<double, DIM >  > AtomCounter::getCOMs() const
 // {
@@ -692,4 +706,16 @@ const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename)
 
 const char* ACWriteCollectiveVars(AtomCounter* a_ac, const char* a_filename)
 {
+  int numFrames = a_ac->getNumCVFrames();
+  int saveFrameEvery = a_ac->getSaveFrameInterval();
+  int varDim = 2;
+  const char * const headernames[] = {"t", "data"};
+  double** data;
+  data = new double* [numFrames];
+  for (int i=0; i<numFrames; i++)
+    {
+      data[i] = a_ac->getChargingParamAddress(i);
+    }
+  write_time_data(a_filename, numFrames, saveFrameEvery, varDim, headernames, data);
+  delete data;
 }

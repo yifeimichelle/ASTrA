@@ -97,6 +97,6 @@ int main(int argc, char** argv)
     ACWriteIons(&ac, "ions");
     ACWriteIonsInLayers(&ac, "layers");
     ACWriteIonsInLayersTime(&ac, "numionslayers");
-    //ACWriteCVs(&ac, "ionCV");
+    ACWriteCollectiveVars(&ac, "ionCV");
     //DOCWrite(&doc, "doc");
 }

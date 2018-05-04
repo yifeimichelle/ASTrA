@@ -7,8 +7,8 @@ ANALYSIS_SRC = $(HOME)/src/analysis
 WRITER_SRC = $(HOME)/src/writer
 CFLAGS = -Wall -I$(TRAJ_SRC) -I$(ANALYSIS_SRC) -I$(WRITER_SRC) -std=c++11
 
-#CXX = g++
-CXX = clang++
+CXX = g++
+#CXX = clang++
 CPPFLAGS = -D DIM=$(DIM)
 
 TRAJ_SRCFILES:=$(wildcard $(TRAJ_SRC)/*.cpp)

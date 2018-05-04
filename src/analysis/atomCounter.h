@@ -51,20 +51,24 @@ class AtomCounter
   double* getACIonsAddress(int i);
   /// Gets the address of the first element in the vector of ion counts per layer.
   double* getACIonsLayersAddress(int i);
-  /// Computes the charging mechanisms parameter from Forse 2016 "New perspectives on the charging mechanisms of supercapacitors".
+  /// Gets the address of the element in the array of ions per layer per time.
   double* getACIonsLayersTimeAddress(int i, int j);
+  /// Gets address of the first element in the charging mechanism CV.
+  double* getChargingParamAddress(int i);
   /// Returns system.
   const System& getSystem() const;
   /// Returns interval for saving frames in time-sequence data.
   const int getSaveFrameInterval() const;
-  /// Returns total number of saved frames
+  /// Returns total number of saved frames (total frames)
   const int getNumSavedFrames() const;
+  /// Returns number of saved frames for CV (only const-potential, const-charge frames)
+  const int getNumCVFrames() const;
   /// Returns vector of COMs.
   //const vector<array<double, DIM > > getCOMs() const;
 
  private:
-  /// Compute charging parameter.
-  double computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer);
+  /// Computes the charging mechanisms parameter from Forse 2016 "New perspectives on the charging mechanisms of supercapacitors".
+  array<double, 2> computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer);
   /// Bin and layer atom, and add to density profile, during zero-P, zero-Q run.
   void binZPAtom(Frame& a_frame, int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte);
   /// Bin and layer electrolyte COM, during zero-P, zero-Q run.
@@ -99,7 +103,7 @@ class AtomCounter
   /// Counter of ion and solvent COMs in layers (anode, cathode, liquid), during zero-P, zero-Q run.
   vector<array<double, NUM_ION_TYPES > > m_avgZPIonsInLayer;
   vector<int > m_excessAnionsInCathode, m_excessCationsInAnode;
-  vector<double > m_chargingParam;
+  vector<array<double, 2> > m_chargingParam;
   int m_saveFrameEvery;
   int m_numSavedFrames;
   int m_numBins;
@@ -112,7 +116,7 @@ const char* ACWriteAtomCounts(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIons(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIonsInLayers(AtomCounter* a_ac, const char* a_filename);
-const char* ACWriteCollecVars(AtomCounter* a_ac, const char* a_filename);
+const char* ACWriteCollectiveVars(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename);
 
 

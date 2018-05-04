@@ -116,6 +116,29 @@ void write_layered_time_data_by_var(const char *a_filename, int a_numFrames, int
     }
 }
 
+void write_time_data(const char *a_filename, int a_numFrames, int a_saveFrameEvery, int a_varDim, const char * const *a_headernames, double **a_vars)
+{
+  open_file(a_filename);
+  // write headers
+  writeString("#t data\n");
+  // write data
+  for (unsigned int iTime=0; iTime<a_numFrames; iTime++)
+    {
+      char str[128];
+      sprintf(str, "%d", iTime*a_saveFrameEvery);
+      writeString(str);
+      for (int jVar = 0; jVar<a_varDim; jVar++)
+	{
+	  sprintf(str, " %f", a_vars[iTime][jVar]);
+	  writeString(str);
+	}
+      writeString("\n");
+    }
+  close_file();
+}
+
+
+
 /// Writes binned data with multiple values per bin, to a different file for each layer
 void write_binned_layered_multival_data(const char *a_filename, int a_numBins, double a_binSize, int a_varDim, int a_numLayers, int a_numValues, const char * const *a_headernames, double ****a_vars)
 {
