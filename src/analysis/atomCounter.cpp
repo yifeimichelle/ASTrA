@@ -759,7 +759,7 @@ const char* ACWriteIonsInLayers(AtomCounter* a_ac, const char* a_filename)
 const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename)
 {
   int numFrames = a_ac->getNumSavedFrames();
-  int saveFrameEvery = a_ac->getSaveFrameInterval();
+  int saveFrameEvery = a_ac->getSaveFrameInterval()*a_ac->getSystem().getFrameTime();
   int numLayers = a_ac->getNumLayers();
   int varDim = a_ac->getNumIonTypes();
   const char * const headernames[] = { "t", "data" };

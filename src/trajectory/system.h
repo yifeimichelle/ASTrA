@@ -43,8 +43,8 @@ class System
 	const int getNumMembersMolec(unsigned int a_molecType) const;
 	/// Get total number of molecules in the system (including mobile and immobile)
 	const unsigned int getNumMolecules() const;
-	/// Return real time of current frame;
-        const float getFrameTime() const;
+	/// Return real time interval between frames;
+        const double getFrameTime() const;
 	/// Returns the name of the trajectory file.
         const string& getTrajFile() const;
 	/// Returns number of atoms of a particular atom type (each atom in a molecule counts separately).

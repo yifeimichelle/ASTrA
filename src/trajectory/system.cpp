@@ -436,7 +436,7 @@ const unsigned int System::getNumMolecules() const
   return m_numMolecules;
 }
 
-const float System::getFrameTime() const
+const double System::getFrameTime() const
 {
     return m_frameTime;
 }
