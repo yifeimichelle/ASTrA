@@ -209,7 +209,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
   for (int layIdx = 0; layIdx < m_numLayers; layIdx++)
     {
       // Get list of molecules in this layer
-      list<int>* molecsInLayer = a_frame.getMoleculesInLayer(layIdx);
+      vector<int>* molecsInLayer = a_frame.getMoleculesInLayer(layIdx);
       // For each pair
       for (int pairIdx = 0; pairIdx < m_numMolecPairs; pairIdx++)
 	{
@@ -217,14 +217,15 @@ void RDF::sampleMolecules(const Frame& a_frame)
 	  int pairFirst = molecPair.first;
 	  int pairSecond = molecPair.second;
 	  vector<double > minDistanceB;
-	  minDistanceB.resize(molecsInLayer[pairSecond].size(),1000.0);
+	  int pairSecondSize = molecsInLayer[pairSecond].size();
+	  minDistanceB.resize(pairSecondSize,1000.0);
 	  // For each molecule of first type in pair
-	  for (list<int>::iterator itA = molecsInLayer[pairFirst].begin(); itA != molecsInLayer[pairFirst].end(); ++itA)
+	  for (vector<int>::iterator itA = molecsInLayer[pairFirst].begin(); itA != molecsInLayer[pairFirst].end(); ++itA)
 	    {
 	      minDistance = 1000.0;
 	      int secondIndex = 0;
 	      // For each molecule of second type in pair
-	      for (list<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
+	      for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
 		{
 		  // Compute distance
 		  float distance = a_frame.computeMolecDistance(*itA,*itB);
@@ -232,11 +233,28 @@ void RDF::sampleMolecules(const Frame& a_frame)
 		    {
 		      minDistance = distance;
 		    }
+#ifdef DEBUG
+		  if (distance < 2.0)
+		    {
+		      cout << "layer " << layIdx << endl;
+		      cout << "overlapping: " << pairFirst << " no. " << *itA << ", ";
+		      cout << pairSecond << " no. " << *itB;
+		      cout << "; distance = " << distance;
+		      cout << endl;
+		      array<double, DIM> pos;
+		      pos = a_frame.getMolec(*itA).getPosition();
+		      cout << pos[0] << " " << pos[1] << " " << pos[2] << endl;
+		      pos = a_frame.getMolec(*itB).getPosition();
+		      cout << pos[0] << " " << pos[1] << " " << pos[2] << endl;
+		      exit(2);
+		    }
+#endif
+		  
 		  // Bin it
-		if (distance < minDistanceB[secondIndex])
-		  {
-		    minDistanceB[secondIndex] = distance;
-		  }
+		  if (distance < minDistanceB[secondIndex])
+		    {
+		      minDistanceB[secondIndex] = distance;
+		    }
 		  if (distance < m_maxDist)
 		    {
 		      binMolecPairDistance(distance, pairIdx);
@@ -244,19 +262,19 @@ void RDF::sampleMolecules(const Frame& a_frame)
 		  secondIndex++;
 		}
 	      if(minDistance < m_maxDist)
-		{
-		  // bin distance as closest species B to species A (reference)
-		  binMolecPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
-		}
+	      	{
+	      	  // bin distance as closest species B to species A (reference)
+	      	  binMolecPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
+	      	}
 	    }
 	  // For each molecule of second type in pair
-	  for (int secondIndex=0; secondIndex<molecsInLayer[pairSecond].size(); secondIndex++)
+	  for (int secondIndex=0; secondIndex<pairSecondSize; secondIndex++)
 	    {
 	      if(minDistanceB[secondIndex] < m_maxDist)
-		{
-		  // bin distance as closest species I to species J (reference)
-		  binMolecPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx);
-		}
+	  	{
+	  	  // bin distance as closest species I to species J (reference)
+	  	  binMolecPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx);
+	  	}
 	    }
 	}
     }
@@ -276,7 +294,7 @@ void RDF::sampleAtoms(const Frame& a_frame)
   for (int layIdx = 0; layIdx < m_numLayers; layIdx++)
     {
       // Get list of atoms in this layer
-      list<int>* atomsInLayer = a_frame.getAtomsInLayer(layIdx);
+      vector<int>* atomsInLayer = a_frame.getAtomsInLayer(layIdx);
       // For each pair
       for (int pairIdx = 0; pairIdx < m_numPairs; pairIdx++)
 	{
@@ -284,14 +302,15 @@ void RDF::sampleAtoms(const Frame& a_frame)
 	  int pairFirst = atomPair.first;
 	  int pairSecond = atomPair.second;
 	  vector<double > minDistanceB;
-	  minDistanceB.resize(atomsInLayer[pairSecond].size(),1000.0);
+	  int pairSecondSize = atomsInLayer[pairSecond].size();
+	  minDistanceB.resize(pairSecondSize,1000.0);
 	  // For each atom of first type in pair
-	  for (list<int>::iterator itA = atomsInLayer[pairFirst].begin(); itA != atomsInLayer[pairFirst].end(); ++itA)
+	  for (vector<int>::iterator itA = atomsInLayer[pairFirst].begin(); itA != atomsInLayer[pairFirst].end(); ++itA)
 	    {
 	      minDistance = 1000.0;
 	      int secondIndex = 0;
 	      // For each atom of second type in pair
-	      for (list<int>::iterator itB = atomsInLayer[pairSecond].begin(); itB != atomsInLayer[pairSecond].end(); ++itB)
+	      for (vector<int>::iterator itB = atomsInLayer[pairSecond].begin(); itB != atomsInLayer[pairSecond].end(); ++itB)
 		{
 		  // Compute distance
 		  float distance = a_frame.computeDistance(*itA,*itB);
@@ -300,10 +319,10 @@ void RDF::sampleAtoms(const Frame& a_frame)
 		      minDistance = distance;
 		    }
 		  // Bin it
-		if (distance < minDistanceB[secondIndex])
-		  {
-		    minDistanceB[secondIndex] = distance;
-		  }
+		  if (distance < minDistanceB[secondIndex])
+		    {
+		      minDistanceB[secondIndex] = distance;
+		    }
 		  if (distance < m_maxDist)
 		    {
 		      binPairDistance(distance, pairIdx);
@@ -311,19 +330,19 @@ void RDF::sampleAtoms(const Frame& a_frame)
 		  secondIndex++;
 		}
 	      if(minDistance < m_maxDist)
-		{
-		  // bin distance as closest species B to species A (reference)
-		  binPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
-		}
+	      	{
+	      	  // bin distance as closest species B to species A (reference)
+	      	  binPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
+	      	}
 	    }
 	  // For each atom of second type in pair
-	  for (int secondIndex=0; secondIndex<atomsInLayer[pairSecond].size(); secondIndex++)
+	  for (int secondIndex=0; secondIndex<pairSecondSize; secondIndex++)
 	    {
 	      if(minDistanceB[secondIndex] < m_maxDist)
-		{
-		  // bin distance as closest species I to species J (reference)
-		  binPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx);
-		}
+	  	{
+	  	  // bin distance as closest species I to species J (reference)
+	  	  binPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx);
+	  	}
 	    }
 	}
     }

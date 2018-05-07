@@ -39,6 +39,10 @@ class Frame
 	const Atom& getAtom(int a_atomIndex) const;
 	/// Returns a reference to a single atom in a frame.
 	Atom& getAtom(int a_atomIndex);
+	/// Returns a reference to a single molecule in a frame.
+	const Atom& getMolec(int a_molecIndex) const;
+	/// Returns a reference to a single molecule in a frame.
+	Atom& getMolec(int a_molecIndex);
 	/// Computes the distance between two atoms. 
 	const double computeDistance(int a_i, int a_j) const;
 	/// Computes the distance between two molecules.
@@ -64,24 +68,24 @@ class Frame
 	/// Print molecules in layer.
 	void printMolecsInLayer(unsigned int a_layer);
 	/// Get pointer to atoms in layer.
-	list<int>* getAtomsInLayer(int a_layerIdx) const;
+	vector<int>* getAtomsInLayer(int a_layerIdx) const;
 	/// Get pointer to molecule COMs in layer.
-	list<int>* getMoleculesInLayer(int a_layerIdx) const;
+	vector<int>* getMoleculesInLayer(int a_layerIdx) const;
      private:
 	System m_system;
         unsigned int m_stepNum;
 	unsigned int m_totalStepNum;
 	unsigned int m_zpStepNum;
         unsigned int m_numAtoms;
-        unsigned int m_numMolecs;
+        unsigned int m_numMolecules;
         vector<Atom > m_atoms;
 	vector<Atom > m_COMs;
 	// record of which layer atoms and molecule COMs are in
 	// access by ARRAY[layer][type] -> list it
-	array<array<list<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_atomLayers;
-	array<array<list<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_COMLayers;
-	array<array<list<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_ZPatomLayers;
-	array<array<list<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_ZPCOMLayers;
+	array<array<vector<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_atomLayers;
+	array<array<vector<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_COMLayers;
+	array<array<vector<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_ZPatomLayers;
+	array<array<vector<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_ZPCOMLayers;
         ifstream m_traj;
 };
 #endif

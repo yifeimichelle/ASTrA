@@ -48,6 +48,7 @@ void AtomCounter::sample(Frame& a_frame)
   int atomIndex = 0;
   int isElectrolyte = 0;
   array<double, DIM > com;
+  array<double, DIM > x0;
   vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
   currentIonsInLayer.resize(m_numLayers);
   // Starting loop...
@@ -76,7 +77,11 @@ void AtomCounter::sample(Frame& a_frame)
       for (int j=0; j < m_system.getNumMolecsOfType(i); j++)
 	{
 	  com.fill(0); // fill with zeros, otherwise will keep same data as before
+	  x0.fill(0);
 	  // For each molecule member
+#ifdef DEBUG
+	  cout << "Computing center of mass for " << molecIndex << ". Positions: " << endl;
+#endif
 	  for (int k=0; k < numMembers; k++)
 	    {
 	      // Get position of atom
@@ -84,16 +89,54 @@ void AtomCounter::sample(Frame& a_frame)
 	      // Bin atom by type and add to density
 	      binAtom(a_frame, atomIndex, position, i, k, masses[k], isElectrolyte);
 	      // Compute center of mass
-	      for (int l=0; l < DIM; l++)
+	      if (k == 0)
 		{
-		  com[l] += position[l]*masses[k];
+		  for (int l=0; l < DIM; l++)
+		    {
+		      x0[l] = position[l];
+		      com[l] += position[l]*masses[k];
+#ifdef DEBUG
+		      cout << position[l] << " ";
+#endif
+		    }
+#ifdef DEBUG
+		      cout <<  masses[k] << endl;
+#endif
+		}
+	      else if (k > 0)
+		{
+		  for (int l=0; l < DIM; l++)
+		    {
+		      double dx = position[l] - x0[l];
+		      if (m_system.isPeriodic(l))
+			{
+			  double dim = m_system.getBoxDim(l);
+			  dx -= round(dx/dim) * dim;
+			}
+		      com[l] += (x0[l]+dx)*masses[k];
+#ifdef DEBUG
+		      cout << position[l] << "(" << x0[l]+dx << ")" << " ";
+#endif
+		    }
+#ifdef DEBUG
+		  cout << masses[k] << endl;
+#endif
 		}
 	      atomIndex++;
 	    }
+#ifdef DEBUG
+	  cout << "COM is: " << endl;
+#endif
 	  for (int l=0; l<DIM; l++)
 	    {
 	      com[l] /= totalMass;
+#ifdef DEBUG
+	      cout << com[l] << " ";
+#endif
 	    }
+#ifdef DEBUG
+	      cout << endl;
+#endif
 	  m_COMs[molecIndex]=com;
 	  binElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte);
 	  molecIndex++;
@@ -139,6 +182,7 @@ void AtomCounter::sampleZP(Frame& a_frame)
   int atomIndex = 0;
   int isElectrolyte = 0;
   array<double, DIM > com;
+  array<double, DIM > x0;
   vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
   currentIonsInLayer.resize(m_numLayers);
   // Starting loop...
@@ -167,6 +211,7 @@ void AtomCounter::sampleZP(Frame& a_frame)
       for (int j=0; j < m_system.getNumMolecsOfType(i); j++)
 	{
 	  com.fill(0); // fill with zeros, otherwise will keep same data as before
+	  x0.fill(0);
 	  // For each molecule member
 	  for (int k=0; k < numMembers; k++)
 	    {
@@ -175,9 +220,26 @@ void AtomCounter::sampleZP(Frame& a_frame)
 	      // Bin atom by type and add to density
 	      binZPAtom(a_frame, atomIndex, position, i, k, masses[k], isElectrolyte);
 	      // Compute center of mass
-	      for (int l=0; l < DIM; l++)
+	      if (k == 0)
 		{
-		  com[l] += position[l]*masses[k];
+		  for (int l=0; l < DIM; l++)
+		    {
+		      x0[l] = position[l];
+		      com[l] += position[l]*masses[k];
+		    }
+		}
+	      else if (k > 0)
+		{	       
+		  for (int l=0; l < DIM; l++)
+		    {
+		      double dx = position[l] - x0[l];
+		      if (m_system.isPeriodic(l))
+			{
+			  double dim = m_system.getBoxDim(l);
+			  dx -= round(dx/dim) * dim;
+			}
+		      com[l] += (x0[l]+dx)*masses[k];
+		    }
 		}
 	      atomIndex++;
 	    }
@@ -224,6 +286,7 @@ void AtomCounter::sampleSkip(Frame& a_frame)
   int atomIndex = 0;
   int isElectrolyte = 0;
   array<double, DIM > com;
+  array<double, DIM > x0;
   vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
   currentIonsInLayer.resize(m_numLayers);
   // Starting loop...
@@ -252,6 +315,7 @@ void AtomCounter::sampleSkip(Frame& a_frame)
       for (int j=0; j < m_system.getNumMolecsOfType(i); j++)
 	{
 	  com.fill(0); // fill with zeros, otherwise will keep same data as before
+	  x0.fill(0);
 	  // For each molecule member
 	  for (int k=0; k < numMembers; k++)
 	    {
@@ -259,9 +323,26 @@ void AtomCounter::sampleSkip(Frame& a_frame)
 	      array<double, DIM> position = a_frame.getAtom(atomIndex).getPosition();
 
 	      // Compute center of mass
-	      for (int l=0; l < DIM; l++)
+	      if (k == 0)
 		{
-		  com[l] += position[l]*masses[k];
+		  for (int l=0; l < DIM; l++)
+		    {
+		      x0[l] = position[l];
+		      com[l] += position[l]*masses[k];
+		    }
+		}
+	      else if (k > 0)
+		{	       
+		  for (int l=0; l < DIM; l++)
+		    {
+		      double dx = position[l] - x0[l];
+		      if (m_system.isPeriodic(l))
+			{
+			  double dim = m_system.getBoxDim(l);
+			  dx -= round(dx/dim) * dim;
+			}
+		      com[l] += (x0[l]+dx)*masses[k];
+		    }
 		}
 	      atomIndex++;
 	    }
@@ -324,9 +405,6 @@ void AtomCounter::binZPElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<d
       double pos_z = a_position[2];
       int bin = floor(pos_z / m_binSize);
 #ifdef DEBUG
-      cout << "bin " << bin << " of " << m_numBins << " bins" << endl;
-      double x = pos_z / m_system.getBoxDim(2);
-      cout << "z position " << pos_z << " of electrolyte " << a_electrolyteID << endl;
       assert( bin < m_numBins );
 #endif
       m_numZPIonsProfile[bin][a_electrolyteID]++;
@@ -378,9 +456,6 @@ void AtomCounter::binElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<dou
       double pos_z = a_position[2];
       int bin = floor(pos_z / m_binSize);
 #ifdef DEBUG
-      cout << "bin " << bin << " of " << m_numBins << " bins" << endl;
-      double x = pos_z / m_system.getBoxDim(2);
-      cout << "z position " << pos_z << " of electrolyte " << a_electrolyteID << endl;
       assert( bin < m_numBins );
 #endif
       m_numIonsProfile[bin][a_electrolyteID]++;

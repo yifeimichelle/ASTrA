@@ -485,7 +485,7 @@ const unsigned int System::getNumPairs() const
   return m_numPairs;
 }
 
-const pair<unsigned int, unsigned int > System::getPairCorrelation(unsigned int a_pair) const
+const pair<unsigned int, unsigned int >& System::getPairCorrelation(unsigned int a_pair) const
 {
   return m_rdfPairs[a_pair];
 }

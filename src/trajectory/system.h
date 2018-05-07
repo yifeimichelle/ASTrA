@@ -58,7 +58,7 @@ class System
 	/// Returns number of RDF atom-atom pairs to calculate, supplied in input.
 	const unsigned int getNumPairs() const;
 	/// Returns pair of atom types from list of RDF atom-atom pairs.
-	const pair<unsigned int, unsigned int > getPairCorrelation(unsigned int a_pair) const;
+	const pair<unsigned int, unsigned int >& getPairCorrelation(unsigned int a_pair) const;
 	/// Returns number of RDF molecule-molecule pairs to calculate, supplied in input.
 	const unsigned int getNumMolecPairs() const;
 	/// Returns pair of molecule types from list of RDF molecule-molecule pairs.
