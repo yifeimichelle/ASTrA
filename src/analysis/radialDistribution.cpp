@@ -428,6 +428,7 @@ void RDF::normalize()
   for (int i=0; i<m_numBins; i++)
     {
       double normFactor = (4./3.)*M_PI*(pow(i+1,3)-pow(i,3))*pow(m_binSize,3);
+      normFactor = normFactor * m_system.getNumFrames();
       for (int j=0; j<m_system.getNumPairs(); j++)
 	{
 	  m_rdf[i][j] /= normFactor;
@@ -436,6 +437,16 @@ void RDF::normalize()
 	      m_rdfLayer[k][i][j] /= normFactor;
 	      m_rdfLayerClosest[k][i][j][0] /= normFactor;
 	      m_rdfLayerClosest[k][i][j][1] /= normFactor;
+	    }
+	}
+      for (int j=0; j<m_system.getNumMolecPairs(); j++)
+	{
+	  m_rdfMolec[i][j] /= normFactor;
+	  for (int k=0; k<m_numLayers; k++)
+	    {
+	      m_rdfMolecLayer[k][i][j] /= normFactor;
+	      m_rdfMolecLayerClosest[k][i][j][0] /= normFactor;
+	      m_rdfMolecLayerClosest[k][i][j][1] /= normFactor;
 	    }
 	}
     }
