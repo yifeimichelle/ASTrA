@@ -26,6 +26,7 @@ static void close_file(void)
     fp = NULL;
 }
 
+// Writes binned data, with multiple variables in a single file
 void write_binned_data(const char *a_filename, int a_numBins, double a_binSize, int a_varDim, const char * const *a_headernames, double **a_vars)
 {
   open_file(a_filename);
@@ -47,6 +48,7 @@ void write_binned_data(const char *a_filename, int a_numBins, double a_binSize, 
   close_file();
 }
 
+// Writes layered data, with multiple variables to a single file
 void write_layered_data(const char *a_filename, int a_numLayers, double *a_layers, int a_varDim, const char * const *a_headernames, double **a_vars)
 {
   open_file(a_filename);
@@ -75,6 +77,50 @@ void write_layered_data(const char *a_filename, int a_numLayers, double *a_layer
   close_file();
 }
 
+void write_binned_layered_data(const char *a_filename, int a_numBins, double a_binSize, int a_varDim, int a_numLayers, const char * const *a_headernames, double ***a_vars)
+{
+  char** filenames = new char * [a_numLayers];
+  // compose filenames for each layer
+  for (int iLayer=0; iLayer<a_numLayers; iLayer++)
+    {
+      filenames[iLayer] = new char [1024];
+      sprintf(filenames[iLayer], "%s-%d", a_filename, iLayer);
+    }
+
+  // Write files for each layer
+  for (int iLayer=0; iLayer<a_numLayers; iLayer++)
+    {
+      open_file(filenames[iLayer]);
+      // write headers
+      writeString("#r ");
+      for (unsigned int jVar=0; jVar<a_varDim; jVar++)
+  	{
+	  char str[128];
+	  sprintf(str, " %d", jVar);
+	  writeString(str);
+	}
+      writeString("\n");
+      // write data
+      for (unsigned int iBin=0; iBin<a_numBins; iBin++)
+  	{
+  	  char str[128];
+  	  sprintf(str, "%f", 1.0*iBin*a_binSize);
+  	  writeString(str);
+  	  for (unsigned int jVar=0; jVar<a_varDim; jVar++)
+  	    {
+	      char str[128];
+	      sprintf(str, " %f", a_vars[iLayer][iBin][jVar]);
+	      writeString(str);
+  	    }
+  	  writeString("\n");
+  	}
+      close_file();
+    }
+  delete filenames;
+
+}
+
+// Writes time series data, with a different file for each variable
 void write_layered_time_data_by_var(const char *a_filename, int a_numFrames, int a_saveFrameEvery, int a_numLayers, int a_varDim, const char * const *a_headernames, double ***a_vars)
 {
   char ** filenames = new char * [a_varDim];
@@ -116,6 +162,7 @@ void write_layered_time_data_by_var(const char *a_filename, int a_numFrames, int
     }
 }
 
+// Writes time series data, with multiple variables to a single file
 void write_time_data(const char *a_filename, int a_numFrames, int a_saveFrameEvery, int a_varDim, const char * const *a_headernames, double **a_vars)
 {
   open_file(a_filename);

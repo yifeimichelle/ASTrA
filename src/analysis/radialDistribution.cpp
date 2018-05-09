@@ -258,6 +258,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
 		  if (distance < m_maxDist)
 		    {
 		      binMolecPairDistance(distance, pairIdx);
+		      binMolecPairDistanceLayer(distance, pairIdx, layIdx);
 		    }
 		  secondIndex++;
 		}
@@ -395,13 +396,10 @@ void RDF::binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pai
 }
 
 
-void RDF::binMolecPairDistance(double a_distance, unsigned int a_pair, unsigned int a_firstLayer, unsigned int a_secondLayer)
+void RDF::binMolecPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer)
 {
   int bin = floor(a_distance / m_binSize);
-  if (a_firstLayer == a_secondLayer )
-    {
-      m_rdfMolecLayer[a_firstLayer][bin][a_pair]++;
-    }
+  m_rdfMolecLayer[a_layer][bin][a_pair]++;
 }
 
 void RDF::binMolecPairDistance(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer)
@@ -517,18 +515,12 @@ void RDF::setRDFLayerClosestValue(int a_layer, int a_bin, int a_pair, int a_clos
     m_rdfLayerClosest[a_layer][a_bin][a_pair][a_closest] = a_setVal;
 }
 
-
-double*** RDF::getRDFAddressLayers(int i)
-{
-  return (double***)&(m_rdfLayerClosest[i][0]); // how to typecast to pointer to pointer?
-}
-
 double** RDF::getRDFAddressLayers(int i, int j)
 {
-  return (double**)&(m_rdfLayerClosest[i][j][0]);
+  return (double**)&(m_rdfLayer[i][j][0]);
 }
 
-double* RDF::getRDFAddressLayers(int i, int j, int k)
+double* RDF::getRDFAddressLayersClosest(int i, int j, int k)
 {
   return &(m_rdfLayerClosest[i][j][k][0]);
 }
@@ -538,18 +530,12 @@ double* RDF::getMolecRDFAddress(int i)
   return &(m_rdfMolec[i][0]);
 }
 
-
-double*** RDF::getMolecRDFAddressLayers(int i)
+double* RDF::getMolecRDFAddressLayers(int i, int j)
 {
-  return (double***)&(m_rdfMolecLayerClosest[i][0]); // how to typecast to pointer to pointer?
+  return &(m_rdfMolecLayer[i][j][0]);
 }
 
-double** RDF::getMolecRDFAddressLayers(int i, int j)
-{
-  return (double**)&(m_rdfMolecLayerClosest[i][j][0]);
-}
-
-double* RDF::getMolecRDFAddressLayers(int i, int j, int k)
+double* RDF::getMolecRDFAddressLayersClosest(int i, int j, int k)
 {
   return &(m_rdfMolecLayerClosest[i][j][k][0]);
 }
@@ -570,7 +556,7 @@ const char* RDFWrite(RDF* a_rdf, const char* a_filename)
   return a_filename;
 }
 
-const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename)
+const char* RDFWriteLayersClosest(RDF* a_rdf, const char* a_filename)
 {
   double binSize = a_rdf->getBinSize();
   int numBins = a_rdf->getNumBins();
@@ -586,7 +572,7 @@ const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename)
 	  data[i][j] = new double*[varDim];
           for (int k=0; k<varDim; k++)
 	    {
-	      data[i][j][k] = a_rdf->getRDFAddressLayers(i,j,k);
+	      data[i][j][k] = a_rdf->getRDFAddressLayersClosest(i,j,k);
 	    }
       	}
     }
@@ -632,6 +618,35 @@ const char* RDFMolecWriteLayers(RDF* a_rdf, const char* a_filename)
   int varDim = a_rdf->getNumMolecPairs();
   int numLayers = a_rdf->getNumLayers();
   const char * const headernames[] = { "nodeData" };
+  double*** data = new double**[numLayers];
+  for (int i=0; i<numLayers; i++)
+    {
+      data[i] = new double*[numBins];
+      for (int j=0; j<numBins; j++)
+      	{
+	  data[i][j] =a_rdf->getMolecRDFAddressLayers(i,j);
+	}
+    }
+  write_binned_layered_data(a_filename, numBins, binSize, varDim, numLayers, headernames, data);
+
+  // delete array of pointers
+  for (int i=0; i<numLayers; i++)
+    {
+        delete data[i];
+    }
+  delete data;
+
+  return a_filename;
+}
+
+
+const char* RDFMolecWriteLayersClosest(RDF* a_rdf, const char* a_filename)
+{
+  double binSize = a_rdf->getBinSize();
+  int numBins = a_rdf->getNumBins();
+  int varDim = a_rdf->getNumMolecPairs();
+  int numLayers = a_rdf->getNumLayers();
+  const char * const headernames[] = { "nodeData" };
   double**** data = new double***[numLayers];
   for (int i=0; i<numLayers; i++)
     {
@@ -641,7 +656,7 @@ const char* RDFMolecWriteLayers(RDF* a_rdf, const char* a_filename)
 	  data[i][j] = new double*[varDim];
           for (int k=0; k<varDim; k++)
 	    {
-	      data[i][j][k] = a_rdf->getMolecRDFAddressLayers(i,j,k);
+	      data[i][j][k] = a_rdf->getMolecRDFAddressLayersClosest(i,j,k);
 	    }
       	}
     }

@@ -138,7 +138,7 @@ void AtomCounter::sample(Frame& a_frame)
 	      cout << endl;
 #endif
 	  m_COMs[molecIndex]=com;
-	  binElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte);
+	  binElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte); // different for ZP and skip
 	  molecIndex++;
 	}
       delete electrolyteID;
@@ -147,7 +147,7 @@ void AtomCounter::sample(Frame& a_frame)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
 	{
-	  m_avgIonsInLayer[i][j] += currentIonsInLayer[i][j];
+	  m_avgIonsInLayer[i][j] += currentIonsInLayer[i][j]; // different for ZP and skip
 	}
     }
   if ( (a_frame.getTotalStepNum() % m_saveFrameEvery == 0) || ( a_frame.getTotalStepNum() == m_system.getNumTotalFrames() ) )
@@ -163,20 +163,12 @@ void AtomCounter::sample(Frame& a_frame)
     }
   a_frame.setCOMs(m_COMs);
   // compute charging parameter
-  m_chargingParam[a_frame.getStepNum()] = computeChargingParam(currentIonsInLayer);
+  m_chargingParam[a_frame.getStepNum()] = computeChargingParam(currentIonsInLayer); // only when sampling production runs
 }
 
 void AtomCounter::sampleZP(Frame& a_frame)
 {
-  // FIXME : Michelle
-  // Here goes:
-  // - Calculate COMs
-  // - Calculate number of ions in electrodes during ZP for charging parameter
-  // - numIonsInLayerTime
-  // (would be nice)
-  // - Calculate zero-P density profile
 
-  
   // setup
   int molecIndex = 0;
   int atomIndex = 0;
@@ -248,7 +240,8 @@ void AtomCounter::sampleZP(Frame& a_frame)
 	      com[l] /= totalMass;
 	    }
 	  m_COMs[molecIndex]=com;
-	  binZPElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte);
+	  binZPElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte); // different for ZP and skip
+	  // (during ZP, calculates initial # of ions for charging mechanism param)
 	  molecIndex++;
 	}
       delete electrolyteID;
@@ -257,7 +250,7 @@ void AtomCounter::sampleZP(Frame& a_frame)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
 	{
-	  m_avgZPIonsInLayer[i][j] += currentIonsInLayer[i][j];
+	  m_avgZPIonsInLayer[i][j] += currentIonsInLayer[i][j]; // different for ZP and skip
 	}
     }
   if ( (a_frame.getTotalStepNum() % m_saveFrameEvery == 0) || ( a_frame.getTotalStepNum() == m_system.getNumTotalFrames() ) )
@@ -276,11 +269,7 @@ void AtomCounter::sampleZP(Frame& a_frame)
 
 void AtomCounter::sampleSkip(Frame& a_frame)
 {
-  // FIXME : Michelle
-  // Here goes:
-  // - Calculate COMs
-  // - numIonsInLayerTime
-
+  
   // setup
   int molecIndex = 0;
   int atomIndex = 0;
@@ -351,7 +340,7 @@ void AtomCounter::sampleSkip(Frame& a_frame)
 	      com[l] /= totalMass;
 	    }
 	  m_COMs[molecIndex]=com;
-	  binSkipElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte);
+	  binSkipElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte); // different for ZP and skip
 	  molecIndex++;
 	}
       delete electrolyteID;
@@ -394,6 +383,7 @@ void AtomCounter::binZPAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM
 
 void AtomCounter::binZPElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, NUM_ION_TYPES> >& a_currentIonsInLayer, int& a_electrolyteID, int& a_isElectrolyte)
 {
+  // increments a_currentIonsInLayer and m_numZPIonsInProfile
   unsigned int layer = m_system.getLayer(a_position);
   a_frame.assignZPIonToLayer(a_molecIndex, a_molecType, layer);
   if(a_isElectrolyte)
@@ -416,6 +406,7 @@ void AtomCounter::binZPElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<d
 
 void AtomCounter::binSkipElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, NUM_ION_TYPES> >& a_currentIonsInLayer, int& a_electrolyteID, int& a_isElectrolyte)
 {
+  // inly increments a_currentIonsInLayer
   unsigned int layer = m_system.getLayer(a_position);
   if(a_isElectrolyte)
     {

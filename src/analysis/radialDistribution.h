@@ -49,20 +49,16 @@ class RDF
 	const unsigned int getNumLayers() const;
 	/// Get address of first element in RDF
 	double* getRDFAddress(int i);
-	/// Get address of first element in RDF
-	double*** getRDFAddressLayers(int i);
 	/// Get address of first element in 3d RDF
 	double** getRDFAddressLayers(int i, int j);
 	/// Get address of first element in 4d RDF
-	double* getRDFAddressLayers(int i, int j, int k);
+	double* getRDFAddressLayersClosest(int i, int j, int k);
 	/// Get address of first element in molecule-molecule RDF
 	double* getMolecRDFAddress(int i);
-	/// Get address of first element in molecule-molecule RDF
-	double*** getMolecRDFAddressLayers(int i);
 	/// Get address of first element in 3d molecule-molecule RDF
-	double** getMolecRDFAddressLayers(int i, int j);
+	double* getMolecRDFAddressLayers(int i, int j);
 	/// Get address of first element in 4d molecule-molecule RDF
-	double* getMolecRDFAddressLayers(int i, int j, int k);
+	double* getMolecRDFAddressLayersClosest(int i, int j, int k);
 	/// Set value of element in RDF (for DEBUGGING ONLY)
         void setRDFLayerClosestValue(int a_layer, int a_bin, int a_pair, int a_closest, double a_setVal);
 
@@ -95,7 +91,7 @@ private:
 	/// Puts molecule-molecule COM pair distance into a bin for the specified layer.
 	void binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer);
 	/// Puts molecule-molecule COM pair distance into a bin based on the layer.
-	void binMolecPairDistance(double a_distance, unsigned int a_pair, unsigned int a_firstLayer, unsigned int a_secondLayer);
+	void binMolecPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer);
 	/// Puts molecule-molecule COM pair distance into a bin based on layer and reference species.
 	void binMolecPairDistance(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer);
 	/// Increment count of atom-atom pairs in standard RDF.
@@ -105,8 +101,9 @@ private:
 };
 
 const char* RDFWrite(RDF* a_rdf, const char* a_filename);
-const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename);
+const char* RDFWriteLayersClosest(RDF* a_rdf, const char* a_filename);
 const char* RDFMolecWrite(RDF* a_rdf, const char* a_filename);
 const char* RDFMolecWriteLayers(RDF* a_rdf, const char* a_filename);
+const char* RDFMolecWriteLayersClosest(RDF* a_rdf, const char* a_filename);
 
 #endif
