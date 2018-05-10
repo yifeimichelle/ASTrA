@@ -216,6 +216,7 @@ void RDF::sampleAtoms(const Frame& a_frame)
 		  if (distance < m_maxDist)
 		    {
 		      binPairDistance(distance, pairIdx);
+		      binPairDistanceLayer(distance, pairIdx, layIdx);
 		    }
 		  secondIndex++;
 		}
@@ -223,7 +224,6 @@ void RDF::sampleAtoms(const Frame& a_frame)
 	      	{
 	      	  // bin distance as closest species B to species A (reference)
 	      	  binPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
-	      	  binPairDistanceLayer(minDistance, pairIdx, layIdx);
 	      	}
 	    }
 	  // For each atom of second type in pair
