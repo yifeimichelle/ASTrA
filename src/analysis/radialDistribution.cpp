@@ -515,9 +515,9 @@ void RDF::setRDFLayerClosestValue(int a_layer, int a_bin, int a_pair, int a_clos
     m_rdfLayerClosest[a_layer][a_bin][a_pair][a_closest] = a_setVal;
 }
 
-double** RDF::getRDFAddressLayers(int i, int j)
+double* RDF::getRDFAddressLayers(int i, int j)
 {
-  return (double**)&(m_rdfLayer[i][j][0]);
+  return &(m_rdfLayer[i][j][0]);
 }
 
 double* RDF::getRDFAddressLayersClosest(int i, int j, int k)
@@ -553,6 +553,34 @@ const char* RDFWrite(RDF* a_rdf, const char* a_filename)
       data[i] = a_rdf->getRDFAddress(i);
     }
   write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
+  return a_filename;
+}
+
+const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename)
+{
+  double binSize = a_rdf->getBinSize();
+  int numBins = a_rdf->getNumBins();
+  int varDim = a_rdf->getNumMolecPairs();
+  int numLayers = a_rdf->getNumLayers();
+  const char * const headernames[] = { "nodeData" };
+  double*** data = new double**[numLayers];
+  for (int i=0; i<numLayers; i++)
+    {
+      data[i] = new double*[numBins];
+      for (int j=0; j<numBins; j++)
+      	{
+	  data[i][j] =a_rdf->getRDFAddressLayers(i,j);
+	}
+    }
+  write_binned_layered_data(a_filename, numBins, binSize, varDim, numLayers, headernames, data);
+
+  // delete array of pointers
+  for (int i=0; i<numLayers; i++)
+    {
+        delete data[i];
+    }
+  delete data;
+
   return a_filename;
 }
 

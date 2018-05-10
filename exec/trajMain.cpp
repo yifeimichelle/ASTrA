@@ -89,6 +89,7 @@ int main(int argc, char** argv)
 
     // print to a file
     RDFWrite(&rdf, "rdf");
+    RDFWriteLayers(&rdf, "rdf");
     RDFWriteLayersClosest(&rdf, "rdfclo");
     RDFMolecWrite(&rdf, "rdfmol");
     RDFMolecWriteLayers(&rdf, "rdfmol");

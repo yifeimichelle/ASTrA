@@ -50,7 +50,7 @@ class RDF
 	/// Get address of first element in RDF
 	double* getRDFAddress(int i);
 	/// Get address of first element in 3d RDF
-	double** getRDFAddressLayers(int i, int j);
+	double* getRDFAddressLayers(int i, int j);
 	/// Get address of first element in 4d RDF
 	double* getRDFAddressLayersClosest(int i, int j, int k);
 	/// Get address of first element in molecule-molecule RDF
@@ -101,6 +101,7 @@ private:
 };
 
 const char* RDFWrite(RDF* a_rdf, const char* a_filename);
+const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename);
 const char* RDFWriteLayersClosest(RDF* a_rdf, const char* a_filename);
 const char* RDFMolecWrite(RDF* a_rdf, const char* a_filename);
 const char* RDFMolecWriteLayers(RDF* a_rdf, const char* a_filename);
