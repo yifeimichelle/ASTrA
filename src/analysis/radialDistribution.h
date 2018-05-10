@@ -82,18 +82,14 @@ private:
 	void binPairDistance(double a_distance, unsigned int a_pair);
 	/// Puts atom-atom pair distance into a bin for the specified layer.
 	void binPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer);
-	/// Puts atom-atom pair distance into a bin based on the layer.
-	void binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_firstLayer, unsigned int a_secondLayer);
-	/// Puts atom-atom pair distance into a bin based on layer and reference species.
-	void binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer);
+	/// Puts atom-atom pair distance into a bin based on layer.
+	void binPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer);
 	/// Puts molecule-molecule COM pair distance into a bin.
 	void binMolecPairDistance(double a_distance, unsigned int a_pair);
 	/// Puts molecule-molecule COM pair distance into a bin for the specified layer.
 	void binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer);
 	/// Puts molecule-molecule COM pair distance into a bin based on the layer.
 	void binMolecPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer);
-	/// Puts molecule-molecule COM pair distance into a bin based on layer and reference species.
-	void binMolecPairDistance(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer);
 	/// Increment count of atom-atom pairs in standard RDF.
 	void incrementCounter(unsigned int a_pair);
 	/// Increment count of molecule-molecule pairs in standard RDF.

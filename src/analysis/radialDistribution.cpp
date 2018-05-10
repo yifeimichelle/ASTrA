@@ -79,117 +79,6 @@ void RDF::sampleZP(Frame& a_frame)
   // Do I need this routine?
 }
 
-void RDF::sampleOld(Frame& a_frame)
-{
-  double pairDistance;
-  double minDistance;
-  // For each pair
-  for (int pairIdx=0; pairIdx<m_numPairs; pairIdx++) {
-    pair<unsigned int, unsigned int > tpair = m_system.getPairCorrelation(pairIdx);
-    pair<unsigned int, unsigned int > layer;
-    array<vector<double >, 3> minDistanceJ;
-    for (int layer=0; layer<3; layer++)
-      {
-	minDistanceJ[layer].resize(m_system.getNumOfType(tpair.second),1000.0);
-      }
-    // For each atom of first type in pair
-    for (int atomTypeI=0; atomTypeI<m_system.getNumOfType(tpair.first); atomTypeI++)
-      {
-	layer.first=a_frame.getLayerOf(m_system.getIndexOfType(tpair.first, atomTypeI) );
-	minDistance=1000.0;
-	// For each atom of second type in pair
-	for (int atomTypeJ=0; atomTypeJ<m_system.getNumOfType(tpair.second); atomTypeJ++)
-	  {
-	    layer.second=a_frame.getLayerOf(m_system.getIndexOfType(tpair.second, atomTypeJ) );
-	    pairDistance = a_frame.computeDistance(m_system.getIndexOfType(tpair.first,atomTypeI), m_system.getIndexOfType(tpair.second,atomTypeJ));
-	    if (pairDistance < m_maxDist)
-	      {
-		// bin regular RDF distance
-		binPairDistance(pairDistance, pairIdx);
-		if(layer.first == layer.second)
-		  {
-		    if (pairDistance < minDistanceJ[layer.first][atomTypeJ])
-		      {
-			minDistanceJ[layer.first][atomTypeJ] = pairDistance;
-		      }
-		    if (pairDistance < minDistance)
-		      {
-			minDistance = pairDistance;
-		      }
-		  }
-		incrementCounter(pairIdx);
-	      }
-	  }
-	if(minDistance < m_maxDist)
-          {
-	    // bin distance as closest species J to species I (reference)
-	    binPairDistanceClosestLayer(minDistance, pairIdx, 0, layer.first);
-          }
-      }
-    // For each atom of second type in pair
-    for (int atomTypeJ=0; atomTypeJ<m_system.getNumOfType(tpair.second); atomTypeJ++)
-      {
-	for (int layer=0; layer<3; layer++)
-	  {
-	    if(minDistanceJ[layer][atomTypeJ] < m_maxDist)
-	      {
-		// bin distance as closest species I to species J (reference)
-		binPairDistanceClosestLayer(minDistanceJ[layer][atomTypeJ], pairIdx, 1, layer);
-	      }
-	  }
-      }
-  }
-
-  // // same thing for molecule COMs
-  // pairDistance = 0;
-  // minDistance = 0;
-  // for (int pairIdx=0; pairIdx<m_numMolecPairs; pairIdx++)
-  //   {
-  //     pair<unsigned int, unsigned int > tpair = m_system.getMolecPairCorrelation(pairIdx);
-  //     pair<unsigned int, unsigned int > layer;
-  //     vector<double > minDistanceJ;
-  //     minDistanceJ.resize(m_system.getNumMolecsOfType(tpair.second),1000.0);
-  //   for (int molecTypeI=0; molecTypeI<m_system.getNumMolecsOfType(tpair.first); molecTypeI++)
-  //     {
-  // 	layer.first=a_frame.getLayerOfMolec(m_system.getMolecIndex(tpair.first, molecTypeI) );
-  // 	minDistance=1000.0;
-  // 	for (int molecTypeJ = 0; molecTypeJ<m_system.getNumMolecsOfType(tpair.second); molecTypeJ++)
-  // 	  {
-  // 	    layer.second = a_frame.getLayerOfMolec(m_system.getMolecIndex(tpair.second, molecTypeJ) );
-  // 	    pairDistance = a_frame.computeMolecDistance(m_system.getMolecIndex(tpair.first,molecTypeI), m_system.getMolecIndex(tpair.second,molecTypeJ));
-  // 	    if (pairDistance < m_maxDist)
-  // 	      {
-  // 		binMolecPairDistance(pairDistance, pairIdx);
-  // 		if (pairDistance < minDistanceJ[molecTypeJ])
-  // 		  {
-  // 		    minDistanceJ[molecTypeJ] = pairDistance;
-  // 		  }
-  // 		if (pairDistance < minDistance)
-  // 		  {
-  // 		    minDistance = pairDistance;
-  // 		  }
-  // 		incrementMolecCounter(pairIdx);
-  // 	      }
-  // 	  }
-  // 	if(minDistance < m_maxDist)
-  //         {
-  // 	    // bin distance as closest species J to species I (reference)
-  //           binMolecPairDistance(minDistance, pairIdx, 0, layer.first, layer.second);
-  //         }
-  //     }
-  //   for (int molecTypeJ=0; molecTypeJ<m_system.getNumMolecsOfType(tpair.second); molecTypeJ++)
-  //     {
-  // 	if(minDistanceJ[molecTypeJ] < m_maxDist)
-  //         {
-  // 	    // bin distance as closest species I to species J (reference)
-  //           binMolecPairDistance(minDistanceJ[molecTypeJ], pairIdx, 1, layer.first, layer.second);
-
-  // 	  }
-  //     }
-  //   }
-
-}
-
 void RDF::sample(const Frame& a_frame)
 {
   sampleMolecules(a_frame);
@@ -334,6 +223,7 @@ void RDF::sampleAtoms(const Frame& a_frame)
 	      	{
 	      	  // bin distance as closest species B to species A (reference)
 	      	  binPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
+	      	  binPairDistanceLayer(minDistance, pairIdx, layIdx);
 	      	}
 	    }
 	  // For each atom of second type in pair
@@ -365,22 +255,11 @@ void RDF::binPairDistanceClosestLayer(double a_distance, unsigned int a_pair, un
   m_rdfLayerClosest[a_layer][bin][a_pair][a_whichClosest]++;
 }
 
-void RDF::binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_firstLayer, unsigned int a_secondLayer)
-{
-  int bin = floor(a_distance / m_binSize);
-  if (a_firstLayer == a_secondLayer )
-    {
-      m_rdfLayer[a_firstLayer][bin][a_pair]++;
-    }
-}
 
-void RDF::binPairDistance(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer)
+void RDF::binPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer)
 {
   int bin = floor(a_distance / m_binSize);
-  if (a_firstLayer == a_secondLayer )
-    {
-      m_rdfLayerClosest[a_firstLayer][bin][a_pair][a_whichClosest]++;
-    }
+  m_rdfLayer[a_layer][bin][a_pair]++;
 }
 
 void RDF::binMolecPairDistance(double a_distance, unsigned int a_pair)
@@ -400,15 +279,6 @@ void RDF::binMolecPairDistanceLayer(double a_distance, unsigned int a_pair, unsi
 {
   int bin = floor(a_distance / m_binSize);
   m_rdfMolecLayer[a_layer][bin][a_pair]++;
-}
-
-void RDF::binMolecPairDistance(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_firstLayer, unsigned int a_secondLayer)
-{
-  int bin = floor(a_distance / m_binSize);
-  if (a_firstLayer == a_secondLayer )
-    {
-      m_rdfMolecLayerClosest[a_firstLayer][bin][a_pair][a_whichClosest]++;
-    }
 }
 
 void RDF::incrementCounter(unsigned int a_pair)
