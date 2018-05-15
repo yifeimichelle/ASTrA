@@ -6,6 +6,7 @@
 #include <iostream>
 #include <assert.h>
 #include "writer.h"
+#include <math.h>
 
 using namespace std;
 
@@ -17,6 +18,7 @@ RDF::RDF(System& a_system)
 {
   m_maxDist = 14.0;
   m_numBins = 500;
+  m_binSize = m_maxDist / m_numBins;
   m_system = a_system;
   m_numPairs = m_system.getNumPairs();
   m_numMolecPairs = m_system.getNumMolecPairs();
@@ -26,7 +28,28 @@ RDF::RDF(System& a_system)
   m_rdfLayerClosest.resize(m_numLayers);
   m_rdfMolec.resize(m_numBins);
   m_rdfMolecLayer.resize(m_numLayers);
+  m_currentRDFMolecLayer.resize(m_numLayers);
   m_rdfMolecLayerClosest.resize(m_numLayers);
+  // Constants for calculating DoC
+  m_Rj = 0.715; // half of carbon-carbon distance in SP2 structure
+  m_phi = 0.6046; // coverage of surface covered by hexagonally tiled structure
+  m_solidAngleFactor.resize(m_numBins);
+  double RjSq = m_Rj * m_Rj;
+  for (int i=0; i<m_numBins; i++)
+    {
+      double rBin = i*m_binSize;
+      double factor;
+      factor = rBin*rBin + RjSq;
+      factor = sqrt (factor);
+      factor = rBin / factor;
+      m_solidAngleFactor[i] = 1 - factor;
+    }
+  m_DoC.resize(m_numBins);
+  for (int i=0; i<m_numBins; i++)
+    {
+      m_DoC[i].resize(m_numMolecPairs);
+    }
+  // end constants for calculating DoC
 
 
   m_pairCounter.resize(m_numPairs);
@@ -58,10 +81,12 @@ RDF::RDF(System& a_system)
   for (int i=0; i<m_numLayers; i++)
     {
       m_rdfMolecLayer[i].resize(m_numBins);
+      m_currentRDFMolecLayer[i].resize(m_numBins);
       m_rdfMolecLayerClosest[i].resize(m_numBins);
       for (int j=0; j<m_numBins; j++)
 	{
 	  m_rdfMolecLayer[i][j].resize(m_numMolecPairs);
+	  m_currentRDFMolecLayer[i][j].resize(m_numMolecPairs);
 	  m_rdfMolecLayerClosest[i][j].resize(m_numMolecPairs);
 	  for (int k=0; k<m_numMolecPairs; k++)
 	    {
@@ -70,7 +95,6 @@ RDF::RDF(System& a_system)
 	}
     }
 
-  m_binSize = m_maxDist / m_numBins;
 };
 
 void RDF::sampleZP(Frame& a_frame)
@@ -118,35 +142,19 @@ void RDF::sampleMolecules(const Frame& a_frame)
 		{
 		  // Compute distance
 		  float distance = a_frame.computeMolecDistance(*itA,*itB);
+		  // Check whether distance is closest for atom type A
 		  if (distance < minDistance)
 		    {
 		      minDistance = distance;
 		    }
-#ifdef DEBUG
-		  if (distance < 2.0)
-		    {
-		      cout << "layer " << layIdx << endl;
-		      cout << "overlapping: " << pairFirst << " no. " << *itA << ", ";
-		      cout << pairSecond << " no. " << *itB;
-		      cout << "; distance = " << distance;
-		      cout << endl;
-		      array<double, DIM> pos;
-		      pos = a_frame.getMolec(*itA).getPosition();
-		      cout << pos[0] << " " << pos[1] << " " << pos[2] << endl;
-		      pos = a_frame.getMolec(*itB).getPosition();
-		      cout << pos[0] << " " << pos[1] << " " << pos[2] << endl;
-		      exit(2);
-		    }
-#endif
-		  
-		  // Bin it
+  		  // Check whether distance is closest for atom type B
 		  if (distance < minDistanceB[secondIndex])
 		    {
 		      minDistanceB[secondIndex] = distance;
 		    }
+		  // Bin it
 		  if (distance < m_maxDist)
 		    {
-		      binMolecPairDistance(distance, pairIdx);
 		      binMolecPairDistanceLayer(distance, pairIdx, layIdx);
 		    }
 		  secondIndex++;
@@ -188,11 +196,12 @@ void RDF::sampleAtoms(const Frame& a_frame)
       // For each pair
       for (int pairIdx = 0; pairIdx < m_numPairs; pairIdx++)
 	{
+	  // Get atom types of pair
 	  pair<unsigned int, unsigned int > atomPair = m_system.getPairCorrelation(pairIdx);
 	  int pairFirst = atomPair.first;
 	  int pairSecond = atomPair.second;
-	  vector<double > minDistanceB;
 	  int pairSecondSize = atomsInLayer[pairSecond].size();
+	  vector<double > minDistanceB;
 	  minDistanceB.resize(pairSecondSize,1000.0);
 	  // For each atom of first type in pair
 	  for (vector<int>::iterator itA = atomsInLayer[pairFirst].begin(); itA != atomsInLayer[pairFirst].end(); ++itA)
@@ -204,18 +213,19 @@ void RDF::sampleAtoms(const Frame& a_frame)
 		{
 		  // Compute distance
 		  float distance = a_frame.computeDistance(*itA,*itB);
+		  // Check whether distance is closest for atom type A
 		  if (distance < minDistance)
 		    {
 		      minDistance = distance;
 		    }
-		  // Bin it
+		  // Check whether distance is closest for atom type B
 		  if (distance < minDistanceB[secondIndex])
 		    {
 		      minDistanceB[secondIndex] = distance;
 		    }
+		  // Bin it
 		  if (distance < m_maxDist)
 		    {
-		      binPairDistance(distance, pairIdx);
 		      binPairDistanceLayer(distance, pairIdx, layIdx);
 		    }
 		  secondIndex++;
@@ -240,13 +250,11 @@ void RDF::sampleAtoms(const Frame& a_frame)
 
 }
 
-void RDF::binPairDistance(double a_distance, unsigned int a_pair)
+void RDF::binPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer)
 {
-#ifdef DEBUG
-  assert(a_distance < m_maxDist);
-#endif
   int bin = floor(a_distance / m_binSize);
   m_rdf[bin][a_pair]++;
+  m_rdfLayer[a_layer][bin][a_pair]++;
 }
 
 void RDF::binPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer)
@@ -255,17 +263,23 @@ void RDF::binPairDistanceClosestLayer(double a_distance, unsigned int a_pair, un
   m_rdfLayerClosest[a_layer][bin][a_pair][a_whichClosest]++;
 }
 
-
-void RDF::binPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer)
-{
-  int bin = floor(a_distance / m_binSize);
-  m_rdfLayer[a_layer][bin][a_pair]++;
-}
-
-void RDF::binMolecPairDistance(double a_distance, unsigned int a_pair)
+void RDF::binMolecPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer)
 {
   int bin = floor(a_distance / m_binSize);
   m_rdfMolec[bin][a_pair]++;
+  m_rdfMolecLayer[a_layer][bin][a_pair]++;
+  m_currentRDFMolecLayer[a_layer][bin][a_pair]++;
+}
+
+void RDF::clearFrame()
+{
+    for (int i=0; i<m_numLayers; i++)
+    {
+      for (int j=0; j<m_numBins; j++)
+	{
+	  fill(m_currentRDFMolecLayer[i][j].begin(), m_currentRDFMolecLayer[i][j].end(), 0);
+	}
+    }
 }
 
 void RDF::binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer)
@@ -274,22 +288,67 @@ void RDF::binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pai
   m_rdfMolecLayerClosest[a_layer][bin][a_pair][a_whichClosest]++;
 }
 
-
-void RDF::binMolecPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer)
-{
-  int bin = floor(a_distance / m_binSize);
-  m_rdfMolecLayer[a_layer][bin][a_pair]++;
-}
-
 void RDF::incrementCounter(unsigned int a_pair)
 {
   m_pairCounter[a_pair]++;
 }
-    void RDF::incrementMolecCounter(unsigned int a_pair)
+
+void RDF::incrementMolecCounter(unsigned int a_pair)
 {
   m_pairMolecCounter[a_pair]++;
 }
 
+// Computes degree of confinement after number of ions in rdf have been counted
+void RDF::computeDegreeOfConfinement(const Frame& a_frame)
+{
+  // For molec pair
+  for (int pairIdx = 0; pairIdx < m_numMolecPairs; pairIdx++)
+    {
+      //cout << "computing DoC" << endl;
+      //cout << pairIdx << endl;
+      pair<unsigned int, unsigned int > atomPair = m_system.getMolecPairCorrelation(pairIdx);
+      unsigned int pairFirst = atomPair.first;
+      unsigned int pairSecond = atomPair.second;
+      int layer = -1;
+      double sum = 0.0;
+      // Layer = bottom if 2nd type is anode, top if cathode, skip if neither
+      if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
+      	{
+	  if ( m_system.isAnodeLower() )
+	    {
+	      layer = 2;
+	    }
+	  else
+	    {
+	      layer = 0;
+	    }
+      	}
+      else if ( m_system.isAnode( pairSecond ) or m_system.isAnode( pairFirst ) )
+      	{
+	  if ( m_system.isAnodeLower() )
+	    {
+	      layer = 0;
+	    }
+	  else
+	    {
+	      layer = 2;
+	    }
+      	}
+      // If molecule is anode or cathode, layer will be set to something nonzero. Otherwise don't compute degree of confinement.
+      if (layer > -1)
+	{
+	  unsigned int numIons = a_frame.getCurrentNumMolecsInLayer(layer, pairFirst);
+	  for (int binIdx = 0; binIdx < m_numBins; binIdx ++)
+	    {
+	      // increment interior sum
+	      sum += m_solidAngleFactor[binIdx]*m_currentRDFMolecLayer[layer][binIdx][pairIdx];
+	      // save interior sum
+	      m_DoC[binIdx][pairIdx] += sum/numIons;
+	      //cout << "adding to DoC ..." << m_currentRDFMolecLayer[layer][binIdx][pairIdx] << " " << numIons << endl;
+	    }
+	}
+    }
+}
 
 void RDF::normalize()
 {
@@ -310,6 +369,7 @@ void RDF::normalize()
       for (int j=0; j<m_system.getNumMolecPairs(); j++)
 	{
 	  m_rdfMolec[i][j] /= normFactor;
+	  m_DoC[i][j] /= m_system.getNumFrames();
 	  for (int k=0; k<m_numLayers; k++)
 	    {
 	      m_rdfMolecLayer[k][i][j] /= normFactor;
@@ -332,7 +392,6 @@ void RDF::print()
 	cout << endl << endl;
       }
   }
-
 }
 
 const unsigned int RDF::getNumPairs() const
@@ -410,6 +469,10 @@ double* RDF::getMolecRDFAddressLayersClosest(int i, int j, int k)
   return &(m_rdfMolecLayerClosest[i][j][k][0]);
 }
 
+double* RDF::getDoCAddress(int i)
+{
+  return &(m_DoC[i][0]);
+}
 
 const char* RDFWrite(RDF* a_rdf, const char* a_filename)
 {
@@ -430,7 +493,7 @@ const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename)
 {
   double binSize = a_rdf->getBinSize();
   int numBins = a_rdf->getNumBins();
-  int varDim = a_rdf->getNumMolecPairs();
+  int varDim = a_rdf->getNumPairs();
   int numLayers = a_rdf->getNumLayers();
   const char * const headernames[] = { "nodeData" };
   double*** data = new double**[numLayers];
@@ -577,3 +640,17 @@ const char* RDFMolecWriteLayersClosest(RDF* a_rdf, const char* a_filename)
   return a_filename;
 }
 
+const char* DoCWrite(RDF* a_rdf, const char* a_filename)
+{
+  double binSize = a_rdf->getBinSize();
+  int numBins = a_rdf->getNumBins();
+  int varDim = a_rdf->getNumMolecPairs();
+  const char * const headernames[] = { "z[A]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14", "15", "16", "17", "18", "19", "20" };
+  double* data[500];
+  for (int i=0; i<numBins; i++)
+    {
+      data[i] = a_rdf->getDoCAddress(i);
+    }
+  write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
+  return a_filename;
+}

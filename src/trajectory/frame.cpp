@@ -291,6 +291,14 @@ void Frame::printMolecsInLayer(unsigned int a_layer)
       cout << endl;
     }
 }
+const unsigned int Frame::getCurrentNumAtomsInLayer(int a_layerIdx, int a_molID) const
+{
+  return m_atomLayers[a_layerIdx][a_molID].size();
+}
 
+const unsigned int Frame::getCurrentNumMolecsInLayer(int a_layerIdx, int a_molID) const
+{
+  return m_COMLayers[a_layerIdx][a_molID].size();
+}
 
 

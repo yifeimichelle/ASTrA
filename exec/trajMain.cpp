@@ -19,8 +19,8 @@ int main(int argc, char** argv)
     // read inputs
     string inputFile(argv[1]);
     System system(inputFile); // initialize system
-    RDF rdf(system);
-    AtomCounter ac(system);
+    RDF rdf(system); // initialize rdf
+    AtomCounter ac(system); // initialize atomcounter
     Frame frame(system); // initialize trajectory frame reader
 
     cout << "Reading trajectory ..." << endl;
@@ -31,10 +31,9 @@ int main(int argc, char** argv)
 	frame.skipStep();
 	ac.sampleSkip(frame);
       }
-    
-    cout << "Analyzing zero-P, zero-Q run of " << system.getNumZPFrames() << " steps..." << endl;
 
     // Read zero-potential, zero-charge frames
+    cout << "Analyzing zero-P, zero-Q run of " << system.getNumZPFrames() << " steps..." << endl;
     for (unsigned int frameCounter = 0; frameCounter<system.getNumZPFrames(); frameCounter++)
       {
 	frame.readZPStep();
@@ -45,7 +44,6 @@ int main(int argc, char** argv)
 	  }
 
 	ac.sampleZP(frame);
-	//rdf.sampleZP(frame);
       	frame.clearFrame();
       }
     ac.normalizeZP();
@@ -57,9 +55,8 @@ int main(int argc, char** argv)
 	ac.sampleSkip(frame);
       }
     
-    cout << "Analyzing constant-P or -Q run of " << system.getNumFrames() << " steps..." << endl;
-
     // Read constant-potential or constant-charge frames
+    cout << "Analyzing constant-P or -Q run of " << system.getNumFrames() << " steps..." << endl;
     for (unsigned int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
       {
 	// read in step of trajectory
@@ -73,17 +70,18 @@ int main(int argc, char** argv)
 	// sample routines
 	ac.sample(frame);
         rdf.sample(frame);
-	//doc.sample(frame);
+	rdf.computeDegreeOfConfinement(frame);
 
 	// clear frame memory
 	frame.clearFrame();
+	rdf.clearFrame();
       }
     // normalize RDF
     rdf.normalize();
-    //ac.printDensity();
     ac.normalize();
 
     // print to stdout
+    //ac.printDensity();
     //rdf.print();
     //ac.print();
 
@@ -94,11 +92,11 @@ int main(int argc, char** argv)
     RDFMolecWrite(&rdf, "rdfmol");
     RDFMolecWriteLayers(&rdf, "rdfmol");
     RDFMolecWriteLayersClosest(&rdf, "rdfmolclo");
+    DoCWrite(&rdf, "DoC");
     ACWriteAtomCounts(&ac, "atoms");
     ACWriteDensity(&ac, "density");
     ACWriteIons(&ac, "ions");
     ACWriteIonsInLayers(&ac, "layers");
     ACWriteIonsInLayersTime(&ac, "numionslayers");
     ACWriteCollectiveVars(&ac, "ionCV");
-    //DOCWrite(&doc, "doc");
 }

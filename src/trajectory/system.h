@@ -93,6 +93,12 @@ class System
 	unsigned int isElectrolyte(int a_molecType, int* a_electrolyteID) const;
 	/// Inserts layers into array pointer
 	void getLayerUpperBounds(int a_numLayers, double* a_layers) const;
+	/// Returns whether anode is the "lower" electrode in the system.
+	unsigned int isAnodeLower() const;
+	/// Returns whether ID is cathode molecule.
+	unsigned int isCathode(unsigned int a_molID) const;
+	/// Returns whether ID anode molecule.
+	unsigned int isAnode(unsigned int a_molID) const;
  private:
 	void readInput(const string& a_inputFile);
 	void setInput();
@@ -102,12 +108,13 @@ class System
 	  void getInputs2(T1* a_value1, T2* a_value2);
 	template <typename T1, typename T2, typename T3>
 	  void getInputs3(T1* a_value1, T2* a_value2, T3* a_value3);
+	template <typename T1, typename T2, typename T3, typename T4>
+	  void getInputs4(T1* a_value1, T2* a_value2, T3* a_value3, T4* a_value4);
 	template <typename T1, typename T2>
 	  void getInputs2(T1* a_value1, T2* a_value2, int a_offset);
 	template <typename T1, typename T2, typename T3>
 	  void getInputs3(T1* a_value1, T2* a_value2, T3* a_value3, int a_offset);
 	vector<vector<string > > m_inputs;
-	void readInputOld(const string& a_inputFile);
 	void nextRow();
 	unsigned int m_inputRow;
 	string m_trajFile;

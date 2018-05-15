@@ -71,6 +71,12 @@ class Frame
 	vector<int>* getAtomsInLayer(int a_layerIdx) const;
 	/// Get pointer to molecule COMs in layer.
 	vector<int>* getMoleculesInLayer(int a_layerIdx) const;
+	/// Computes the degree of confinement for the given frame
+	void computeDegreeOfConfinement();
+	/// Gets number of atoms in layer.
+	const unsigned int getCurrentNumAtomsInLayer(int a_layerIdx, int a_molID) const;
+	/// Gets number of molecules in layer.
+	const unsigned int getCurrentNumMolecsInLayer(int a_layerIdx, int a_molID) const;
      private:
 	System m_system;
         unsigned int m_stepNum;

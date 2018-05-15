@@ -75,7 +75,16 @@ void System::getInputs3(T1* a_value1, T2* a_value2, T3* a_value3)
 {
   *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0]);
   *a_value2 = convert_to<T2>(m_inputs[m_inputRow][1]);
-  *a_value3 = convert_to<T3>(m_inputs[m_inputRow][3]);
+  *a_value3 = convert_to<T3>(m_inputs[m_inputRow][2]);
+}
+
+template <typename T1, typename T2, typename T3, typename T4>
+void System::getInputs4(T1* a_value1, T2* a_value2, T3* a_value3, T4* a_value4)
+{
+  *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0]);
+  *a_value2 = convert_to<T2>(m_inputs[m_inputRow][1]);
+  *a_value3 = convert_to<T3>(m_inputs[m_inputRow][2]);
+  *a_value4 = convert_to<T4>(m_inputs[m_inputRow][3]);
 }
 
 template <typename T1, typename T2>
@@ -90,7 +99,7 @@ void System::getInputs3(T1* a_value1, T2* a_value2, T3* a_value3, int a_offset)
 {
   *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0+a_offset]);
   *a_value2 = convert_to<T2>(m_inputs[m_inputRow][1+a_offset]);
-  *a_value3 = convert_to<T3>(m_inputs[m_inputRow][3+a_offset]);
+  *a_value3 = convert_to<T3>(m_inputs[m_inputRow][2+a_offset]);
 }
 
 
@@ -145,8 +154,8 @@ void System::setInput()
     }
 
   nextRow();
-  getInputs2(&m_cationID, &m_anionID);
-  getInputs2(&m_lowerElecID,&m_upperElecID,2);
+  getInputs4(&m_cationID, &m_anionID, &m_lowerElecID, &m_upperElecID);
+  //getInputs2(&m_lowerElecID,&m_upperElecID,2);
 
   nextRow();
   getInput(&m_anodeIsLower,0);
@@ -300,111 +309,6 @@ vector<string > System::lineToString(char* a_inputline, string& a_delimiter)
   return retVector;
 }
 
-void System::readInputOld(const string& a_inputFile)
-{
-    ifstream system(a_inputFile.c_str());
-    cout << "Reading input file ";
-    cout << a_inputFile << endl;
-
-    system >> m_trajFile;
-    system >> m_numFrames;
-    
-    for (int i=0; i<DIM; i++) {
-        system >> m_boxDims[i];
-    }
-    for (int i=0; i<DIM; i++) {
-        system >> m_boxPeriodic[i];
-    }
-    cout << m_trajFile << endl;
-    cout << "Box dims: ";
-    for (int i=0; i<DIM; i++) {
-        cout << m_boxDims[i] << " ";
-    }
-    cout << endl;
-    system >> m_lowerElecTop >> m_upperElecBot;
-    cout << "Electrode limits: " << m_lowerElecTop << " " << m_upperElecBot << endl;
-    system >> m_numMolecTypes;
-    m_numAtomTypes = 0;
-    for (unsigned int i=0; i<m_numMolecTypes; i++)
-    {
-        system >> m_numMolecs[i] >> m_numMembersMolec[i];
-	m_numMolecules += m_numMolecs[i];
-	m_numAtomTypes += m_numMembersMolec[i];
-	m_numAtoms += m_numMolecs[i]*m_numMembersMolec[i];
-	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
-	{
-	  system >> m_masses[i][j] >> m_charges[i][j];
-	}
-    }
-    system >> m_cationID >> m_anionID >> m_lowerElecID >> m_upperElecID;
-    system >> m_anodeIsLower ;
-    if (m_anodeIsLower)
-      {
-	m_anodeID = m_lowerElecID;
-	m_cathodeID = m_upperElecID;
-      }
-    else
-      {
-	m_anodeID = m_upperElecID;
-	m_cathodeID = m_lowerElecID;
-      }
-    system >> m_solventID ;
-    system >> m_capID ;
-    if (m_solventID == 0) {
-      m_boolWithSolvent = 0;
-      m_numElectrolyteSpecies = 2;
-      m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID);
-    }
-    else {
-      m_boolWithSolvent = 1;
-      m_numElectrolyteSpecies = 3;
-      m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID) + getNumMolecsOfType(m_solventID);
-    }
-
-    if (m_capID == 0) {
-      m_boolWithCap = 0; }
-    else {
-      m_boolWithCap = 0; }
-    cout << "number of atom types: " << m_numAtomTypes << endl;
-    system >> m_stepInterval >> m_stepTime;
-    system >> m_numPairs;
-    m_rdfPairs.resize(m_numPairs);
-    cout << "Pair correlations:" << endl;
-    for (unsigned int i=0; i<m_numPairs; i++) {
-      unsigned int molecA, atomA, molecB, atomB;
-      system >> molecA >> atomA >> molecB >> atomB;
-      unsigned int atomTypeA = getAtomType(molecA-1, atomA-1);
-      unsigned int atomTypeB = getAtomType(molecB-1, atomB-1);
-      cout << i << " " << atomTypeA << " " << atomTypeB << endl;
-      m_rdfPairs[i] = make_pair(atomTypeA, atomTypeB);
-    }
-
-    m_frameTime = m_stepInterval * m_stepTime;
-    m_typeAtomIndices.resize(m_numAtomTypes);
-    m_molecMembersOfType.resize(m_numAtomTypes);
-    unsigned int atomTypeCounter=0;
-    for (unsigned int i=0; i<m_numMolecTypes; i++)
-      {
-	for (unsigned int j=0; j<m_numMolecs[i]; j++)
-	  {
-	    for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
-	      {
-		m_typeAtomIndices[getAtomType(i,k)].push_back(atomTypeCounter);
-		atomTypeCounter++;
-	      }
-	  }
-      }
-    for (unsigned int i=0; i<m_numMolecTypes; i++)
-      {
-	for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
-	  {
-	    m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
-	  }
-      }
-    
-}
-
-
 const int System::getNumAtoms() const
 {
   return m_numAtoms;
@@ -414,7 +318,6 @@ const int System::getNumAtomTypes() const
 {
   return m_numAtomTypes;
 }
-
 
 const int System::getNumMolecTypes() const
 {
@@ -612,4 +515,20 @@ void System::getLayerUpperBounds(int a_numLayers, double* a_layers) const
   a_layers[0] = m_lowerElecTop;
   a_layers[1] = m_upperElecBot;
   a_layers[2] = m_boxDims[2];
+}
+
+/// Returns whether anode is the "lower" electrode in the system.
+unsigned int System::isAnodeLower() const
+{
+  return m_anodeIsLower;
+}
+/// Returns whether ID is cathode molecule.
+unsigned int System::isCathode(unsigned int a_molID) const
+{
+  return a_molID == m_cathodeID-1;
+}
+/// Returns whether ID anode molecule.
+unsigned int System::isAnode(unsigned int a_molID) const
+{
+  return a_molID == m_anodeID-1;
 }

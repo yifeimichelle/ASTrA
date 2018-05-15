@@ -59,8 +59,14 @@ class RDF
 	double* getMolecRDFAddressLayers(int i, int j);
 	/// Get address of first element in 4d molecule-molecule RDF
 	double* getMolecRDFAddressLayersClosest(int i, int j, int k);
+	/// Get address of first element in DoC
+	double* getDoCAddress(int i);
 	/// Set value of element in RDF (for DEBUGGING ONLY)
         void setRDFLayerClosestValue(int a_layer, int a_bin, int a_pair, int a_closest, double a_setVal);
+	/// Clear data for the current frame
+	void clearFrame();
+	/// Compute degree of confinement
+	void computeDegreeOfConfinement(const Frame& a_frame);
 
 private:
 	System m_system;
@@ -70,6 +76,7 @@ private:
 	vector<int > m_pairCounter;
 	vector<vector< double > > m_rdfMolec;
 	vector<vector<vector<double > > > m_rdfMolecLayer;
+	vector<vector<vector<double > > > m_currentRDFMolecLayer;
 	vector<vector<vector<vector<double > > > > m_rdfMolecLayerClosest;
 	vector<int > m_pairMolecCounter;
 	double m_maxDist;
@@ -78,18 +85,20 @@ private:
 	int m_numMolecPairs;
 	int m_numBins;
 	double m_binSize;
-	/// Puts atom-atom pair distance into a bin.
-	void binPairDistance(double a_distance, unsigned int a_pair);
-	/// Puts atom-atom pair distance into a bin for the specified layer.
-	void binPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer);
+	// Constants for calculating DoC
+	double m_Rj;
+	double m_phi;
+	vector<double > m_solidAngleFactor;
+	vector<vector<double > > m_DoC;
+	// end constants for calculating DoC
 	/// Puts atom-atom pair distance into a bin based on layer.
 	void binPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer);
-	/// Puts molecule-molecule COM pair distance into a bin.
-	void binMolecPairDistance(double a_distance, unsigned int a_pair);
-	/// Puts molecule-molecule COM pair distance into a bin for the specified layer.
-	void binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer);
+	/// Puts atom-atom pair distance into a bin for the specified layer.
+	void binPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer);
 	/// Puts molecule-molecule COM pair distance into a bin based on the layer.
 	void binMolecPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer);
+	/// Puts molecule-molecule COM pair distance into a bin for the specified layer.
+	void binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer);
 	/// Increment count of atom-atom pairs in standard RDF.
 	void incrementCounter(unsigned int a_pair);
 	/// Increment count of molecule-molecule pairs in standard RDF.
@@ -102,5 +111,6 @@ const char* RDFWriteLayersClosest(RDF* a_rdf, const char* a_filename);
 const char* RDFMolecWrite(RDF* a_rdf, const char* a_filename);
 const char* RDFMolecWriteLayers(RDF* a_rdf, const char* a_filename);
 const char* RDFMolecWriteLayersClosest(RDF* a_rdf, const char* a_filename);
+const char* DoCWrite(RDF* a_rdf, const char* a_filename);
 
 #endif
