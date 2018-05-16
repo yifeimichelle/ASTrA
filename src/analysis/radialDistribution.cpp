@@ -439,7 +439,7 @@ void RDF::normalize()
     {
       double normFactor = (4./3.)*M_PI*(pow(i+1,3)-pow(i,3))*pow(m_binSize,3);
       normFactor = normFactor * numFrames;
-      double DoCnormFactor = numFrames * m_phi*2.0 * m_binSizeDoC;
+      double DoCnormFactor = numFrames * m_phi*2.0;
       for (int j=0; j<m_system.getNumPairs(); j++)
 	{
 	  m_rdf[i][j] /= normFactor;
@@ -466,7 +466,7 @@ void RDF::normalize()
     {
       for (int j=0; j<m_system.getNumMolecPairs(); j++)
 	{
-	  m_DoCHist[i][j] /= (numFrames * m_countIonsDoC[j]);
+	  m_DoCHist[i][j] /= (numFrames * m_countIonsDoC[j] *  m_binSizeDoC);
 	}
     }
 }
