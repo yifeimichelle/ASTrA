@@ -207,8 +207,11 @@ void RDF::sampleMolecules(const Frame& a_frame)
 		    }
 		  secondIndex++;
 		}
-	      DoC /= (2.0*m_phi);
-	      binDoC(DoC, pairIdx);
+	      if (computeDoC)
+		{
+		  DoC /= (2.0*m_phi);
+		  binDoC(DoC, pairIdx);
+		}
 	      if(minDistance < m_maxDist)
 	      	{
 	      	  // bin distance as closest species B to species A (reference)
