@@ -61,12 +61,18 @@ class RDF
 	double* getMolecRDFAddressLayersClosest(int i, int j, int k);
 	/// Get address of first element in DoC
 	double* getDoCAddress(int i);
+	/// Get address of first element in DoCHist
+	double* getDoCHistAddress(int i);
 	/// Set value of element in RDF (for DEBUGGING ONLY)
         void setRDFLayerClosestValue(int a_layer, int a_bin, int a_pair, int a_closest, double a_setVal);
 	/// Clear data for the current frame
 	void clearFrame();
 	/// Compute degree of confinement
 	void computeDegreeOfConfinement(const Frame& a_frame);
+	/// Get number of bins over which the DoC is computed.
+	const unsigned int getNumBinsDoC() const;
+	/// Get size of bins of DoC (in length units).
+	const double getBinSizeDoC() const;
 
 private:
 	System m_system;
@@ -88,9 +94,13 @@ private:
 	// Constants for calculating DoC
 	double m_Rj;
 	double m_phi;
-	double m_RcutDoC;
+	double m_Rcut;
+	unsigned int m_numBinsDoC;
+	double m_binSizeDoC;
+	array<unsigned int, MAX_NUM_TYPES > m_countIonsDoC;
 	vector<double > m_solidAngleFactor;
 	vector<vector<double > > m_DoC;
+	vector<vector<double > > m_DoCHist;
 	// end constants for calculating DoC
 	/// Puts atom-atom pair distance into a bin based on layer.
 	void binPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer);
@@ -104,6 +114,8 @@ private:
 	void incrementCounter(unsigned int a_pair);
 	/// Increment count of molecule-molecule pairs in standard RDF.
 	void incrementMolecCounter(unsigned int a_pair);
+	double computeSolidAngleFactor(double a_distance);
+	double binDoC(double a_doc, unsigned int a_pair);
 };
 
 const char* RDFWrite(RDF* a_rdf, const char* a_filename);
@@ -113,5 +125,6 @@ const char* RDFMolecWrite(RDF* a_rdf, const char* a_filename);
 const char* RDFMolecWriteLayers(RDF* a_rdf, const char* a_filename);
 const char* RDFMolecWriteLayersClosest(RDF* a_rdf, const char* a_filename);
 const char* DoCWrite(RDF* a_rdf, const char* a_filename);
+const char* DoCHistWrite(RDF* a_rdf, const char* a_filename);
 
 #endif

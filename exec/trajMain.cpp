@@ -93,6 +93,7 @@ int main(int argc, char** argv)
     RDFMolecWriteLayers(&rdf, "rdfmol");
     RDFMolecWriteLayersClosest(&rdf, "rdfmolclo");
     DoCWrite(&rdf, "DoC");
+    DoCHistWrite(&rdf, "DoCHist");
     ACWriteAtomCounts(&ac, "atoms");
     ACWriteDensity(&ac, "density");
     ACWriteIons(&ac, "ions");

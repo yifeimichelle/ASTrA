@@ -34,8 +34,10 @@ RDF::RDF(System& a_system)
   // Constants for calculating DoC
   m_Rj = 0.715; // half of carbon-carbon distance in SP2 structure
   m_phi = 0.6046; // coverage of surface covered by hexagonally tiled structure
-  m_RcutDoC = 6.3;
+  m_Rcut = 6.3;
   m_solidAngleFactor.resize(m_numBins);
+  m_numBinsDoC = 100;
+  m_binSizeDoC = 1.0/m_numBinsDoC;
   double RjSq = m_Rj * m_Rj;
   for (int i=0; i<m_numBins; i++)
     {
@@ -50,6 +52,11 @@ RDF::RDF(System& a_system)
   for (int i=0; i<m_numBins; i++)
     {
       m_DoC[i].resize(m_numMolecPairs);
+    }
+  m_DoCHist.resize(m_numBinsDoC);
+  for (int i=0; i<m_numBinsDoC; i++)
+    {
+      m_DoCHist[i].resize(m_numMolecPairs);
     }
   // end constants for calculating DoC
 
@@ -133,11 +140,43 @@ void RDF::sampleMolecules(const Frame& a_frame)
 	  vector<double > minDistanceB;
 	  int pairSecondSize = molecsInLayer[pairSecond].size();
 	  minDistanceB.resize(pairSecondSize,1000.0);
+
+	  // Find out whether to compute DoC
+	  int layer = -1;
+	  unsigned int computeDoC = 0;
+	  if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
+	    {
+	      if ( m_system.isAnodeLower() )
+		{
+		  layer = 2;
+		}
+	      else
+		{
+		  layer = 0;
+		}
+	    }
+	  else if ( m_system.isAnode( pairSecond ) or m_system.isAnode( pairFirst ) )
+	    {
+	      if ( m_system.isAnodeLower() )
+		{
+		  layer = 0;
+		}
+	      else
+		{
+		  layer = 2;
+		}
+	    }
+	  if ( layIdx == layer)
+	    {
+	      computeDoC = 1;
+	    }
+		
 	  // For each molecule of first type in pair
 	  for (vector<int>::iterator itA = molecsInLayer[pairFirst].begin(); itA != molecsInLayer[pairFirst].end(); ++itA)
 	    {
 	      minDistance = 1000.0;
 	      int secondIndex = 0;
+	      double DoC = 0;
 	      // For each molecule of second type in pair
 	      for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
 		{
@@ -157,9 +196,19 @@ void RDF::sampleMolecules(const Frame& a_frame)
 		  if (distance < m_maxDist)
 		    {
 		      binMolecPairDistanceLayer(distance, pairIdx, layIdx);
+		      if (computeDoC)
+			{
+			  if (distance < m_Rcut)
+			    {
+			      DoC += computeSolidAngleFactor(distance);
+			    }
+			}
+
 		    }
 		  secondIndex++;
 		}
+	      DoC /= (2.0*m_phi);
+	      binDoC(DoC, pairIdx);
 	      if(minDistance < m_maxDist)
 	      	{
 	      	  // bin distance as closest species B to species A (reference)
@@ -299,6 +348,27 @@ void RDF::incrementMolecCounter(unsigned int a_pair)
   m_pairMolecCounter[a_pair]++;
 }
 
+double RDF::computeSolidAngleFactor(double a_distance)
+{
+  double factor;
+  double retVal;
+  double RjSq = m_Rj * m_Rj;
+  factor = a_distance*a_distance + RjSq;
+  factor = sqrt (factor);
+  factor = a_distance / factor;
+  retVal = 1.0 - factor;
+  return retVal;
+}
+
+double RDF::binDoC(double a_doc, unsigned int a_pair)
+{
+  int bin = floor(a_doc / m_binSizeDoC);
+  assert(a_doc<1.0);
+  m_DoCHist[bin][a_pair]++;
+  m_countIonsDoC[a_pair]++;
+}
+
+
 // Computes degree of confinement after number of ions in rdf have been counted
 void RDF::computeDegreeOfConfinement(const Frame& a_frame)
 {
@@ -351,13 +421,25 @@ void RDF::computeDegreeOfConfinement(const Frame& a_frame)
     }
 }
 
+/// Get number of bins over which the DoC is computed.
+const unsigned int RDF::getNumBinsDoC() const
+{
+  return m_numBinsDoC;
+}
+/// Get size of bins of DoC (in length units).
+const double RDF::getBinSizeDoC() const
+{
+  return m_binSizeDoC;
+}
+
 void RDF::normalize()
 {
+  int numFrames = m_system.getNumFrames();
   for (int i=0; i<m_numBins; i++)
     {
       double normFactor = (4./3.)*M_PI*(pow(i+1,3)-pow(i,3))*pow(m_binSize,3);
-      normFactor = normFactor * m_system.getNumFrames();
-      double DoCnormFactor = m_system.getNumFrames() * m_phi*2.0;
+      normFactor = normFactor * numFrames;
+      double DoCnormFactor = numFrames * m_phi*2.0 * m_binSizeDoC;
       for (int j=0; j<m_system.getNumPairs(); j++)
 	{
 	  m_rdf[i][j] /= normFactor;
@@ -378,6 +460,13 @@ void RDF::normalize()
 	      m_rdfMolecLayerClosest[k][i][j][0] /= normFactor;
 	      m_rdfMolecLayerClosest[k][i][j][1] /= normFactor;
 	    }
+	}
+    }
+  for (int i=0; i<m_numBinsDoC; i++)
+    {
+      for (int j=0; j<m_system.getNumMolecPairs(); j++)
+	{
+	  m_DoCHist[i][j] /= (numFrames * m_countIonsDoC[j]);
 	}
     }
 }
@@ -474,6 +563,11 @@ double* RDF::getMolecRDFAddressLayersClosest(int i, int j, int k)
 double* RDF::getDoCAddress(int i)
 {
   return &(m_DoC[i][0]);
+}
+
+double* RDF::getDoCHistAddress(int i)
+{
+  return &(m_DoCHist[i][0]);
 }
 
 const char* RDFWrite(RDF* a_rdf, const char* a_filename)
@@ -652,6 +746,21 @@ const char* DoCWrite(RDF* a_rdf, const char* a_filename)
   for (int i=0; i<numBins; i++)
     {
       data[i] = a_rdf->getDoCAddress(i);
+    }
+  write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
+  return a_filename;
+}
+
+const char* DoCHistWrite(RDF* a_rdf, const char* a_filename)
+{
+  double binSize = a_rdf->getBinSizeDoC();
+  int numBins = a_rdf->getNumBinsDoC();
+  int varDim = a_rdf->getNumMolecPairs();
+  const char * const headernames[] = { "z[A]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14", "15", "16", "17", "18", "19", "20" };
+  double* data[500];
+  for (int i=0; i<numBins; i++)
+    {
+      data[i] = a_rdf->getDoCHistAddress(i);
     }
   write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
   return a_filename;
