@@ -88,6 +88,7 @@ private:
 	// Constants for calculating DoC
 	double m_Rj;
 	double m_phi;
+	double m_RcutDoC;
 	vector<double > m_solidAngleFactor;
 	vector<vector<double > > m_DoC;
 	// end constants for calculating DoC

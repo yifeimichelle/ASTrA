@@ -30,9 +30,11 @@ RDF::RDF(System& a_system)
   m_rdfMolecLayer.resize(m_numLayers);
   m_currentRDFMolecLayer.resize(m_numLayers);
   m_rdfMolecLayerClosest.resize(m_numLayers);
+
   // Constants for calculating DoC
   m_Rj = 0.715; // half of carbon-carbon distance in SP2 structure
   m_phi = 0.6046; // coverage of surface covered by hexagonally tiled structure
+  m_RcutDoC = 6.3;
   m_solidAngleFactor.resize(m_numBins);
   double RjSq = m_Rj * m_Rj;
   for (int i=0; i<m_numBins; i++)
@@ -50,7 +52,6 @@ RDF::RDF(System& a_system)
       m_DoC[i].resize(m_numMolecPairs);
     }
   // end constants for calculating DoC
-
 
   m_pairCounter.resize(m_numPairs);
   m_pairMolecCounter.resize(m_numMolecPairs);
@@ -343,8 +344,8 @@ void RDF::computeDegreeOfConfinement(const Frame& a_frame)
 	      // increment interior sum
 	      sum += m_solidAngleFactor[binIdx]*m_currentRDFMolecLayer[layer][binIdx][pairIdx];
 	      // save interior sum
-	      m_DoC[binIdx][pairIdx] += sum/numIons;
-	      //cout << "adding to DoC ..." << m_currentRDFMolecLayer[layer][binIdx][pairIdx] << " " << numIons << endl;
+	      m_DoC[binIdx][pairIdx] += sum/(numIons);
+	      //cout << "adding to DoC ..." << m_currentRDFMolecLayer[layer][binIdx][pairIdx] << " "< < numIons << endl;
 	    }
 	}
     }
@@ -356,6 +357,7 @@ void RDF::normalize()
     {
       double normFactor = (4./3.)*M_PI*(pow(i+1,3)-pow(i,3))*pow(m_binSize,3);
       normFactor = normFactor * m_system.getNumFrames();
+      double DoCnormFactor = m_system.getNumFrames() * m_phi*2.0;
       for (int j=0; j<m_system.getNumPairs(); j++)
 	{
 	  m_rdf[i][j] /= normFactor;
@@ -369,7 +371,7 @@ void RDF::normalize()
       for (int j=0; j<m_system.getNumMolecPairs(); j++)
 	{
 	  m_rdfMolec[i][j] /= normFactor;
-	  m_DoC[i][j] /= m_system.getNumFrames();
+	  m_DoC[i][j] /= DoCnormFactor;
 	  for (int k=0; k<m_numLayers; k++)
 	    {
 	      m_rdfMolecLayer[k][i][j] /= normFactor;
