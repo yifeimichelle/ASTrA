@@ -28,6 +28,8 @@ System::System()
 // as well as information on the RDF pairs to compute
 System::System(const string& a_inputFile)
 {
+  //readArguments(args); //!!
+  m_readFluctuatingCharge = 1; //!!
   readInput(a_inputFile);
   setInput();
 };
@@ -113,6 +115,12 @@ void System::setInput()
   m_inputRow = 0;
   getInput(&m_trajFile, 0);
 
+  if (m_readFluctuatingCharge) //!!
+    {
+      nextRow();
+      getInput(&m_chgFile, 0);
+    }
+  
   nextRow();
   getInput(&m_totalFrames,0);
 
@@ -349,6 +357,11 @@ const string& System::getTrajFile() const
     return m_trajFile;
 }
 
+const string& System::getChargesFile() const
+{
+  return m_chgFile;
+}
+
 const unsigned int System::getNumOfType(unsigned int a_type) const
 {
   return m_typeAtomIndices[a_type].size();
@@ -532,3 +545,10 @@ unsigned int System::isAnode(unsigned int a_molID) const
 {
   return a_molID == m_anodeID-1;
 }
+
+unsigned int System::hasChargeFile() const
+{
+  return m_readFluctuatingCharge;
+}
+	  
+

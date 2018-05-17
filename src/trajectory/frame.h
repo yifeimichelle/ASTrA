@@ -25,8 +25,12 @@ class Frame
 	void readZPStep();
 	/// Reads a constant-P or -Q step. Stores atom positions and increments m_stepNum.
         void readStep();
+	/// Reads a constant-P or -Q step. Stores atom positions and increments m_stepNum.
+        void readStep(int a_every);
 	/// Skips a step. Doesn't store anything. Only increments m_totalStepNum.
 	void skipStep();
+	/// Reads fluctuating charges for electrodes.
+	void readCharges();
 	/// Returns total step number (counting from beginning of trajectory and not skipping any steps).
 	const unsigned int getTotalStepNum() const;
 	/// Returns step number of the current frame in the constant-P or -Q window.
@@ -78,12 +82,15 @@ class Frame
 	/// Gets number of molecules in layer.
 	const unsigned int getCurrentNumMolecsInLayer(int a_layerIdx, int a_molID) const;
      private:
+	/// Set charges to charges read from input file.
+	void setCharges(const System& a_system);
 	System m_system;
         unsigned int m_stepNum;
 	unsigned int m_totalStepNum;
 	unsigned int m_zpStepNum;
         unsigned int m_numAtoms;
         unsigned int m_numMolecules;
+	unsigned int m_numFluctuatingCharges;
         vector<Atom > m_atoms;
 	vector<Atom > m_COMs;
 	// record of which layer atoms and molecule COMs are in
@@ -93,5 +100,6 @@ class Frame
 	array<array<vector<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_ZPatomLayers;
 	array<array<vector<int >, MAX_NUM_TYPES> , NUM_LAYERS > m_ZPCOMLayers;
         ifstream m_traj;
+	ifstream m_chg;
 };
 #endif

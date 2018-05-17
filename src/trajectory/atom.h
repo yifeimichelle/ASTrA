@@ -20,7 +20,10 @@ class Atom
         const array<double, DIM>& getPosition() const;
 	/// Set the atomic position.
         void setPosition(double a_x, double a_y, double a_z);
+	/// Set the atomic charge.
+	void setCharge(double a_q);
     private:
         array<double, DIM> m_position;
+	double m_charge;
 };
 #endif

@@ -9,16 +9,18 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-    if(argc != 2)
+  if(argc != 2) //!! Make it able to take additional arguments
     {
-        cout << "this program takes one argument that is the input file ";
-        cout << endl;
-        return 1;
+      cout << "this program takes one argument that is the input file ";
+      cout << endl;
+      return 1;
     }
 
     // read inputs
     string inputFile(argv[1]);
+    //string chargeFile(argv[2]); //!!
     System system(inputFile); // initialize system
+    //System system(inputFile,chargeFile); //!!
     RDF rdf(system); // initialize rdf
     AtomCounter ac(system); // initialize atomcounter
     Frame frame(system); // initialize trajectory frame reader
@@ -26,27 +28,30 @@ int main(int argc, char** argv)
     cout << "Reading trajectory ..." << endl;
 
     // Skip frames
-    for (int i=0; i<system.getNumSkipFrames(); i++)
+    if (system.getNumZPFrames() > 0)
       {
-	frame.skipStep();
-	ac.sampleSkip(frame);
-      }
-
-    // Read zero-potential, zero-charge frames
-    cout << "Analyzing zero-P, zero-Q run of " << system.getNumZPFrames() << " steps..." << endl;
-    for (unsigned int frameCounter = 0; frameCounter<system.getNumZPFrames(); frameCounter++)
-      {
-	frame.readZPStep();
-
-	if (frame.getZPStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
+	for (int i=0; i<system.getNumSkipFrames(); i++)
 	  {
-	    cout << frame.getZPStepNum() << endl;
+	    frame.skipStep();
+	    ac.sampleSkip(frame);
 	  }
 
-	ac.sampleZP(frame);
-      	frame.clearFrame();
+	// Read zero-potential, zero-charge frames
+	cout << "Analyzing zero-P, zero-Q run of " << system.getNumZPFrames() << " steps..." << endl;
+	for (unsigned int frameCounter = 0; frameCounter<system.getNumZPFrames(); frameCounter++)
+	  {
+	    frame.readZPStep();
+
+	    if (frame.getZPStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
+	      {
+		cout << frame.getZPStepNum() << endl;
+	      }
+
+	    ac.sampleZP(frame);
+	    frame.clearFrame();
+	  }
+	ac.normalizeZP();
       }
-    ac.normalizeZP();
     
     // Skip frames (potential or charge turned on)
     for (int i=0; i<system.getNumSkipFrames(); i++)
@@ -61,6 +66,7 @@ int main(int argc, char** argv)
       {
 	// read in step of trajectory
 	frame.readStep();
+	frame.readCharges(); //!!
 
 	if ( frame.getStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
 	  {

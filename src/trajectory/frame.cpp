@@ -20,6 +20,8 @@ Frame::Frame(System& a_system)
   m_zpStepNum = -1;
   m_numAtoms = a_system.getNumAtoms();
   m_numMolecules = a_system.getNumMolecules();
+
+  // Initialize reading of trajectory file
   m_traj.open(a_system.getTrajFile());
   unsigned int trajNumAtoms;
   m_traj >> trajNumAtoms;
@@ -27,6 +29,22 @@ Frame::Frame(System& a_system)
   m_atoms.resize(m_numAtoms);
   m_COMs.resize(m_numMolecules);
   m_traj.seekg(0, m_traj.beg);
+
+  // Initialize frame charges from input charges
+  setCharges(a_system);
+  
+  // Initialize reading of charges file
+  if (a_system.hasChargeFile())
+    {
+      m_chg.open(a_system.getChargesFile());
+      unsigned int chgNumAtoms;
+      char tmp[256];
+      m_chg >> tmp >> tmp >> tmp >> tmp >> tmp >> tmp >> tmp;
+      m_chg >> chgNumAtoms;
+      m_numFluctuatingCharges = chgNumAtoms;
+      m_chg.seekg(0, m_chg.beg);
+    }
+  
 };
 
 void Frame::skipStep()
@@ -72,6 +90,50 @@ void Frame::readStep()
     {
       m_traj >> atomName >> x >> y >> z;
       m_atoms[i].setPosition(x,y,z);
+    }
+}
+
+void Frame::readStep(int a_every)
+{
+  // read step from traj file
+  for (int istep=0; istep < a_every-1; istep++)
+    {
+      char tmp[256];
+      m_traj >> tmp >> tmp >> tmp >> tmp;
+      for (unsigned int i=0; i<m_numAtoms; i++)
+	{
+	  m_traj >> tmp >> tmp >> tmp >> tmp;
+	}
+    }
+
+  // read actual step
+  m_stepNum++;
+  m_totalStepNum++;
+  char tmp[256];
+  m_traj >> tmp >> tmp >> tmp >> tmp;
+  string atomName;
+  double x, y, z;
+  for (unsigned int i=0; i<m_numAtoms; i++)
+    {
+      m_traj >> atomName >> x >> y >> z;
+      m_atoms[i].setPosition(x,y,z);
+    }
+}
+
+void Frame::readCharges()
+{
+  char tmp[256];
+  // skip lines
+  for (unsigned int i=0; i<24; i++)
+    {
+      m_chg >> tmp;
+    }
+  int id;
+  double q;
+  for (unsigned int i=0; i<m_numFluctuatingCharges; i++)
+    {
+      m_chg >> id >> q;
+      m_atoms[id-1].setCharge(q);
     }
 }
 
@@ -301,4 +363,22 @@ const unsigned int Frame::getCurrentNumMolecsInLayer(int a_layerIdx, int a_molID
   return m_COMLayers[a_layerIdx][a_molID].size();
 }
 
-
+void Frame::setCharges(const System& a_system)
+{
+  unsigned int atomIdx = 0;
+  double q;
+  for (unsigned int i=0; i<a_system.getNumMolecTypes(); i++)
+    {
+      array<double , MAX_MEMBERS_PER_MOLEC > charges = a_system.getChargesOfType(i);
+      unsigned int numMolecs=a_system.getNumMolecsOfType(i);
+      for (unsigned int j=0; j<numMolecs; j++)
+	{
+	  unsigned int numMembers=a_system.getNumMembersMolec(i);
+	  for (unsigned int k=0; k<numMembers; k++)
+	    {
+	      m_atoms[atomIdx].setCharge(charges[k]);
+	      atomIdx++;
+	    }
+	}
+    }
+}

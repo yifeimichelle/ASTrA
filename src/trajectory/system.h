@@ -47,6 +47,8 @@ class System
         const double getFrameTime() const;
 	/// Returns the name of the trajectory file.
         const string& getTrajFile() const;
+	/// Returns the name of the fluctuating electrode charges file.
+        const string& getChargesFile() const;
 	/// Returns number of atoms of a particular atom type (each atom in a molecule counts separately).
 	const unsigned int getNumOfType(unsigned int a_type) const;
 	/// Returns index of individual atom, given atom type and index into all atoms of that atom type.
@@ -99,6 +101,8 @@ class System
 	unsigned int isCathode(unsigned int a_molID) const;
 	/// Returns whether ID anode molecule.
 	unsigned int isAnode(unsigned int a_molID) const;
+	/// Returns whether or not charge file is to be read.
+	unsigned int hasChargeFile() const;
  private:
 	void readInput(const string& a_inputFile);
 	void setInput();
@@ -118,6 +122,7 @@ class System
 	void nextRow();
 	unsigned int m_inputRow;
 	string m_trajFile;
+	string m_chgFile;
 	unsigned int m_totalFrames;
         unsigned int m_numFramesInclSkip; // Number of constant-P or constant-Q "production" frames.
         unsigned int m_numFrames; // Number of constant-P or constant-Q "production" frames.
@@ -152,6 +157,7 @@ class System
 	vector<pair<unsigned int, unsigned int > > m_rdfMolecPairs;
         float m_stepTime;
         float m_frameTime;
+	unsigned int m_readFluctuatingCharge;
 	double m_lowerElecTop;
 	double m_upperElecBot;
         array<double, DIM > m_boxDims;
