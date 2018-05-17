@@ -194,6 +194,13 @@ Atom& Frame::getMolec(int a_molecIndex)
   return m_COMs[a_molecIndex];
 } 
 
+const Atom& Frame::getAtomOfMolec(int a_molecIndex) const
+{
+  int atomIndex = m_system.getFirstAtomOfMolec(a_molecIndex);
+  return m_atoms[atomIndex];
+}
+
+
 const double Frame::computeDistance(int a_i, int a_j) const
 {
   //array<double, DIM > boxDims = m_system.getBoxDims();
@@ -381,4 +388,27 @@ void Frame::setCharges(const System& a_system)
 	    }
 	}
     }
+}
+
+const double Frame::sumCharges(const System& a_system, int a_molID) const
+{
+  double sum = 0;
+  unsigned int atomIdx = 0;
+  for (unsigned int i=0; i<a_system.getNumMolecTypes(); i++)
+    {
+      unsigned int numMolecs=a_system.getNumMolecsOfType(i);
+      for (unsigned int j=0; j<numMolecs; j++)
+	{
+	  unsigned int numMembers=a_system.getNumMembersMolec(i);
+	  for (unsigned int k=0; k<numMembers; k++)
+	    {
+	      if ( i == a_molID-1 )
+		{
+		  sum += m_atoms[atomIdx].getCharge();
+		}
+	      atomIdx++;
+	    }
+	}
+    }
+  return sum;
 }

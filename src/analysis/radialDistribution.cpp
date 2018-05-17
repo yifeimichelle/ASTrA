@@ -54,9 +54,11 @@ RDF::RDF(System& a_system)
       m_DoC[i].resize(m_numMolecPairs);
     }
   m_DoCHist.resize(m_numBinsDoC);
+  //m_counterCharge.resize(m_numBinsDoC);
   for (int i=0; i<m_numBinsDoC; i++)
     {
-      m_DoCHist[i].resize(m_numMolecPairs);
+      m_DoCHist[i].resize(2*m_numMolecPairs);
+      //m_counterCharge[i].resize(m_numMolecPairs);
     }
   // end constants for calculating DoC
 
@@ -144,6 +146,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
 	  // Find out whether to compute DoC
 	  int layer = -1;
 	  unsigned int computeDoC = 0;
+	  unsigned int isCounterCharge = 0;
 	  if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
 	    {
 	      if ( m_system.isAnodeLower() )
@@ -153,6 +156,10 @@ void RDF::sampleMolecules(const Frame& a_frame)
 	      else
 		{
 		  layer = 0;
+		}
+	      if ( m_system.isAnion(pairFirst ) )
+		{
+		  isCounterCharge = 1;
 		}
 	    }
 	  else if ( m_system.isAnode( pairSecond ) or m_system.isAnode( pairFirst ) )
@@ -164,6 +171,10 @@ void RDF::sampleMolecules(const Frame& a_frame)
 	      else
 		{
 		  layer = 2;
+		}
+	      if ( m_system.isCation(pairFirst ) )
+		{
+		  isCounterCharge = 1;
 		}
 	    }
 	  if ( layIdx == layer)
@@ -177,6 +188,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
 	      minDistance = 1000.0;
 	      int secondIndex = 0;
 	      double DoC = 0;
+	      double sumElecCharge = 0;
 	      // For each molecule of second type in pair
 	      for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
 		{
@@ -201,6 +213,11 @@ void RDF::sampleMolecules(const Frame& a_frame)
 			  if (distance < m_Rcut)
 			    {
 			      DoC += computeSolidAngleFactor(distance);
+			      sumElecCharge += a_frame.getAtomOfMolec(*itB).getCharge();
+			      // if (m_system.isCathode(pairIdx))
+			      // 	{
+			      // 	  cout << *itB << " " << a_frame.getAtom(*itB).getCharge() << endl;
+			      // 	}
 			    }
 			}
 
@@ -210,7 +227,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
 	      if (computeDoC)
 		{
 		  DoC /= (2.0*m_phi);
-		  binDoC(DoC, pairIdx);
+		  binDoC(DoC, sumElecCharge, isCounterCharge, pairIdx);
 		}
 	      if(minDistance < m_maxDist)
 	      	{
@@ -363,12 +380,16 @@ double RDF::computeSolidAngleFactor(double a_distance)
   return retVal;
 }
 
-double RDF::binDoC(double a_doc, unsigned int a_pair)
+double RDF::binDoC(double a_doc, double a_elecCharge, unsigned int a_isCounterCharge, unsigned int a_pair)
 {
   int bin = floor(a_doc / m_binSizeDoC);
-  assert(a_doc<1.0);
-  m_DoCHist[bin][a_pair]++;
-  m_countIonsDoC[a_pair]++;
+  if(a_doc<1.0)
+    {
+      m_DoCHist[bin][2*a_pair]++;
+      m_DoCHist[bin][2*a_pair+1] += a_elecCharge / 0.78;
+      //m_counterCharge[bin][a_pair] += a_elecCharge / 0.78;
+      m_countIonsDoC[a_pair]++;
+    }
 }
 
 
@@ -469,7 +490,12 @@ void RDF::normalize()
     {
       for (int j=0; j<m_system.getNumMolecPairs(); j++)
 	{
-	  m_DoCHist[i][j] /= (numFrames * m_countIonsDoC[j] *  m_binSizeDoC);
+	  //m_counterCharge[i][j] /= m_DoCHist[i][j];
+	  if ( m_countIonsDoC[j] > 0)
+	    {
+	      m_DoCHist[i][2*j+1] /= m_DoCHist[i][2*j];
+	    }
+	  m_DoCHist[i][2*j] /= (numFrames * m_countIonsDoC[j] *  m_binSizeDoC);
 	}
     }
 }
@@ -758,8 +784,8 @@ const char* DoCHistWrite(RDF* a_rdf, const char* a_filename)
 {
   double binSize = a_rdf->getBinSizeDoC();
   int numBins = a_rdf->getNumBinsDoC();
-  int varDim = a_rdf->getNumMolecPairs();
-  const char * const headernames[] = { "z[A]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14", "15", "16", "17", "18", "19", "20" };
+  int varDim = 2*a_rdf->getNumMolecPairs();
+  const char * const headernames[] = { "z[A]",  "DoC_0",  "cc_0",  "DoC_1",  "cc_1",  "DoC_1",  "cc_2",  "DoC_3",  "cc_3",  "DoC_4",  "cc_4",  "DoC_5",  "cc_5",  "DoC_6",  "cc_6",  "DoC_7",  "cc_7",  "DoC_8",  "cc_8",  "DoC_9",  "cc_9",  "DoC_10",  "cc_10",  "DoC_11",  "cc_11",  "DoC_12",  "cc_12",  "DoC_13",  "cc_13" };
   double* data[500];
   for (int i=0; i<numBins; i++)
     {

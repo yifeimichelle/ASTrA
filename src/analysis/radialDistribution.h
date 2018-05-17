@@ -101,6 +101,7 @@ private:
 	vector<double > m_solidAngleFactor;
 	vector<vector<double > > m_DoC;
 	vector<vector<double > > m_DoCHist;
+	vector<vector<double > > m_counterCharge;
 	// end constants for calculating DoC
 	/// Puts atom-atom pair distance into a bin based on layer.
 	void binPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer);
@@ -115,7 +116,7 @@ private:
 	/// Increment count of molecule-molecule pairs in standard RDF.
 	void incrementMolecCounter(unsigned int a_pair);
 	double computeSolidAngleFactor(double a_distance);
-	double binDoC(double a_doc, unsigned int a_pair);
+	double binDoC(double a_doc, double a_elecCharge, unsigned int a_isCounterCharge, unsigned int a_pair);
 };
 
 const char* RDFWrite(RDF* a_rdf, const char* a_filename);

@@ -47,6 +47,8 @@ class Frame
 	const Atom& getMolec(int a_molecIndex) const;
 	/// Returns a reference to a single molecule in a frame.
 	Atom& getMolec(int a_molecIndex);
+	/// Returns a reference to a single atom in a frame.
+	const Atom& getAtomOfMolec(int a_molecIndex) const;
 	/// Computes the distance between two atoms. 
 	const double computeDistance(int a_i, int a_j) const;
 	/// Computes the distance between two molecules.
@@ -81,6 +83,8 @@ class Frame
 	const unsigned int getCurrentNumAtomsInLayer(int a_layerIdx, int a_molID) const;
 	/// Gets number of molecules in layer.
 	const unsigned int getCurrentNumMolecsInLayer(int a_layerIdx, int a_molID) const;
+	/// Sums charges of selected molecule.
+	const double sumCharges(const System& a_system, int a_molID) const;
      private:
 	/// Set charges to charges read from input file.
 	void setCharges(const System& a_system);

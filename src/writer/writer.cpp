@@ -31,6 +31,12 @@ void write_binned_data(const char *a_filename, int a_numBins, double a_binSize, 
 {
   open_file(a_filename);
   // print headers
+  for (unsigned int iHeader=0; iHeader<a_varDim+1; iHeader++)
+    {
+      char str[128];
+      sprintf(str, " %s", a_headernames[iHeader]);
+      writeString(str);
+    }
   // print data
   for (unsigned int iBin=0; iBin<a_numBins; iBin++)
     {

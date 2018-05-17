@@ -247,15 +247,16 @@ void System::setInput()
   m_frameTime = m_stepInterval * m_stepTime;
   m_typeAtomIndices.resize(m_numAtomTypes);
   m_molecMembersOfType.resize(m_numAtomTypes);
-  unsigned int atomTypeCounter=0;
+  unsigned int atomCounter=0;
   for (unsigned int i=0; i<m_numMolecTypes; i++)
     {
       for (unsigned int j=0; j<m_numMolecs[i]; j++)
 	{
+	  m_firstAtomOfMolec.push_back(atomCounter);
 	  for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
 	    {
-	      m_typeAtomIndices[getAtomType(i,k)].push_back(atomTypeCounter);
-	      atomTypeCounter++;
+	      m_typeAtomIndices[getAtomType(i,k)].push_back(atomCounter);
+	      atomCounter++;
 	    }
 	}
     }
@@ -551,4 +552,30 @@ unsigned int System::hasChargeFile() const
   return m_readFluctuatingCharge;
 }
 	  
+	/// Returns anode ID.
+unsigned int System::getAnodeID() const
+{
+  return m_anodeID;
+}
 
+	/// Returns cathode ID.
+unsigned int System::getCathodeID() const
+{
+  return m_cathodeID;
+}
+
+	/// Returns whether molecule is anion.
+unsigned int System::isAnion(unsigned int a_molID) const
+{
+  return a_molID == m_anionID - 1;
+}
+	/// Returns whether molecule is cation.
+unsigned int System::isCation(unsigned int a_molID) const
+{
+  return a_molID == m_cationID - 1;
+}
+
+const unsigned int System::getFirstAtomOfMolec(unsigned int a_molecIndex) const
+{
+  return m_firstAtomOfMolec[a_molecIndex];
+}

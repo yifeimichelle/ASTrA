@@ -30,3 +30,8 @@ void Atom::setCharge(double a_q)
 {
   m_charge = a_q;
 }
+
+const double Atom::getCharge() const
+{
+  return m_charge;
+}

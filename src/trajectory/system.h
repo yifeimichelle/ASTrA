@@ -103,6 +103,16 @@ class System
 	unsigned int isAnode(unsigned int a_molID) const;
 	/// Returns whether or not charge file is to be read.
 	unsigned int hasChargeFile() const;
+	/// Returns anode ID.
+	unsigned int getAnodeID() const;
+	/// Returns cathode ID.
+	unsigned int getCathodeID() const;
+	/// Returns whether molecule is anion.
+	unsigned int isAnion(unsigned int a_molID) const;
+	/// Returns whether molecule is cation.
+	unsigned int isCation(unsigned int a_molID) const;
+	/// Returns first atom index of molecule.
+	const unsigned int getFirstAtomOfMolec(unsigned int a_molecIndex) const;
  private:
 	void readInput(const string& a_inputFile);
 	void setInput();
@@ -149,6 +159,7 @@ class System
 	unsigned int m_numElectrolyteSpecies;
 	unsigned int m_numElectrolyteMolecs;
 	unsigned int m_numMolecules;
+	vector<int > m_firstAtomOfMolec;
 	array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_masses;
 	array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_charges;
 	vector<vector<unsigned int > > m_typeAtomIndices;
