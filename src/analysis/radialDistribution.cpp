@@ -422,10 +422,20 @@ double RDF::binDoC(double a_doc, double a_elecCharge, unsigned int a_isCounterCh
 double RDF::binCoordNum(double a_coordNum, unsigned int a_pair, unsigned int a_layer)
 {
   int bin = floor(a_coordNum / m_binSizeCoordNum);
-  assert(a_coordNum < 20.0);
-  m_coordNumHist[a_layer][bin][a_pair]++;
-  m_coordNum[a_layer][a_pair] += a_coordNum;
-  m_countCoordNum[a_layer][a_pair]++;
+  if(a_coordNum < 20.0)
+    {
+      m_coordNumHist[a_layer][bin][a_pair]++;
+      m_coordNum[a_layer][a_pair] += a_coordNum;
+      m_countCoordNum[a_layer][a_pair]++;
+    }
+  else if (a_coordNum > 20.0)
+    {
+      if (m_errorPrinted == 0)
+	{
+	  cout << "WARNING: Some coordination numbers are greater than 20!" << endl;
+	  m_errorPrinted = 1;
+	}
+    }
 }
 
 

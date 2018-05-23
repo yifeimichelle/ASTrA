@@ -85,6 +85,7 @@ class RDF
 	const double getBinSizeCoordNum() const;
 
 private:
+	unsigned int m_errorPrinted = 0;
 	System m_system;
 	vector<vector< double > > m_rdf;
 	vector<vector<vector<double > > > m_rdfLayer;
