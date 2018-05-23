@@ -66,7 +66,10 @@ int main(int argc, char** argv)
       {
 	// read in step of trajectory
 	frame.readStep(5);
-	frame.readCharges(); //!!
+	if (READ_CHARGE_FILE)
+	  {
+	    frame.readCharges(); //!!
+	  }
 
 	if ( frame.getStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
 	  {
@@ -100,6 +103,8 @@ int main(int argc, char** argv)
     RDFMolecWriteLayersClosest(&rdf, "rdfmolclo");
     DoCWrite(&rdf, "DoC");
     DoCHistWrite(&rdf, "DoCHist");
+    CoordNumWrite(&rdf, "coordnum");
+    CoordNumHistWrite(&rdf, "coordnumHist");
     ACWriteAtomCounts(&ac, "atoms");
     ACWriteDensity(&ac, "density");
     ACWriteIons(&ac, "ions");

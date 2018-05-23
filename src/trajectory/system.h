@@ -11,6 +11,7 @@
 #define MAX_MEMBERS_PER_MOLEC 3
 #define NUM_ION_TYPES 3
 #define NUM_LAYERS 3
+#define READ_CHARGE_FILE 0
 
 using namespace std;
 /// A class describing the system (either for MD or MC).
@@ -65,6 +66,8 @@ class System
 	const unsigned int getNumMolecPairs() const;
 	/// Returns pair of molecule types from list of RDF molecule-molecule pairs.
 	const pair<unsigned int, unsigned int > getMolecPairCorrelation(unsigned int a_pair) const;
+	/// Returns coordination number cutoff for RDF molecule-molecule pairs.
+	const double getMolecPairCutoff(unsigned int a_pair) const;
 	/// Return box dims.
 	const array<double, DIM >& getBoxDims() const;
 	/// Return box size in specified dimension.
@@ -166,6 +169,7 @@ class System
 	vector<pair<unsigned int, unsigned int > > m_molecMembersOfType;
 	vector<pair<unsigned int, unsigned int > > m_rdfPairs;
 	vector<pair<unsigned int, unsigned int > > m_rdfMolecPairs;
+	vector<double > m_rdfMolecCutoffs;
         float m_stepTime;
         float m_frameTime;
 	unsigned int m_readFluctuatingCharge;

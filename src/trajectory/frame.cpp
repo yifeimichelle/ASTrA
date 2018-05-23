@@ -203,7 +203,6 @@ const Atom& Frame::getAtomOfMolec(int a_molecIndex) const
 
 const double Frame::computeDistance(int a_i, int a_j) const
 {
-  //array<double, DIM > boxDims = m_system.getBoxDims();
   array<double, DIM > posI = m_atoms[a_i].getPosition();
   array<double, DIM > posJ = m_atoms[a_j].getPosition();
   double retVal = 0.0;
@@ -216,10 +215,7 @@ const double Frame::computeDistance(int a_i, int a_j) const
 	{
 	  dist -= round(dist/dim) * dim;
 	}
-      // if(m_system.isPeriodic(i))
-      // 	{
-      // 	  dist -= boxDims[i]*floor(dist/(0.5*boxDims[i]));
-      // 	}
+
       retVal += dist*dist;
     }
   retVal = sqrt(retVal);
@@ -228,7 +224,6 @@ const double Frame::computeDistance(int a_i, int a_j) const
 
 const double Frame::computeMolecDistance(int a_i, int a_j) const
 {
-  //array<double, DIM > boxDims = m_system.getBoxDims();
   array<double, DIM > posI = m_COMs[a_i].getPosition();
   array<double, DIM > posJ = m_COMs[a_j].getPosition();
   double retVal = 0.0;
@@ -241,10 +236,6 @@ const double Frame::computeMolecDistance(int a_i, int a_j) const
 	{
 	  dist -= round(dist/dim) * dim;
 	}
-      // if(m_system.isPeriodic(i))
-      // 	{
-      // 	  dist -= boxDims[i]*floor(dist/(0.5*boxDims[i]));
-      // 	}
       retVal += dist*dist;
     }
   retVal = sqrt(retVal);

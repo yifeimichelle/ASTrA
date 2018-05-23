@@ -29,7 +29,7 @@ System::System()
 System::System(const string& a_inputFile)
 {
   //readArguments(args); //!!
-  m_readFluctuatingCharge = 1; //!!
+  m_readFluctuatingCharge = READ_CHARGE_FILE; //!!
   readInput(a_inputFile);
   setInput();
 };
@@ -228,16 +228,19 @@ void System::setInput()
   nextRow();
   getInput(&m_numMolecPairs,0);
   m_rdfMolecPairs.resize(m_numMolecPairs);
+  m_rdfMolecCutoffs.resize(m_numMolecPairs);
 
   cout << "Molecule-molecule COM pair correlations:" << endl;
 
   for (unsigned int i=0; i<m_numMolecPairs; i++)
     {
       unsigned int molecA, molecB;
+      double cutoff;
       nextRow();
-      getInputs2(&molecA,&molecB);
+      getInputs3(&molecA,&molecB,&cutoff);
       cout << i << " " << molecA-1 << " " << molecB-1 << endl;
       m_rdfMolecPairs[i] = make_pair(molecA-1, molecB-1);
+      m_rdfMolecCutoffs[i] = cutoff;
     }
     
   m_numFramesInclSkip = m_totalFrames - m_zpFramesInclSkip;
@@ -417,6 +420,10 @@ const pair<unsigned int, unsigned int > System::getMolecPairCorrelation(unsigned
   return m_rdfMolecPairs[a_pair];
 }
 
+const double System::getMolecPairCutoff(unsigned int a_pair) const
+{
+  return m_rdfMolecCutoffs[a_pair];
+}
 
 const unsigned int System::getNumFrames() const
 {
