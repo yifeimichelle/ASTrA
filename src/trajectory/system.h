@@ -11,7 +11,9 @@
 #define MAX_MEMBERS_PER_MOLEC 3
 #define NUM_ION_TYPES 3
 #define NUM_LAYERS 3
+#ifndef READ_CHARGE_FILE
 #define READ_CHARGE_FILE 0
+#endif
 
 using namespace std;
 /// A class describing the system (either for MD or MC).
@@ -116,6 +118,8 @@ class System
 	unsigned int isCation(unsigned int a_molID) const;
 	/// Returns first atom index of molecule.
 	const unsigned int getFirstAtomOfMolec(unsigned int a_molecIndex) const;
+	/// Returns read interval for trajectory steps
+	const unsigned int getReadFrameEvery() const;
  private:
 	void readInput(const string& a_inputFile);
 	void setInput();
@@ -162,6 +166,7 @@ class System
 	unsigned int m_numElectrolyteSpecies;
 	unsigned int m_numElectrolyteMolecs;
 	unsigned int m_numMolecules;
+	unsigned int m_readFrameEvery;
 	vector<int > m_firstAtomOfMolec;
 	array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_masses;
 	array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_charges;

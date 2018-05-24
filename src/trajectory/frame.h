@@ -21,16 +21,22 @@ class Frame
         Frame();
         /// Constructor for initial frame.
         Frame(System& a_system);
-	/// Reads a zero-potential, zero-charge step. Stores atom positions and increments m_zpStepNum.
-	void readZPStep();
 	/// Reads a constant-P or -Q step. Stores atom positions and increments m_stepNum.
         void readStep();
 	/// Reads a constant-P or -Q step. Stores atom positions and increments m_stepNum.
         void readStep(int a_every);
 	/// Skips a step. Doesn't store anything. Only increments m_totalStepNum.
 	void skipStep();
+	/// Skips a step. Doesn't store anything. Only increments m_totalStepNum.
+	void skipStep(int a_every);
+	/// Reads a zero-potential, zero-charge step. Stores atom positions and increments m_zpStepNum.
+	void readZPStep();
+	/// Reads a zero-potential, zero-charge step. Stores atom positions and increments m_zpStepNum.
+	void readZPStep(int a_every);
 	/// Reads fluctuating charges for electrodes.
 	void readCharges();
+	/// Skips fluctuating charges for electrodes.
+	void skipCharges();
 	/// Returns total step number (counting from beginning of trajectory and not skipping any steps).
 	const unsigned int getTotalStepNum() const;
 	/// Returns step number of the current frame in the constant-P or -Q window.
@@ -89,7 +95,8 @@ class Frame
 	/// Set charges to charges read from input file.
 	void setCharges(const System& a_system);
 	System m_system;
-        unsigned int m_stepNum;
+	unsigned int m_every;
+	unsigned int m_stepNum;
 	unsigned int m_totalStepNum;
 	unsigned int m_zpStepNum;
         unsigned int m_numAtoms;

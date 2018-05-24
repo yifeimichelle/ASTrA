@@ -122,7 +122,7 @@ void System::setInput()
     }
   
   nextRow();
-  getInput(&m_totalFrames,0);
+  getInputs2(&m_totalFrames,&m_readFrameEvery);
 
   nextRow();
   getInputs2(&m_zpFramesInclSkip,&m_skipFrames);
@@ -585,4 +585,9 @@ unsigned int System::isCation(unsigned int a_molID) const
 const unsigned int System::getFirstAtomOfMolec(unsigned int a_molecIndex) const
 {
   return m_firstAtomOfMolec[a_molecIndex];
+}
+
+const unsigned int System::getReadFrameEvery() const
+{
+  return m_readFrameEvery;
 }

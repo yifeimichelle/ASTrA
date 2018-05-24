@@ -34,6 +34,10 @@ int main(int argc, char** argv)
 	  {
 	    frame.skipStep();
 	    ac.sampleSkip(frame);
+	    if (READ_CHARGE_FILE)
+	      {
+		frame.skipCharges(); //!!
+	      }
 	  }
 
 	// Read zero-potential, zero-charge frames
@@ -41,6 +45,10 @@ int main(int argc, char** argv)
 	for (unsigned int frameCounter = 0; frameCounter<system.getNumZPFrames(); frameCounter++)
 	  {
 	    frame.readZPStep();
+	    if (READ_CHARGE_FILE)
+	      {
+		frame.skipCharges(); //!!
+	      }
 
 	    if (frame.getZPStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
 	      {
@@ -65,7 +73,7 @@ int main(int argc, char** argv)
     for (unsigned int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
       {
 	// read in step of trajectory
-	frame.readStep(5);
+	frame.readStep();
 	if (READ_CHARGE_FILE)
 	  {
 	    frame.readCharges(); //!!

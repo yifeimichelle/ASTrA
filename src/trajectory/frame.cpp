@@ -18,11 +18,12 @@ Frame::Frame(System& a_system)
   m_stepNum = -1;
   m_totalStepNum = -1;
   m_zpStepNum = -1;
-  m_numAtoms = a_system.getNumAtoms();
-  m_numMolecules = a_system.getNumMolecules();
-
+  m_numAtoms = m_system.getNumAtoms();
+  m_numMolecules = m_system.getNumMolecules();
+  m_every = m_system.getReadFrameEvery();
+  
   // Initialize reading of trajectory file
-  m_traj.open(a_system.getTrajFile());
+  m_traj.open(m_system.getTrajFile());
   unsigned int trajNumAtoms;
   m_traj >> trajNumAtoms;
   assert(m_numAtoms==trajNumAtoms);
@@ -31,12 +32,12 @@ Frame::Frame(System& a_system)
   m_traj.seekg(0, m_traj.beg);
 
   // Initialize frame charges from input charges
-  setCharges(a_system);
+  setCharges(m_system);
   
   // Initialize reading of charges file
-  if (a_system.hasChargeFile())
+  if (m_system.hasChargeFile())
     {
-      m_chg.open(a_system.getChargesFile());
+      m_chg.open(m_system.getChargesFile());
       unsigned int chgNumAtoms;
       char tmp[256];
       m_chg >> tmp >> tmp >> tmp >> tmp >> tmp >> tmp >> tmp;
@@ -46,9 +47,22 @@ Frame::Frame(System& a_system)
     }
   
 };
-
 void Frame::skipStep()
 {
+  skipStep(m_every);
+}
+void Frame::skipStep(int a_every)
+{
+  // discard step from traj file
+  for (int istep=0; istep < a_every-1; istep++)
+    {
+      char tmp[256];
+      m_traj >> tmp >> tmp >> tmp >> tmp;
+      for (unsigned int i=0; i<m_numAtoms; i++)
+	{
+	  m_traj >> tmp >> tmp >> tmp >> tmp;
+	}
+    }
   m_totalStepNum++;
   char tmp[256];
   m_traj >> tmp >> tmp >> tmp >> tmp;
@@ -63,6 +77,21 @@ void Frame::skipStep()
 
 void Frame::readZPStep()
 {
+  readZPStep(m_every);
+}
+
+void Frame::readZPStep(int a_every)
+{
+  // discard step from traj file
+  for (int istep=0; istep < a_every-1; istep++)
+    {
+      char tmp[256];
+      m_traj >> tmp >> tmp >> tmp >> tmp;
+      for (unsigned int i=0; i<m_numAtoms; i++)
+	{
+	  m_traj >> tmp >> tmp >> tmp >> tmp;
+	}
+    }
   // read step from traj file
   m_zpStepNum++;
   m_totalStepNum++;
@@ -79,23 +108,12 @@ void Frame::readZPStep()
 
 void Frame::readStep()
 {
-  // read step from traj file
-  m_stepNum++;
-  m_totalStepNum++;
-  char tmp[256];
-  m_traj >> tmp >> tmp >> tmp >> tmp;
-  string atomName;
-  double x, y, z;
-  for (unsigned int i=0; i<m_numAtoms; i++)
-    {
-      m_traj >> atomName >> x >> y >> z;
-      m_atoms[i].setPosition(x,y,z);
-    }
+  readStep(m_every);
 }
 
 void Frame::readStep(int a_every)
 {
-  // read step from traj file
+  // discard step from traj file
   for (int istep=0; istep < a_every-1; istep++)
     {
       char tmp[256];
@@ -134,6 +152,23 @@ void Frame::readCharges()
     {
       m_chg >> id >> q;
       m_atoms[id-1].setCharge(q);
+    }
+}
+
+void Frame::skipCharges()
+{
+  char tmp[256];
+  // skip lines
+  for (unsigned int i=0; i<24; i++)
+    {
+      m_chg >> tmp;
+    }
+  int id;
+  double q;
+  for (unsigned int i=0; i<m_numFluctuatingCharges; i++)
+    {
+      m_chg >> id >> q;
+      //m_atoms[id-1].setCharge(q);
     }
 }
 
@@ -239,6 +274,16 @@ const double Frame::computeMolecDistance(int a_i, int a_j) const
       retVal += dist*dist;
     }
   retVal = sqrt(retVal);
+  // if (retVal == 0) //!!
+  //   {
+  //     cout << a_i << ", " << a_j << ": ";
+  //     cout << posI[0] << " " ;
+  //     cout << posI[1] << " " ;
+  //     cout << posI[2] << " " << endl;
+  //     cout << posJ[0] << " " ;
+  //     cout << posJ[1] << " " ;
+  //     cout << posJ[2] << " " << endl;
+  //   }
   return retVal;
 }
 

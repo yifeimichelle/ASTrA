@@ -204,15 +204,15 @@ void RDF::sampleMolecules(const Frame& a_frame)
 	    {
 	      computeDoC = 1;
 	    }
-		
 	  // For each molecule of first type in pair
+	  //cout << layIdx << " " << pairIdx << " " << molecsInLayer[pairFirst].size() << " " << molecsInLayer[pairSecond].size() << endl;
 	  for (vector<int>::iterator itA = molecsInLayer[pairFirst].begin(); itA != molecsInLayer[pairFirst].end(); ++itA)
 	    {
 	      minDistance = 1000.0;
 	      int secondIndex = 0;
-	      double DoC = 0;
-	      double sumElecCharge = 0;
-	      double coordNum = 0;
+	      double DoC = 0.0;
+	      double sumElecCharge = 0.0;
+	      double coordNum = 0.0;
 	      // For each molecule of second type in pair
 	      for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
 		{
@@ -242,11 +242,14 @@ void RDF::sampleMolecules(const Frame& a_frame)
 			  else
 			    {
 			      coordNum++;
-			      // if (coordNum > 60) {
-			      //   cout << pairIdx << " " <<  *itA << " " << *itB << " " << coordNum << " " << Rcut << " " << distance << endl; }
+			      // if (coordNum > 20)
+			      // {
+			      //   cout << pairIdx << " " <<  m_system.getFirstAtomOfMolec(*itA);
+			      // 	cout << " " << m_system.getFirstAtomOfMolec(*itB) << " ";
+			      // 	cout << coordNum << " " << Rcut << " " << distance << endl;
+			      // }
 			    }
 			}
-
 		    }
 		  secondIndex++;
 		}
@@ -422,20 +425,21 @@ double RDF::binDoC(double a_doc, double a_elecCharge, unsigned int a_isCounterCh
 double RDF::binCoordNum(double a_coordNum, unsigned int a_pair, unsigned int a_layer)
 {
   int bin = floor(a_coordNum / m_binSizeCoordNum);
-  if(a_coordNum < 20.0)
-    {
-      m_coordNumHist[a_layer][bin][a_pair]++;
-      m_coordNum[a_layer][a_pair] += a_coordNum;
-      m_countCoordNum[a_layer][a_pair]++;
-    }
-  else if (a_coordNum > 20.0)
-    {
-      if (m_errorPrinted == 0)
-	{
-	  cout << "WARNING: Some coordination numbers are greater than 20!" << endl;
-	  m_errorPrinted = 1;
-	}
-    }
+  // if(a_coordNum < 20.0)
+  //   {
+  assert(a_coordNum < 20.0);
+  m_coordNumHist[a_layer][bin][a_pair]++;
+  m_coordNum[a_layer][a_pair] += a_coordNum;
+  m_countCoordNum[a_layer][a_pair]++;
+    // }
+  // else if (a_coordNum > 20.0)
+  //   {
+  //      if (m_errorPrinted == 0)
+  // 	{
+  // 	  cout << "WARNING: Some coordination numbers are greater than 20!" << endl;
+  // 	  m_errorPrinted = 1;
+  // 	}
+  //   }
 }
 
 
