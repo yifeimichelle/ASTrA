@@ -6,6 +6,8 @@ HOME = ./..
 # We've made a common set of makefile definitions and rules in the home directory.
 # By including that file, you have all the definitions you need.
 
+CHARGE=1
+#DEBUGFLAGS = -DDEBUG
 include $(HOME)/GNUmakefile
 CFLAGS += -O3
 #CFLAGS += -g

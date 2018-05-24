@@ -5,11 +5,11 @@ DIM = 3
 TRAJ_SRC = $(HOME)/src/trajectory
 ANALYSIS_SRC = $(HOME)/src/analysis
 WRITER_SRC = $(HOME)/src/writer
-CFLAGS = -Wall -I$(TRAJ_SRC) -I$(ANALYSIS_SRC) -I$(WRITER_SRC) -std=c++11
+CFLAGS = -Wall -I$(TRAJ_SRC) -I$(ANALYSIS_SRC) -I$(WRITER_SRC) -std=c++11 -pg
 
 CXX = g++
 #CXX = clang++
-CPPFLAGS = -D DIM=$(DIM)
+CPPFLAGS = -D DIM=$(DIM) -D READ_CHARGE_FILE=$(CHARGE)
 
 TRAJ_SRCFILES:=$(wildcard $(TRAJ_SRC)/*.cpp)
 TRAJ_OBJS:=$(patsubst %.cpp, %.o, $(TRAJ_SRCFILES))
