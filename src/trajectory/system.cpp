@@ -40,7 +40,7 @@ void System::printPairCorrelations() const
     {
       cout << "pair " << i << " : ";
       cout << m_rdfPairs[i].first << " " << m_rdfPairs[i].second << endl;
-      
+
     }
 }
 
@@ -120,13 +120,13 @@ void System::setInput()
       nextRow();
       getInput(&m_chgFile, 0);
     }
-  
+
   nextRow();
   getInputs2(&m_totalFrames,&m_readFrameEvery);
 
   nextRow();
   getInputs2(&m_zpFramesInclSkip,&m_skipFrames);
-  
+
   nextRow();
   for (int i=0; i<DIM; i++)
     {
@@ -242,11 +242,17 @@ void System::setInput()
       m_rdfMolecPairs[i] = make_pair(molecA-1, molecB-1);
       m_rdfMolecCutoffs[i] = cutoff;
     }
-    
+
   m_numFramesInclSkip = m_totalFrames - m_zpFramesInclSkip;
   m_numFrames = m_numFramesInclSkip - m_skipFrames;
-  m_zpFrames = m_zpFramesInclSkip - m_skipFrames;
-  
+  if ( m_zpFramesInclSkip > 0 ) {
+      m_zpFrames = m_zpFramesInclSkip - m_skipFrames;
+  }
+  else if (m_zpFramesInclSkip == 0 )
+  {
+      m_zpFrames = 0;
+  }
+
   m_frameTime = m_stepInterval * m_stepTime;
   m_typeAtomIndices.resize(m_numAtomTypes);
   m_molecMembersOfType.resize(m_numAtomTypes);
@@ -558,7 +564,7 @@ unsigned int System::hasChargeFile() const
 {
   return m_readFluctuatingCharge;
 }
-	  
+
 	/// Returns anode ID.
 unsigned int System::getAnodeID() const
 {
