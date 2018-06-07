@@ -20,10 +20,11 @@ int main(int argc, char** argv)
     string inputFile(argv[1]);
     System system(inputFile); // initialize system
     AtomCounter ac(system);
-    cout << "number of bins: " << ac.getNumBins() << endl;
+    cout << "number of AC bins: " << ac.getNumBins() << endl;
     Frame frame(system); // initialize trajectory frame reader
 
-    cout << system.getBoxDim(0) << " " << system.getBoxDim(1) << endl;
+    cout << "Reading trajectory ..." << endl;
+    cout << "   box x and y: " << system.getBoxDim(0) << " " << system.getBoxDim(1) << endl;
 
     // Skip frames
     if (system.getNumZPFrames() > 0)
@@ -96,4 +97,6 @@ int main(int argc, char** argv)
     ACWriteDensity(&ac, "density");
     ACWriteIons(&ac, "ions");
     ACWriteIonsInLayers(&ac, "layers");
+    ACWriteIonsInLayersTime(&ac, "numionslayers");
+    ACWriteCollectiveVars(&ac, "ionCV");
 }

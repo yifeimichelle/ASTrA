@@ -32,8 +32,8 @@ RDF::RDF(System& a_system)
   m_rdfMolecLayerClosest.resize(m_numLayers);
 
   // For calculating coordination number
-  m_numBinsCoordNum = 20.0;
-  m_binSizeCoordNum = 20.0 / m_numBinsCoordNum;
+  m_numBinsCoordNum = MAX_COORD_NUM;
+  m_binSizeCoordNum = MAX_COORD_NUM * 1.0 / m_numBinsCoordNum;
   m_coordNum.resize(m_numLayers);
   m_coordNumHist.resize(m_numLayers);
   m_countCoordNum.resize(m_numLayers);
@@ -47,7 +47,7 @@ RDF::RDF(System& a_system)
 	  m_coordNumHist[i][j].resize(m_numMolecPairs);
 	}
     }
-  
+
   // Constants for calculating DoC
   m_Rj = 0.715; // half of carbon-carbon distance in SP2 structure
   m_phi = 0.6046; // coverage of surface covered by hexagonally tiled structure
@@ -425,18 +425,18 @@ double RDF::binDoC(double a_doc, double a_elecCharge, unsigned int a_isCounterCh
 double RDF::binCoordNum(double a_coordNum, unsigned int a_pair, unsigned int a_layer)
 {
   int bin = floor(a_coordNum / m_binSizeCoordNum);
-  // if(a_coordNum < 20.0)
+  // if(a_coordNum < MAX_COORD_NUM)
   //   {
-  assert(a_coordNum < 20.0);
+  assert(a_coordNum < MAX_COORD_NUM);
   m_coordNumHist[a_layer][bin][a_pair]++;
   m_coordNum[a_layer][a_pair] += a_coordNum;
   m_countCoordNum[a_layer][a_pair]++;
     // }
-  // else if (a_coordNum > 20.0)
+  // else if (a_coordNum > MAX_COORD_NUM)
   //   {
   //      if (m_errorPrinted == 0)
   // 	{
-  // 	  cout << "WARNING: Some coordination numbers are greater than 20!" << endl;
+  // 	  cout << "WARNING: Some coordination numbers are greater than " << MAX_COORD_NUM << "!" << endl;
   // 	  m_errorPrinted = 1;
   // 	}
   //   }
@@ -902,7 +902,7 @@ const char* CoordNumHistWrite(RDF* a_rdf, const char* a_filename)
     }
   delete data;
 
-  return a_filename;  
+  return a_filename;
 }
 
 const char* CoordNumWrite(RDF* a_rdf, const char* a_filename)

@@ -6,12 +6,12 @@ HOME = ./..
 # We've made a common set of makefile definitions and rules in the home directory.
 # By including that file, you have all the definitions you need.
 
-CHARGE=0
+CHARGE=1
 #DEBUGFLAGS = -DDEBUG
 include $(HOME)/GNUmakefile
 CFLAGS += -O3
 #CFLAGS += -g
 
-testDensityProfile: GNUmakefile $(OBJS) testDensityProfile.cpp
-	  $(CXX) $(CPPFLAGS) $(CFLAGS) -o testDensityProfile.exe testDensityProfile.cpp  $(OBJS)
+atomCounter: GNUmakefile $(OBJS) atomCounterMain.cpp
+	  $(CXX) $(CPPFLAGS) $(CFLAGS) -o atomCounterChg.exe atomCounterMain.cpp  $(OBJS)
 

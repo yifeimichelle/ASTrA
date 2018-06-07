@@ -4,6 +4,7 @@
 #include "system.h"
 #include "atom.h"
 #include <vector>
+#define MAX_COORD_NUM 40
 
 using namespace std;
 /// A class to contain radial distribution (pair correlation) functions and associated calculations.
@@ -15,7 +16,7 @@ class RDF
 {
     public:
         RDF();
-        /// Constructor 
+        /// Constructor
         RDF(System& a_system);
 	/// Returns system.
 	const System& getSystem() const;
@@ -115,7 +116,7 @@ private:
 	vector<vector<vector<double > > > m_coordNumHist;
 	vector<vector<double > > m_countCoordNum;
 	vector<vector<double > > m_DoC;
-	vector<vector<double > > m_DoCHist; // columns are DoC and 
+	vector<vector<double > > m_DoCHist; // columns are DoC and
 	vector<vector<double > > m_counterCharge;
 	// end constants for calculating DoC
 	/// Puts atom-atom pair distance into a bin based on layer.

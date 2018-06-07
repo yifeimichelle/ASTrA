@@ -6,16 +6,16 @@
 #include <assert.h>
 #include <iostream>
 #include "writer.h"
- 
+
 using namespace std;
 
 AtomCounter::AtomCounter(System& a_system)
 {
   m_system = a_system;
   m_saveFrameEvery = 1;
-  m_numSavedFrames = ceil(m_system.getNumTotalFrames() / m_saveFrameEvery) + 1;
+  m_numSavedFrames = ceil(m_system.getNumTotalFrames() / m_saveFrameEvery) ;
 
-  m_binSize = 0.05;
+  m_binSize = 0.05; //!! FIXME
   m_numBins = ceil(m_system.getBoxDim(2) / m_binSize );
   m_numLayers = m_system.getNumLayers();
   // resize vectors
@@ -221,7 +221,7 @@ void AtomCounter::sampleZP(Frame& a_frame)
 		    }
 		}
 	      else if (k > 0)
-		{	       
+		{
 		  for (int l=0; l < DIM; l++)
 		    {
 		      double dx = position[l] - x0[l];
@@ -269,7 +269,7 @@ void AtomCounter::sampleZP(Frame& a_frame)
 
 void AtomCounter::sampleSkip(Frame& a_frame)
 {
-  
+
   // setup
   int molecIndex = 0;
   int atomIndex = 0;
@@ -321,7 +321,7 @@ void AtomCounter::sampleSkip(Frame& a_frame)
 		    }
 		}
 	      else if (k > 0)
-		{	       
+		{
 		  for (int l=0; l < DIM; l++)
 		    {
 		      double dx = position[l] - x0[l];
@@ -507,7 +507,13 @@ void AtomCounter::normalize()
   // Divide by number of frames read
   double numFrames = m_system.getNumFrames();
   // Convert density to g/ml
-  double normDensity = numFrames * m_binSize * m_system.getBoxDim(0) * m_system.getBoxDim(1) * 10. / avogadro;
+#ifdef DEBUG
+  cout << 10./avogadro << endl;
+  cout << m_system.getBoxDim(0) << endl;
+  cout << m_system.getBoxDim(1) << endl;
+  cout << m_binSize << endl;
+#endif
+  double normDensity = numFrames * m_binSize * m_system.getBoxDim(0) * m_system.getBoxDim(1) * avogadro / 10.;
   for (int i=0; i<m_numLayers; i++)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
@@ -750,7 +756,7 @@ const char* ACWriteIonsInLayers(AtomCounter* a_ac, const char* a_filename)
 const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename)
 {
   int numFrames = a_ac->getNumSavedFrames();
-  int saveFrameEvery = a_ac->getSaveFrameInterval()*a_ac->getSystem().getFrameTime();
+  float saveFrameEvery = a_ac->getSaveFrameInterval()*a_ac->getSystem().getFrameTime();
   int numLayers = a_ac->getNumLayers();
   int varDim = a_ac->getNumIonTypes();
   const char * const headernames[] = { "t", "data" };
@@ -773,7 +779,7 @@ const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename)
 const char* ACWriteCollectiveVars(AtomCounter* a_ac, const char* a_filename)
 {
   int numFrames = a_ac->getNumCVFrames();
-  int saveFrameEvery = a_ac->getSaveFrameInterval();
+  float saveFrameEvery = a_ac->getSaveFrameInterval();
   int varDim = 2;
   const char * const headernames[] = {"t", "data"};
   double** data;
