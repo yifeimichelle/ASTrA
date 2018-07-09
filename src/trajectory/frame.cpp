@@ -21,7 +21,6 @@ Frame::Frame(System& a_system)
   m_numAtoms = m_system.getNumAtoms();
   m_numMolecules = m_system.getNumMolecules();
   m_every = m_system.getReadFrameEvery();
-  m_zSymmetrized = m_system.isZSymmetrized();
 
   // Initialize reading of trajectory file
   m_traj.open(m_system.getTrajFile());

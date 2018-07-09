@@ -102,7 +102,6 @@ class Frame
         unsigned int m_numAtoms;
         unsigned int m_numMolecules;
 	unsigned int m_numFluctuatingCharges;
-        unsigned int m_zSymmetrized;
         vector<Atom > m_atoms;
 	vector<Atom > m_COMs;
 	// record of which layer atoms and molecule COMs are in
