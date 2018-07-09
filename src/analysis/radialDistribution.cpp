@@ -431,7 +431,7 @@ double RDF::binCoordNum(double a_coordNum, unsigned int a_pair, unsigned int a_l
   m_coordNumHist[a_layer][bin][a_pair]++;
   m_coordNum[a_layer][a_pair] += a_coordNum;
   m_countCoordNum[a_layer][a_pair]++;
-    // }
+  //   }
   // else if (a_coordNum > MAX_COORD_NUM)
   //   {
   //      if (m_errorPrinted == 0)

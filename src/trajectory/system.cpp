@@ -134,8 +134,9 @@ void System::setInput()
     }
   for (int i=0; i<DIM; i++)
     {
-      getInput(&m_boxPeriodic[i],i+2);
+      getInput(&m_boxPeriodic[i],i+3);
     }
+  getInput(&m_zSymmetrized,6);
 
   nextRow();
   getInputs2(&m_lowerElecTop,&m_upperElecBot);
@@ -451,8 +452,6 @@ const unsigned int System::getNumSkipFrames() const
   return m_skipFrames;
 }
 
-
-
 const array<double, DIM >& System::getBoxDims() const
 {
   return m_boxDims;
@@ -461,6 +460,11 @@ const array<double, DIM >& System::getBoxDims() const
 const double System::getBoxDim(int a_dim) const
 {
   return m_boxDims[a_dim];
+}
+
+const unsigned int System::isZSymmetrized() const
+{
+  return m_zSymmetrized;
 }
 
 const unsigned int System::isPeriodic(int i) const

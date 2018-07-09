@@ -21,7 +21,8 @@ Frame::Frame(System& a_system)
   m_numAtoms = m_system.getNumAtoms();
   m_numMolecules = m_system.getNumMolecules();
   m_every = m_system.getReadFrameEvery();
-  
+  m_zSymmetrized = m_system.isZSymmetrized();
+
   // Initialize reading of trajectory file
   m_traj.open(m_system.getTrajFile());
   unsigned int trajNumAtoms;
@@ -33,7 +34,7 @@ Frame::Frame(System& a_system)
 
   // Initialize frame charges from input charges
   setCharges(m_system);
-  
+
   // Initialize reading of charges file
   if (m_system.hasChargeFile())
     {
@@ -45,7 +46,7 @@ Frame::Frame(System& a_system)
       m_numFluctuatingCharges = chgNumAtoms;
       m_chg.seekg(0, m_chg.beg);
     }
-  
+
 };
 void Frame::skipStep()
 {
@@ -217,7 +218,7 @@ const Atom& Frame::getAtom(int a_atomIndex) const
 Atom& Frame::getAtom(int a_atomIndex)
 {
   return m_atoms[a_atomIndex];
-} 
+}
 
 const Atom& Frame::getMolec(int a_molecIndex) const
 {
@@ -227,7 +228,7 @@ const Atom& Frame::getMolec(int a_molecIndex) const
 Atom& Frame::getMolec(int a_molecIndex)
 {
   return m_COMs[a_molecIndex];
-} 
+}
 
 const Atom& Frame::getAtomOfMolec(int a_molecIndex) const
 {
