@@ -19,8 +19,6 @@ class AtomCounter
   AtomCounter(System& a_system);
   /// Calculates COMs and computes density and number-of-atoms CVs given the current frame.
   void sample(Frame& a_frame);
-  /// Old sample routine.
-  void sampleOld(Frame& a_frame);
   /// Samples zero-potential part of trajectory.
   void sampleZP(Frame& a_frame);
   /// Samples skipped part of trajectory, counting COMs and ions in layer vs. time only.
@@ -110,6 +108,7 @@ class AtomCounter
   double m_binSize;
   int m_numAtomTypes;
   int m_numLayers;
+  double m_zLo;
 };
 
 const char* ACWriteAtomCounts(AtomCounter* a_ac, const char* a_filename);

@@ -74,6 +74,10 @@ class System
 	const array<double, DIM >& getBoxDims() const;
 	/// Return box size in specified dimension.
 	const double getBoxDim(int a_dim) const;
+        /// Return whether the box is symmetric over the z=0 axis.
+        const unsigned int isZSymmetrized() const;
+	/// Return lower z boundary
+	const double getZLo() const;
 	/// Return whether the selected dimemsion is periodic.
 	const unsigned int isPeriodic(int i) const;
 	/// Get number of layers (currently always returns 3, assuming anode, bulk, cathode layers).
@@ -167,6 +171,8 @@ class System
 	unsigned int m_numElectrolyteMolecs;
 	unsigned int m_numMolecules;
 	unsigned int m_readFrameEvery;
+        unsigned int m_zSymmetrized;
+	double m_zLo;
 	vector<int > m_firstAtomOfMolec;
 	array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_masses;
 	array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_charges;

@@ -55,7 +55,7 @@ class Frame
 	Atom& getMolec(int a_molecIndex);
 	/// Returns a reference to a single atom in a frame.
 	const Atom& getAtomOfMolec(int a_molecIndex) const;
-	/// Computes the distance between two atoms. 
+	/// Computes the distance between two atoms.
 	const double computeDistance(int a_i, int a_j) const;
 	/// Computes the distance between two molecules.
 	const double computeMolecDistance(int a_i, int a_j) const;

@@ -18,9 +18,7 @@ int main(int argc, char** argv)
 
     // read inputs
     string inputFile(argv[1]);
-    //string chargeFile(argv[2]); //!!
     System system(inputFile); // initialize system
-    //System system(inputFile,chargeFile); //!!
     RDF rdf(system); // initialize rdf
     AtomCounter ac(system); // initialize atomcounter
     Frame frame(system); // initialize trajectory frame reader
@@ -60,14 +58,14 @@ int main(int argc, char** argv)
 	  }
 	ac.normalizeZP();
       }
-    
+
     // Skip frames (potential or charge turned on)
     for (int i=0; i<system.getNumSkipFrames(); i++)
       {
 	frame.skipStep();
 	ac.sampleSkip(frame);
       }
-    
+
     // Read constant-potential or constant-charge frames
     cout << "Analyzing constant-P or -Q run of " << system.getNumFrames() << " steps..." << endl;
     for (unsigned int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
@@ -83,7 +81,7 @@ int main(int argc, char** argv)
 	  {
 	    cout << frame.getStepNum() << endl;
 	  }
-	
+
 	// sample routines
 	ac.sample(frame);
         rdf.sample(frame);

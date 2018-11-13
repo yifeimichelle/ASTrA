@@ -14,7 +14,7 @@ AtomCounter::AtomCounter(System& a_system)
   m_system = a_system;
   m_saveFrameEvery = 1;
   m_numSavedFrames = ceil(m_system.getNumTotalFrames() / m_saveFrameEvery) ;
-
+  m_zLo = m_system.getZLo();
   m_binSize = 0.05; //!! FIXME
   m_numBins = ceil(m_system.getBoxDim(2) / m_binSize );
   m_numLayers = m_system.getNumLayers();
@@ -417,7 +417,7 @@ void AtomCounter::binSkipElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array
 }
 void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte)
 {
-  double pos_z = a_position[2];
+  double pos_z = a_position[2] - m_zLo;
   int bin = floor(pos_z / m_binSize);
   int atomType = m_system.getAtomType(a_molecType, a_molecMember);
 #ifdef DEBUG
@@ -444,7 +444,7 @@ void AtomCounter::binElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<dou
       assert(a_electrolyteID > -1);
       assert(a_electrolyteID < 3);
 #endif
-      double pos_z = a_position[2];
+      double pos_z = a_position[2] - m_zLo;
       int bin = floor(pos_z / m_binSize);
 #ifdef DEBUG
       assert( bin < m_numBins );

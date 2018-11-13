@@ -134,7 +134,20 @@ void System::setInput()
     }
   for (int i=0; i<DIM; i++)
     {
-      getInput(&m_boxPeriodic[i],i+2);
+      getInput(&m_boxPeriodic[i],i+3);
+    }
+  getInput(&m_zSymmetrized,6);
+  if (m_zSymmetrized == 1)
+    {
+      m_zLo = -1.0*m_boxDims[2]/2.0;
+    }
+  else if (m_zSymmetrized == 2)
+    {
+      getInput(&m_zLo,7);
+    }
+  else
+    {
+      m_zLo = 0.0;
     }
 
   nextRow();
@@ -451,8 +464,6 @@ const unsigned int System::getNumSkipFrames() const
   return m_skipFrames;
 }
 
-
-
 const array<double, DIM >& System::getBoxDims() const
 {
   return m_boxDims;
@@ -461,6 +472,16 @@ const array<double, DIM >& System::getBoxDims() const
 const double System::getBoxDim(int a_dim) const
 {
   return m_boxDims[a_dim];
+}
+
+const unsigned int System::isZSymmetrized() const
+{
+  return m_zSymmetrized;
+}
+
+const double System::getZLo() const
+{
+  return m_zLo;
 }
 
 const unsigned int System::isPeriodic(int i) const
@@ -487,6 +508,10 @@ const unsigned int System::getLayer(array<double, DIM>& a_position) const
 {
   unsigned int retVal;
   double z=a_position[DIM-1];
+  if (m_zSymmetrized == 1 || m_zSymmetrized == 2)
+    {
+      z -= m_zLo;
+    }
   if (z < m_lowerElecTop )
     {
       retVal = 0;
