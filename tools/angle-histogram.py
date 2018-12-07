@@ -39,7 +39,7 @@ count_anode=0
 count_cathode=0
 anglesum=0
 anglevec=np.zeros(numangles*steps,dtype=float)
-while line != '':
+while (line != '') and (counter < steps):
     anode_sum=0
     cathode_sum=0
     line=fp.readline()
