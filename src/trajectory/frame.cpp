@@ -18,6 +18,7 @@ Frame::Frame(System& a_system)
   m_stepNum = -1;
   m_totalStepNum = -1;
   m_zpStepNum = -1;
+  m_timestep = -1;
   m_numAtoms = m_system.getNumAtoms();
   m_numMolecules = m_system.getNumMolecules();
   m_every = m_system.getReadFrameEvery();
@@ -100,10 +101,10 @@ void Frame::readZPStep(int a_every)
   string atomName;
   double x, y, z;
   for (unsigned int i=0; i<m_numAtoms; i++)
-    {
-      m_traj >> atomName >> x >> y >> z;
-      m_atoms[i].setPosition(x,y,z);
-    }
+  {
+    m_traj >> atomName >> x >> y >> z;
+    m_atoms[i].setPosition(x,y,z);
+  }
 }
 
 void Frame::readStep()
@@ -115,27 +116,56 @@ void Frame::readStep(int a_every)
 {
   // discard step from traj file
   for (int istep=0; istep < a_every-1; istep++)
+  {
+    char tmp[256];
+    m_traj >> tmp >> tmp >> tmp >> tmp;
+    for (unsigned int i=0; i<m_numAtoms; i++)
     {
-      char tmp[256];
       m_traj >> tmp >> tmp >> tmp >> tmp;
-      for (unsigned int i=0; i<m_numAtoms; i++)
-	{
-	  m_traj >> tmp >> tmp >> tmp >> tmp;
-	}
     }
+  }
 
   // read actual step
   m_stepNum++;
   m_totalStepNum++;
   char tmp[256];
-  m_traj >> tmp >> tmp >> tmp >> tmp;
+  int currentTimestep;
   string atomName;
   double x, y, z;
-  for (unsigned int i=0; i<m_numAtoms; i++)
+  m_traj >> tmp >> tmp >> tmp >> currentTimestep;
+  // if current timestep is a duplicate, skip it
+  // (ONLY IF READING EVERY STEP, otherwise throw error)
+  //cout << currentTimestep << endl;
+  while (currentTimestep <= m_timestep)
+  {
+    //cout << "current timestep is smaller than previous timestep" << endl;
+    if (a_every > 1)
     {
-      m_traj >> atomName >> x >> y >> z;
-      m_atoms[i].setPosition(x,y,z);
+      cerr << "ERROR: there is a duplicate or discontinuous timestep," << endl\
+        << "and every " << a_every << " steps are being read." << endl \
+        << "This is incompatible. m_timestep = " << m_timestep << ", " << endl\
+        << "currentTimestep = " << currentTimestep << endl;
+      exit(1);
+      // or figure out how to handle this and break;
     }
+    else
+    {
+      for (unsigned int i=0; i<m_numAtoms; i++)
+      {
+        m_traj >> atomName >> x >> y >> z;
+        //m_atoms[i].setPosition(x,y,z); // don't need to read position
+      }
+      m_traj >> tmp >> tmp >> tmp >> currentTimestep;
+    }
+  }
+  //cout << "reading next step" << endl;
+  m_timestep = currentTimestep;
+  for (unsigned int i=0; i<m_numAtoms; i++)
+  {
+    m_traj >> atomName >> x >> y >> z;
+    m_atoms[i].setPosition(x,y,z);
+  }
+
 }
 
 void Frame::readCharges()
@@ -172,17 +202,22 @@ void Frame::skipCharges()
     }
 }
 
-const unsigned int Frame::getStepNum() const
+const int Frame::getTimestep() const
+{
+  return m_timestep;
+}
+
+const int Frame::getStepNum() const
 {
   return m_stepNum;
 }
 
-const unsigned int Frame::getTotalStepNum() const
+const int Frame::getTotalStepNum() const
 {
   return m_totalStepNum;
 }
 
-const unsigned int Frame::getZPStepNum() const
+const int Frame::getZPStepNum() const
 {
   return m_zpStepNum;
 }

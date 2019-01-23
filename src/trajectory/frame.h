@@ -37,12 +37,14 @@ class Frame
 	void readCharges();
 	/// Skips fluctuating charges for electrodes.
 	void skipCharges();
+        /// Returns timestep of frame.
+        const int getTimestep() const;
 	/// Returns total step number (counting from beginning of trajectory and not skipping any steps).
-	const unsigned int getTotalStepNum() const;
+	const int getTotalStepNum() const;
 	/// Returns step number of the current frame in the constant-P or -Q window.
-	const unsigned int getStepNum() const;
+	const int getStepNum() const;
 	/// Returns step number of the current frame in the zero-P or -Q window.
-	const unsigned int getZPStepNum() const;
+	const int getZPStepNum() const;
 	/// Sets all atomic coordinates to -1.
         void clearFrame();
 	/// Returns a reference to a single atom in a frame.
@@ -96,12 +98,13 @@ class Frame
 	void setCharges(const System& a_system);
 	System m_system;
 	unsigned int m_every;
-	unsigned int m_stepNum;
-	unsigned int m_totalStepNum;
-	unsigned int m_zpStepNum;
+	int m_stepNum;
+	int m_totalStepNum;
+	int m_zpStepNum;
         unsigned int m_numAtoms;
         unsigned int m_numMolecules;
 	unsigned int m_numFluctuatingCharges;
+        int m_timestep;
         vector<Atom > m_atoms;
 	vector<Atom > m_COMs;
 	// record of which layer atoms and molecule COMs are in
