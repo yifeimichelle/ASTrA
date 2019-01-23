@@ -24,7 +24,7 @@ Frame::Frame(System& a_system)
   m_every = m_system.getReadFrameEvery();
 
   // Initialize reading of trajectory file
-  m_traj.open(m_system.getTrajFile());
+  m_traj.open(m_system.getTrajFile().c_str());
   unsigned int trajNumAtoms;
   m_traj >> trajNumAtoms;
   assert(m_numAtoms==trajNumAtoms);
@@ -38,7 +38,7 @@ Frame::Frame(System& a_system)
   // Initialize reading of charges file
   if (m_system.hasChargeFile())
     {
-      m_chg.open(m_system.getChargesFile());
+      m_chg.open(m_system.getChargesFile().c_str());
       unsigned int chgNumAtoms;
       char tmp[256];
       m_chg >> tmp >> tmp >> tmp >> tmp >> tmp >> tmp >> tmp;
