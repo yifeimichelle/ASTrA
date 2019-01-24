@@ -19,9 +19,9 @@ int main(int argc, char** argv)
     // read inputs
     string inputFile(argv[1]);
     System system(inputFile); // initialize system
+    Frame frame(system); // initialize trajectory frame reader
     RDF rdf(system); // initialize rdf
     AtomCounter ac(system); // initialize atomcounter
-    Frame frame(system); // initialize trajectory frame reader
 
     cout << "Reading trajectory ..." << endl;
 

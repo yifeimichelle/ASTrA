@@ -446,50 +446,53 @@ double RDF::binCoordNum(double a_coordNum, unsigned int a_pair, unsigned int a_l
 // Computes degree of confinement after number of ions in rdf have been counted
 void RDF::computeDegreeOfConfinement(const Frame& a_frame)
 {
+  //cout << "starting to compute degree of confinement." << endl;
   // For molec pair
   for (int pairIdx = 0; pairIdx < m_numMolecPairs; pairIdx++)
+  {
+    pair<unsigned int, unsigned int > atomPair = m_system.getMolecPairCorrelation(pairIdx);
+    unsigned int pairFirst = atomPair.first;
+    unsigned int pairSecond = atomPair.second;
+    int layer = -1;
+    double sum = 0.0;
+    // Layer = bottom if 2nd type is anode, top if cathode, skip if neither
+    if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
     {
-      pair<unsigned int, unsigned int > atomPair = m_system.getMolecPairCorrelation(pairIdx);
-      unsigned int pairFirst = atomPair.first;
-      unsigned int pairSecond = atomPair.second;
-      int layer = -1;
-      double sum = 0.0;
-      // Layer = bottom if 2nd type is anode, top if cathode, skip if neither
-      if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
-      	{
-	  if ( m_system.isAnodeLower() )
-	    {
-	      layer = 2;
-	    }
-	  else
-	    {
-	      layer = 0;
-	    }
-      	}
-      else if ( m_system.isAnode( pairSecond ) or m_system.isAnode( pairFirst ) )
-      	{
-	  if ( m_system.isAnodeLower() )
-	    {
-	      layer = 0;
-	    }
-	  else
-	    {
-	      layer = 2;
-	    }
-      	}
-      // If molecule is anode or cathode, layer will be set to something nonzero. Otherwise don't compute degree of confinement.
-      if (layer > -1)
-	{
-	  unsigned int numIons = a_frame.getCurrentNumMolecsInLayer(layer, pairFirst);
-	  for (int binIdx = 0; binIdx < m_numBins; binIdx ++)
-	    {
-	      // increment interior sum
-	      sum += m_solidAngleFactor[binIdx]*m_currentRDFMolecLayer[layer][binIdx][pairIdx];
-	      // save interior sum
-	      m_DoC[binIdx][pairIdx] += sum/(numIons);
-	    }
-	}
+      if ( m_system.isAnodeLower() )
+      {
+        layer = 2;
+      }
+      else
+      {
+        layer = 0;
+      }
     }
+    else if ( m_system.isAnode( pairSecond ) or m_system.isAnode( pairFirst ) )
+    {
+      if ( m_system.isAnodeLower() )
+      {
+        layer = 0;
+      }
+      else
+      {
+        layer = 2;
+      }
+    }
+    // If molecule is anode or cathode, layer will be set to something nonzero. Otherwise don't compute degree of confinement.
+    if (layer > -1)
+    {
+      //cout << "computing degree of confinement for pair " << pairIdx <<" in layer " << layer << "." << endl;
+      unsigned int numIons = a_frame.getCurrentNumMolecsInLayer(layer, pairFirst);
+      for (int binIdx = 0; binIdx < m_numBins; binIdx ++)
+      {
+        //cout << "going through bin " << binIdx << " of " << m_numBins << " for pair " << pairIdx <<" in layer " << layer << "." << endl;
+        // increment interior sum
+        sum += m_solidAngleFactor[binIdx]*m_currentRDFMolecLayer[layer][binIdx][pairIdx];
+        // save interior sum
+        m_DoC[binIdx][pairIdx] += sum/(numIons);
+      }
+    }
+  }
 }
 
 /// Get number of bins over which the DoC is computed.
