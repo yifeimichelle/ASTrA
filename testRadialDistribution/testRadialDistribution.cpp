@@ -19,12 +19,13 @@ int main(int argc, char** argv)
     // read inputs
     string inputFile(argv[1]);
     System system(inputFile); // initialize system
-    RDF rdf(system);
-    RDF rdfOld(system);
-    AtomCounter ac(system);
     Frame frame(system); // initialize trajectory frame reader
+    RDF rdf(system);
+    //RDF rdfOld(system);
+    AtomCounter ac(system);
 
     cout << "Reading trajectory ..." << endl;
+
     for (unsigned int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
       {
 	if ( frameCounter % int(ceil(system.getNumFrames()/10.0)) == 0)
@@ -33,21 +34,33 @@ int main(int argc, char** argv)
 	  }
 	// read in step of trajectory
 	frame.readStep();
+        cout << "read a step" << endl;
+        int timestep = frame.getTimestep();
+        cout << "Current timestep is " << timestep << endl;
+	if (READ_CHARGE_FILE)
+	  {
+	    frame.readCharges(); //!!
+	  }
+
+	if ( frame.getStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
+	  {
+	    cout << frame.getStepNum() << endl;
+	  }
 
 	// sample routines
 	ac.sample(frame);
         rdf.sample(frame);
-	rdfOld.sampleOld(frame);
+	//rdfOld.sampleOld(frame);
 
 	array<double, DIM> position = frame.getAtom(3).getPosition();
 	cout << position[0] << " " << position[1] << " " << position[2] << endl;
 	cout << endl;
-	
-	frame.printMolecsInLayer(0);
-	frame.printMolecsInLayer(1);
-	frame.printMolecsInLayer(2);
-	cout << endl;
-		
+
+	//frame.printMolecsInLayer(0);
+	//frame.printMolecsInLayer(1);
+	//frame.printMolecsInLayer(2);
+	//cout << endl;
+
 	// frame.printAtomsInLayerCheck(0);
 	// frame.printAtomsInLayerCheck(1);
 	// frame.printAtomsInLayerCheck(2);
@@ -58,21 +71,21 @@ int main(int argc, char** argv)
       }
     // normalize RDF
     rdf.normalize();
-    rdfOld.normalize();
-    //ac.printDensity();
+    //rdfOld.normalize();
     ac.normalize();
 
     // print to stdout
     //rdf.print();
     //ac.print();
+    //ac.printDensity();
 
     // print to a file
     RDFWrite(&rdf, "rdf");
     RDFWriteLayers(&rdf, "rdf");
     RDFMolecWrite(&rdf, "rdfmol");
     RDFMolecWriteLayers(&rdf, "rdfmol");
-    RDFWrite(&rdfOld, "rdfOld");
-    RDFWriteLayers(&rdfOld, "rdfOld");
+    //RDFWrite(&rdfOld, "rdfOld");
+    //RDFWriteLayers(&rdfOld, "rdfOld");
     // RDFMolecWrite(&rdfOld, "rdfmolOld");
     // RDFMolecWriteLayers(&rdfOld, "rdfmolOld");
     ACWriteAtomCounts(&ac, "atoms");

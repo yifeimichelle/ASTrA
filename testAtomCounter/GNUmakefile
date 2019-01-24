@@ -15,6 +15,6 @@ CFLAGS += -O3
 # ON NERSC:
 # change name of executable to reflect machine:
 # .cori for cori, .exe for edison
-testRadialDistribution: GNUmakefile $(OBJS) testRadialDistribution.cpp
-	  $(CXX) $(CPPFLAGS) $(CFLAGS) -o testRadialDistribution.exe testRadialDistribution.cpp  $(OBJS)
+testAtomCounter: GNUmakefile $(OBJS) testAtomCounter.cpp
+	  $(CXX) $(CPPFLAGS) $(CFLAGS) -o testAtomCounterChg.exe testAtomCounter.cpp  $(OBJS)
 
