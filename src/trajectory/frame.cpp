@@ -132,6 +132,7 @@ void Frame::readStep(int a_every)
   int currentTimestep;
   string atomName;
   double x, y, z;
+  // read timestep
   m_traj >> tmp >> tmp >> tmp >> currentTimestep;
   // if current timestep is a duplicate, skip it
   // (ONLY IF READING EVERY STEP, otherwise throw error)

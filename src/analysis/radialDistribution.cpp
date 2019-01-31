@@ -38,15 +38,15 @@ RDF::RDF(System& a_system)
   m_coordNumHist.resize(m_numLayers);
   m_countCoordNum.resize(m_numLayers);
   for (int i=0; i<m_numLayers; i++)
+  {
+    m_coordNum[i].resize(m_numMolecPairs);
+    m_countCoordNum[i].resize(m_numMolecPairs);
+    m_coordNumHist[i].resize(m_numBinsCoordNum);
+    for (int j=0; j<m_numBinsCoordNum; j++)
     {
-      m_coordNum[i].resize(m_numMolecPairs);
-      m_countCoordNum[i].resize(m_numMolecPairs);
-      m_coordNumHist[i].resize(m_numBinsCoordNum);
-      for (int j=0; j<m_numBinsCoordNum; j++)
-	{
-	  m_coordNumHist[i][j].resize(m_numMolecPairs);
-	}
+      m_coordNumHist[i][j].resize(m_numMolecPairs);
     }
+  }
 
   // Constants for calculating DoC
   m_Rj = 0.715; // half of carbon-carbon distance in SP2 structure
@@ -56,70 +56,70 @@ RDF::RDF(System& a_system)
   m_binSizeDoC = 1.0/m_numBinsDoC;
   double RjSq = m_Rj * m_Rj;
   for (int i=0; i<m_numBins; i++)
-    {
-      double rBin = i*m_binSize;
-      double factor;
-      factor = rBin*rBin + RjSq;
-      factor = sqrt (factor);
-      factor = rBin / factor;
-      m_solidAngleFactor[i] = 1 - factor;
-    }
+  {
+    double rBin = i*m_binSize;
+    double factor;
+    factor = rBin*rBin + RjSq;
+    factor = sqrt (factor);
+    factor = rBin / factor;
+    m_solidAngleFactor[i] = 1 - factor;
+  }
   m_DoC.resize(m_numBins);
   for (int i=0; i<m_numBins; i++)
-    {
-      m_DoC[i].resize(m_numMolecPairs);
-    }
+  {
+    m_DoC[i].resize(m_numMolecPairs);
+  }
   m_DoCHist.resize(m_numBinsDoC);
   //m_counterCharge.resize(m_numBinsDoC);
   for (int i=0; i<m_numBinsDoC; i++)
-    {
-      m_DoCHist[i].resize(2*m_numMolecPairs);
-      //m_counterCharge[i].resize(m_numMolecPairs);
-    }
+  {
+    m_DoCHist[i].resize(2*m_numMolecPairs);
+    //m_counterCharge[i].resize(m_numMolecPairs);
+  }
   // end constants for calculating DoC
 
   m_pairCounter.resize(m_numPairs);
   m_pairMolecCounter.resize(m_numMolecPairs);
 
   for (int i=0; i<m_numBins; i++)
-    {
-      m_rdf[i].resize(m_numPairs);
-    }
+  {
+    m_rdf[i].resize(m_numPairs);
+  }
   for (int i=0; i<m_numLayers; i++)
+  {
+    m_rdfLayer[i].resize(m_numBins);
+    m_rdfLayerClosest[i].resize(m_numBins);
+    for (int j=0; j<m_numBins; j++)
     {
-      m_rdfLayer[i].resize(m_numBins);
-      m_rdfLayerClosest[i].resize(m_numBins);
-      for (int j=0; j<m_numBins; j++)
-	{
-	  m_rdfLayer[i][j].resize(m_numPairs);
-	  m_rdfLayerClosest[i][j].resize(m_numPairs);
-	  for (int k=0; k<m_numPairs; k++)
-	    {
-	      m_rdfLayerClosest[i][j][k].resize(2);
-	    }
-	}
+      m_rdfLayer[i][j].resize(m_numPairs);
+      m_rdfLayerClosest[i][j].resize(m_numPairs);
+      for (int k=0; k<m_numPairs; k++)
+      {
+        m_rdfLayerClosest[i][j][k].resize(2);
+      }
     }
+  }
 
   for (int i=0; i<m_numBins; i++)
-    {
-      m_rdfMolec[i].resize(m_numMolecPairs);
-    }
+  {
+    m_rdfMolec[i].resize(m_numMolecPairs);
+  }
   for (int i=0; i<m_numLayers; i++)
+  {
+    m_rdfMolecLayer[i].resize(m_numBins);
+    m_currentRDFMolecLayer[i].resize(m_numBins);
+    m_rdfMolecLayerClosest[i].resize(m_numBins);
+    for (int j=0; j<m_numBins; j++)
     {
-      m_rdfMolecLayer[i].resize(m_numBins);
-      m_currentRDFMolecLayer[i].resize(m_numBins);
-      m_rdfMolecLayerClosest[i].resize(m_numBins);
-      for (int j=0; j<m_numBins; j++)
-	{
-	  m_rdfMolecLayer[i][j].resize(m_numMolecPairs);
-	  m_currentRDFMolecLayer[i][j].resize(m_numMolecPairs);
-	  m_rdfMolecLayerClosest[i][j].resize(m_numMolecPairs);
-	  for (int k=0; k<m_numMolecPairs; k++)
-	    {
-	      m_rdfMolecLayerClosest[i][j][k].resize(2);
-	    }
-	}
+      m_rdfMolecLayer[i][j].resize(m_numMolecPairs);
+      m_currentRDFMolecLayer[i][j].resize(m_numMolecPairs);
+      m_rdfMolecLayerClosest[i][j].resize(m_numMolecPairs);
+      for (int k=0; k<m_numMolecPairs; k++)
+      {
+        m_rdfMolecLayerClosest[i][j][k].resize(2);
+      }
     }
+  }
 
 };
 
@@ -152,130 +152,134 @@ void RDF::sampleMolecules(const Frame& a_frame)
 
   // For each layer
   for (int layIdx = 0; layIdx < m_numLayers; layIdx++)
+  {
+    // Get list of molecules in this layer
+    vector<int>* molecsInLayer = a_frame.getMoleculesInLayer(layIdx);
+    // For each pair
+    for (int pairIdx = 0; pairIdx < m_numMolecPairs; pairIdx++)
     {
-      // Get list of molecules in this layer
-      vector<int>* molecsInLayer = a_frame.getMoleculesInLayer(layIdx);
-      // For each pair
-      for (int pairIdx = 0; pairIdx < m_numMolecPairs; pairIdx++)
-	{
-	  pair<unsigned int, unsigned int > molecPair = m_system.getMolecPairCorrelation(pairIdx);
-	  double Rcut = m_system.getMolecPairCutoff(pairIdx);
-	  int pairFirst = molecPair.first;
-	  int pairSecond = molecPair.second;
-	  vector<double > minDistanceB;
-	  int pairSecondSize = molecsInLayer[pairSecond].size();
-	  minDistanceB.resize(pairSecondSize,1000.0);
+      pair<unsigned int, unsigned int > molecPair = m_system.getMolecPairCorrelation(pairIdx);
+      double Rcut = m_system.getMolecPairCutoff(pairIdx);
+      int pairFirst = molecPair.first;
+      int pairSecond = molecPair.second;
+      vector<double > minDistanceB;
+      int pairSecondSize = molecsInLayer[pairSecond].size();
+      minDistanceB.resize(pairSecondSize,1000.0);
 
-	  // Find out whether to compute DoC
-	  int layer = -1;
-	  unsigned int computeDoC = 0;
-	  unsigned int isCounterCharge = 0;
-	  if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
-	    {
-	      if ( m_system.isAnodeLower() )
-		{
-		  layer = 2;
-		}
-	      else
-		{
-		  layer = 0;
-		}
-	      if ( m_system.isAnion(pairFirst ) )
-		{
-		  isCounterCharge = 1;
-		}
-	    }
-	  else if ( m_system.isAnode( pairSecond ) or m_system.isAnode( pairFirst ) )
-	    {
-	      if ( m_system.isAnodeLower() )
-		{
-		  layer = 0;
-		}
-	      else
-		{
-		  layer = 2;
-		}
-	      if ( m_system.isCation(pairFirst ) )
-		{
-		  isCounterCharge = 1;
-		}
-	    }
-	  if ( layIdx == layer)
-	    {
-	      computeDoC = 1;
-	    }
-	  // For each molecule of first type in pair
-	  //cout << layIdx << " " << pairIdx << " " << molecsInLayer[pairFirst].size() << " " << molecsInLayer[pairSecond].size() << endl;
-	  for (vector<int>::iterator itA = molecsInLayer[pairFirst].begin(); itA != molecsInLayer[pairFirst].end(); ++itA)
-	    {
-	      minDistance = 1000.0;
-	      int secondIndex = 0;
-	      double DoC = 0.0;
-	      double sumElecCharge = 0.0;
-	      double coordNum = 0.0;
-	      // For each molecule of second type in pair
-	      for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
-		{
-		  // Compute distance
-		  double distance = a_frame.computeMolecDistance(*itA,*itB);
-		  // Check whether distance is closest for atom type A
-		  if (distance < minDistance)
-		    {
-		      minDistance = distance;
-		    }
-  		  // Check whether distance is closest for atom type B
-		  if (distance < minDistanceB[secondIndex])
-		    {
-		      minDistanceB[secondIndex] = distance;
-		    }
-		  // Bin it
-		  if (distance < m_maxDist)
-		    {
-		      binMolecPairDistanceLayer(distance, pairIdx, layIdx);
-		      if (distance < Rcut)
-			{
-			  if (computeDoC)
-			    {
-			      DoC += computeSolidAngleFactor(distance);
-			      sumElecCharge += a_frame.getAtomOfMolec(*itB).getCharge();
-			    }
-			  else
-			    {
-			      coordNum++;
-			      // if (coordNum > 20)
-			      // {
-			      //   cout << pairIdx << " " <<  m_system.getFirstAtomOfMolec(*itA);
-			      // 	cout << " " << m_system.getFirstAtomOfMolec(*itB) << " ";
-			      // 	cout << coordNum << " " << Rcut << " " << distance << endl;
-			      // }
-			    }
-			}
-		    }
-		  secondIndex++;
-		}
-	      binCoordNum(coordNum, pairIdx, layIdx);
-	      if (computeDoC)
-		{
-		  DoC /= (2.0*m_phi);
-		  binDoC(DoC, sumElecCharge, isCounterCharge, pairIdx);
-		}
-	      if(minDistance < m_maxDist)
-	      	{
-	      	  // bin distance as closest species B to species A (reference)
-	      	  binMolecPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
-	      	}
-	    }
-	  // For each molecule of second type in pair
-	  for (int secondIndex=0; secondIndex<pairSecondSize; secondIndex++)
-	    {
-	      if(minDistanceB[secondIndex] < m_maxDist)
-	  	{
-	  	  // bin distance as closest species I to species J (reference)
-	  	  binMolecPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx);
-	  	}
-	    }
-	}
+      // Find out whether to compute DoC
+      int layer = -1;
+      unsigned int computeDoC = 0;
+      unsigned int isCounterCharge = 0;
+      if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
+      {
+        if ( m_system.isAnodeLower() )
+        {
+          layer = 2;
+        }
+        else
+        {
+          layer = 0;
+        }
+        if ( m_system.isAnion(pairFirst ) )
+        {
+          isCounterCharge = 1;
+        }
+      }
+      else if ( m_system.isAnode( pairSecond ) or m_system.isAnode( pairFirst ) )
+      {
+        if ( m_system.isAnodeLower() )
+        {
+          layer = 0;
+        }
+        else
+        {
+          layer = 2;
+        }
+        if ( m_system.isCation(pairFirst ) )
+        {
+          isCounterCharge = 1;
+        }
+      }
+      if ( layIdx == layer)
+      {
+        computeDoC = 1;
+      }
+      // For each molecule of first type in pair
+      //cout << layIdx << " " << pairIdx << " " << molecsInLayer[pairFirst].size() << " " << molecsInLayer[pairSecond].size() << endl;
+      for (vector<int>::iterator itA = molecsInLayer[pairFirst].begin(); itA != molecsInLayer[pairFirst].end(); ++itA)
+      {
+        minDistance = 1000.0;
+        int secondIndex = 0;
+        double DoC = 0.0;
+        double sumElecCharge = 0.0;
+        double coordNum = 0.0;
+        // For each molecule of second type in pair
+        for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
+        {
+          // Compute distance
+          double distance = a_frame.computeMolecDistance(*itA,*itB);
+          // Check whether distance is closest for atom type A
+          if (distance < minDistance)
+          {
+            minDistance = distance;
+          }
+          // Check whether distance is closest for atom type B
+          if (distance < minDistanceB[secondIndex])
+          {
+            minDistanceB[secondIndex] = distance;
+          }
+          // Bin it
+          if (distance < m_maxDist)
+          {
+            binMolecPairDistanceLayer(distance, pairIdx, layIdx);
+            if (distance < Rcut)
+            {
+              if (computeDoC)
+              {
+                DoC += computeSolidAngleFactor(distance);
+                sumElecCharge += a_frame.getAtomOfMolec(*itB).getCharge();
+              }
+              else
+              {
+                coordNum++;
+                // if (coordNum > 20)
+                // {
+                //   cout << pairIdx << " " <<  m_system.getFirstAtomOfMolec(*itA);
+                // 	 cout << " " << m_system.getFirstAtomOfMolec(*itB) << " ";
+                // 	 cout << coordNum << " " << Rcut << " " << distance << endl;
+                // }
+              }
+            }
+          }
+          secondIndex++;
+        }
+        if(coordNum > MAX_COORD_NUM)
+        {
+          cout << coordNum << endl;
+        }
+        binCoordNum(coordNum, pairIdx, layIdx);
+        if (computeDoC)
+        {
+          DoC /= (2.0*m_phi);
+          binDoC(DoC, sumElecCharge, isCounterCharge, pairIdx);
+        }
+        if(minDistance < m_maxDist)
+        {
+          // bin distance as closest species B to species A (reference)
+          binMolecPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
+        }
+      }
+      // For each molecule of second type in pair
+      for (int secondIndex=0; secondIndex<pairSecondSize; secondIndex++)
+      {
+        if(minDistanceB[secondIndex] < m_maxDist)
+        {
+          // bin distance as closest species I to species J (reference)
+          binMolecPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx);
+        }
+      }
     }
+  }
 
 }
 
@@ -290,63 +294,63 @@ void RDF::sampleAtoms(const Frame& a_frame)
 
   // For each layer
   for (int layIdx = 0; layIdx < m_numLayers; layIdx++)
+  {
+    // Get list of atoms in this layer
+    vector<int>* atomsInLayer = a_frame.getAtomsInLayer(layIdx);
+    // For each pair
+    for (int pairIdx = 0; pairIdx < m_numPairs; pairIdx++)
     {
-      // Get list of atoms in this layer
-      vector<int>* atomsInLayer = a_frame.getAtomsInLayer(layIdx);
-      // For each pair
-      for (int pairIdx = 0; pairIdx < m_numPairs; pairIdx++)
-	{
-	  // Get atom types of pair
-	  pair<unsigned int, unsigned int > atomPair = m_system.getPairCorrelation(pairIdx);
-	  int pairFirst = atomPair.first;
-	  int pairSecond = atomPair.second;
-	  int pairSecondSize = atomsInLayer[pairSecond].size();
-	  vector<double > minDistanceB;
-	  minDistanceB.resize(pairSecondSize,1000.0);
-	  // For each atom of first type in pair
-	  for (vector<int>::iterator itA = atomsInLayer[pairFirst].begin(); itA != atomsInLayer[pairFirst].end(); ++itA)
-	    {
-	      minDistance = 1000.0;
-	      int secondIndex = 0;
-	      // For each atom of second type in pair
-	      for (vector<int>::iterator itB = atomsInLayer[pairSecond].begin(); itB != atomsInLayer[pairSecond].end(); ++itB)
-		{
-		  // Compute distance
-		  float distance = a_frame.computeDistance(*itA,*itB);
-		  // Check whether distance is closest for atom type A
-		  if (distance < minDistance)
-		    {
-		      minDistance = distance;
-		    }
-		  // Check whether distance is closest for atom type B
-		  if (distance < minDistanceB[secondIndex])
-		    {
-		      minDistanceB[secondIndex] = distance;
-		    }
-		  // Bin it
-		  if (distance < m_maxDist)
-		    {
-		      binPairDistanceLayer(distance, pairIdx, layIdx);
-		    }
-		  secondIndex++;
-		}
-	      if(minDistance < m_maxDist)
-	      	{
-	      	  // bin distance as closest species B to species A (reference)
-	      	  binPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
-	      	}
-	    }
-	  // For each atom of second type in pair
-	  for (int secondIndex=0; secondIndex<pairSecondSize; secondIndex++)
-	    {
-	      if(minDistanceB[secondIndex] < m_maxDist)
-	  	{
-	  	  // bin distance as closest species I to species J (reference)
-	  	  binPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx);
-	  	}
-	    }
-	}
+      // Get atom types of pair
+      pair<unsigned int, unsigned int > atomPair = m_system.getPairCorrelation(pairIdx);
+      int pairFirst = atomPair.first;
+      int pairSecond = atomPair.second;
+      int pairSecondSize = atomsInLayer[pairSecond].size();
+      vector<double > minDistanceB;
+      minDistanceB.resize(pairSecondSize,1000.0);
+      // For each atom of first type in pair
+      for (vector<int>::iterator itA = atomsInLayer[pairFirst].begin(); itA != atomsInLayer[pairFirst].end(); ++itA)
+      {
+        minDistance = 1000.0;
+        int secondIndex = 0;
+        // For each atom of second type in pair
+        for (vector<int>::iterator itB = atomsInLayer[pairSecond].begin(); itB != atomsInLayer[pairSecond].end(); ++itB)
+        {
+          // Compute distance
+          float distance = a_frame.computeDistance(*itA,*itB);
+          // Check whether distance is closest for atom type A
+          if (distance < minDistance)
+          {
+            minDistance = distance;
+          }
+          // Check whether distance is closest for atom type B
+          if (distance < minDistanceB[secondIndex])
+          {
+            minDistanceB[secondIndex] = distance;
+          }
+          // Bin it
+          if (distance < m_maxDist)
+          {
+            binPairDistanceLayer(distance, pairIdx, layIdx);
+          }
+          secondIndex++;
+        }
+        if(minDistance < m_maxDist)
+        {
+          // bin distance as closest species B to species A (reference)
+          binPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
+        }
+      }
+      // For each atom of second type in pair
+      for (int secondIndex=0; secondIndex<pairSecondSize; secondIndex++)
+      {
+        if(minDistanceB[secondIndex] < m_maxDist)
+        {
+          // bin distance as closest species I to species J (reference)
+          binPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx);
+        }
+      }
     }
+  }
 
 }
 
@@ -373,13 +377,13 @@ void RDF::binMolecPairDistanceLayer(double a_distance, unsigned int a_pair, unsi
 
 void RDF::clearFrame()
 {
-    for (int i=0; i<m_numLayers; i++)
+  for (int i=0; i<m_numLayers; i++)
+  {
+    for (int j=0; j<m_numBins; j++)
     {
-      for (int j=0; j<m_numBins; j++)
-	{
-	  fill(m_currentRDFMolecLayer[i][j].begin(), m_currentRDFMolecLayer[i][j].end(), 0);
-	}
+      fill(m_currentRDFMolecLayer[i][j].begin(), m_currentRDFMolecLayer[i][j].end(), 0);
     }
+  }
 }
 
 void RDF::binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer)
@@ -414,12 +418,12 @@ double RDF::binDoC(double a_doc, double a_elecCharge, unsigned int a_isCounterCh
 {
   int bin = floor(a_doc / m_binSizeDoC);
   if(a_doc<1.0)
-    {
-      m_DoCHist[bin][2*a_pair]++;
-      m_DoCHist[bin][2*a_pair+1] += a_elecCharge / 0.78;
-      //m_counterCharge[bin][a_pair] += a_elecCharge / 0.78;
-      m_countIonsDoC[a_pair]++;
-    }
+  {
+    m_DoCHist[bin][2*a_pair]++;
+    m_DoCHist[bin][2*a_pair+1] += a_elecCharge / 0.78;
+    //m_counterCharge[bin][a_pair] += a_elecCharge / 0.78;
+    m_countIonsDoC[a_pair]++;
+  }
 }
 
 double RDF::binCoordNum(double a_coordNum, unsigned int a_pair, unsigned int a_layer)
@@ -522,68 +526,68 @@ void RDF::normalize()
 {
   int numFrames = m_system.getNumFrames();
   for (int i=0; i<m_numBins; i++)
+  {
+    double normFactor = (4./3.)*M_PI*(pow(i+1,3)-pow(i,3))*pow(m_binSize,3);
+    normFactor = normFactor * numFrames;
+    double DoCnormFactor = numFrames * m_phi*2.0;
+    for (int j=0; j<m_system.getNumPairs(); j++)
     {
-      double normFactor = (4./3.)*M_PI*(pow(i+1,3)-pow(i,3))*pow(m_binSize,3);
-      normFactor = normFactor * numFrames;
-      double DoCnormFactor = numFrames * m_phi*2.0;
-      for (int j=0; j<m_system.getNumPairs(); j++)
-	{
-	  m_rdf[i][j] /= normFactor;
-	  for (int k=0; k<m_numLayers; k++)
-	    {
-	      m_rdfLayer[k][i][j] /= normFactor;
-	      m_rdfLayerClosest[k][i][j][0] /= normFactor;
-	      m_rdfLayerClosest[k][i][j][1] /= normFactor;
-	    }
-	}
-      for (int j=0; j<m_numMolecPairs; j++)
-	{
-	  m_rdfMolec[i][j] /= normFactor;
-	  m_DoC[i][j] /= DoCnormFactor;
-	  for (int k=0; k<m_numLayers; k++)
-	    {
-	      m_rdfMolecLayer[k][i][j] /= normFactor;
-	      m_rdfMolecLayerClosest[k][i][j][0] /= normFactor;
-	      m_rdfMolecLayerClosest[k][i][j][1] /= normFactor;
-	    }
-	}
+      m_rdf[i][j] /= normFactor;
+      for (int k=0; k<m_numLayers; k++)
+      {
+        m_rdfLayer[k][i][j] /= normFactor;
+        m_rdfLayerClosest[k][i][j][0] /= normFactor;
+        m_rdfLayerClosest[k][i][j][1] /= normFactor;
+      }
     }
+    for (int j=0; j<m_numMolecPairs; j++)
+    {
+      m_rdfMolec[i][j] /= normFactor;
+      m_DoC[i][j] /= DoCnormFactor;
+      for (int k=0; k<m_numLayers; k++)
+      {
+        m_rdfMolecLayer[k][i][j] /= normFactor;
+        m_rdfMolecLayerClosest[k][i][j][0] /= normFactor;
+        m_rdfMolecLayerClosest[k][i][j][1] /= normFactor;
+      }
+    }
+  }
   for (int i=0; i<m_numBinsDoC; i++)
+  {
+    for (int j=0; j<m_numMolecPairs; j++)
     {
-      for (int j=0; j<m_numMolecPairs; j++)
-	{
-	  //m_counterCharge[i][j] /= m_DoCHist[i][j];
-	  if ( m_countIonsDoC[j] > 0)
-	    {
-	      m_DoCHist[i][2*j+1] /= m_DoCHist[i][2*j];
-	    }
-	  m_DoCHist[i][2*j] /= (numFrames * m_countIonsDoC[j] *  m_binSizeDoC);
-	}
+      //m_counterCharge[i][j] /= m_DoCHist[i][j];
+      if ( m_countIonsDoC[j] > 0)
+      {
+        m_DoCHist[i][2*j+1] /= m_DoCHist[i][2*j];
+      }
+      m_DoCHist[i][2*j] /= (numFrames * m_countIonsDoC[j] *  m_binSizeDoC);
     }
+  }
   for (int i=0; i<m_numLayers; i++)
+  {
+    for (int j=0; j<m_numMolecPairs; j++)
     {
-      for (int j=0; j<m_numMolecPairs; j++)
-	{
-	  m_coordNum[i][j] /= m_countCoordNum[i][j];
-	  for (int k=0; k<m_numBinsCoordNum; k++)
-	    {
-	      m_coordNumHist[i][k][j] /= m_countCoordNum[i][j];
-	    }
-	}
+      m_coordNum[i][j] /= m_countCoordNum[i][j];
+      for (int k=0; k<m_numBinsCoordNum; k++)
+      {
+        m_coordNumHist[i][k][j] /= m_countCoordNum[i][j];
+      }
     }
+  }
 }
 
 void RDF::print()
 {
   {
     for (int i=0; i<m_numBins; i++)
+    {
+      for (int j=0; j<m_system.getNumPairs(); j++)
       {
-	for (int j=0; j<m_system.getNumPairs(); j++)
-	  {
-	    cout << i*m_binSize << " " << m_rdf[i][j] << endl;
-	  }
-	cout << endl << endl;
+        cout << i*m_binSize << " " << m_rdf[i][j] << endl;
       }
+      cout << endl << endl;
+    }
   }
 }
 
@@ -634,7 +638,7 @@ double* RDF::getRDFAddress(int i)
 
 void RDF::setRDFLayerClosestValue(int a_layer, int a_bin, int a_pair, int a_closest, double a_setVal)
 {
-    m_rdfLayerClosest[a_layer][a_bin][a_pair][a_closest] = a_setVal;
+  m_rdfLayerClosest[a_layer][a_bin][a_pair][a_closest] = a_setVal;
 }
 
 double* RDF::getRDFAddressLayers(int i, int j)
@@ -672,12 +676,12 @@ double* RDF::getDoCHistAddress(int i)
   return &(m_DoCHist[i][0]);
 }
 
-	/// Get address of first element in CoordNum
+/// Get address of first element in CoordNum
 double* RDF::getCoordNumAddress(int i)
 {
   return &(m_coordNum[i][0]);
 }
-	/// Get address of first element in CoordNumHist
+/// Get address of first element in CoordNumHist
 double* RDF::getCoordNumHistAddress(int i, int j)
 {
   return &(m_coordNumHist[i][j][0]);
@@ -692,9 +696,9 @@ const char* RDFWrite(RDF* a_rdf, const char* a_filename)
   const char * const headernames[] = { "z[A]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14", "15", "16", "17", "18", "19", "20" };
   double* data[500];
   for (int i=0; i<numBins; i++)
-    {
-      data[i] = a_rdf->getRDFAddress(i);
-    }
+  {
+    data[i] = a_rdf->getRDFAddress(i);
+  }
   write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
   return a_filename;
 }
@@ -708,20 +712,20 @@ const char* RDFWriteLayers(RDF* a_rdf, const char* a_filename)
   const char * const headernames[] = { "nodeData" };
   double*** data = new double**[numLayers];
   for (int i=0; i<numLayers; i++)
+  {
+    data[i] = new double*[numBins];
+    for (int j=0; j<numBins; j++)
     {
-      data[i] = new double*[numBins];
-      for (int j=0; j<numBins; j++)
-      	{
-	  data[i][j] =a_rdf->getRDFAddressLayers(i,j);
-	}
+      data[i][j] =a_rdf->getRDFAddressLayers(i,j);
     }
+  }
   write_binned_layered_data(a_filename, numBins, binSize, varDim, numLayers, headernames, data);
 
   // delete array of pointers
   for (int i=0; i<numLayers; i++)
-    {
-        delete data[i];
-    }
+  {
+    delete data[i];
+  }
   delete data;
 
   return a_filename;
@@ -736,31 +740,31 @@ const char* RDFWriteLayersClosest(RDF* a_rdf, const char* a_filename)
   const char * const headernames[] = { "nodeData" };
   double**** data = new double***[numLayers];
   for (int i=0; i<numLayers; i++)
+  {
+    data[i] = new double**[numBins];
+    for (int j=0; j<numBins; j++)
     {
-      data[i] = new double**[numBins];
-      for (int j=0; j<numBins; j++)
-      	{
-	  data[i][j] = new double*[varDim];
-          for (int k=0; k<varDim; k++)
-	    {
-	      data[i][j][k] = a_rdf->getRDFAddressLayersClosest(i,j,k);
-	    }
-      	}
+      data[i][j] = new double*[varDim];
+      for (int k=0; k<varDim; k++)
+      {
+        data[i][j][k] = a_rdf->getRDFAddressLayersClosest(i,j,k);
+      }
     }
+  }
   write_binned_layered_multival_data(a_filename, numBins, binSize, varDim, numLayers, 2, headernames, data);
 
   // delete array of pointers
   for (int i=0; i<numLayers; i++)
+  {
+    for (int j=0; j<numBins; j++)
     {
-      for (int j=0; j<numBins; j++)
-      	{
-            delete data[i][j];
-      	}
+      delete data[i][j];
     }
+  }
   for (int i=0; i<numLayers; i++)
-    {
-        delete data[i];
-    }
+  {
+    delete data[i];
+  }
   delete data;
 
   return a_filename;
@@ -775,9 +779,9 @@ const char* RDFMolecWrite(RDF* a_rdf, const char* a_filename)
   const char * const headernames[] = { "z[A]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14", "15", "16", "17", "18", "19", "20" };
   double* data[500];
   for (int i=0; i<numBins; i++)
-    {
-      data[i] = a_rdf->getMolecRDFAddress(i);
-    }
+  {
+    data[i] = a_rdf->getMolecRDFAddress(i);
+  }
   write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
   return a_filename;
 }
@@ -791,20 +795,20 @@ const char* RDFMolecWriteLayers(RDF* a_rdf, const char* a_filename)
   const char * const headernames[] = { "nodeData" };
   double*** data = new double**[numLayers];
   for (int i=0; i<numLayers; i++)
+  {
+    data[i] = new double*[numBins];
+    for (int j=0; j<numBins; j++)
     {
-      data[i] = new double*[numBins];
-      for (int j=0; j<numBins; j++)
-      	{
-	  data[i][j] =a_rdf->getMolecRDFAddressLayers(i,j);
-	}
+      data[i][j] =a_rdf->getMolecRDFAddressLayers(i,j);
     }
+  }
   write_binned_layered_data(a_filename, numBins, binSize, varDim, numLayers, headernames, data);
 
   // delete array of pointers
   for (int i=0; i<numLayers; i++)
-    {
-        delete data[i];
-    }
+  {
+    delete data[i];
+  }
   delete data;
 
   return a_filename;
@@ -820,31 +824,31 @@ const char* RDFMolecWriteLayersClosest(RDF* a_rdf, const char* a_filename)
   const char * const headernames[] = { "nodeData" };
   double**** data = new double***[numLayers];
   for (int i=0; i<numLayers; i++)
+  {
+    data[i] = new double**[numBins];
+    for (int j=0; j<numBins; j++)
     {
-      data[i] = new double**[numBins];
-      for (int j=0; j<numBins; j++)
-      	{
-	  data[i][j] = new double*[varDim];
-          for (int k=0; k<varDim; k++)
-	    {
-	      data[i][j][k] = a_rdf->getMolecRDFAddressLayersClosest(i,j,k);
-	    }
-      	}
+      data[i][j] = new double*[varDim];
+      for (int k=0; k<varDim; k++)
+      {
+        data[i][j][k] = a_rdf->getMolecRDFAddressLayersClosest(i,j,k);
+      }
     }
+  }
   write_binned_layered_multival_data(a_filename, numBins, binSize, varDim, numLayers, 2, headernames, data);
 
   // delete array of pointers
   for (int i=0; i<numLayers; i++)
+  {
+    for (int j=0; j<numBins; j++)
     {
-      for (int j=0; j<numBins; j++)
-      	{
-            delete data[i][j];
-      	}
+      delete data[i][j];
     }
+  }
   for (int i=0; i<numLayers; i++)
-    {
-        delete data[i];
-    }
+  {
+    delete data[i];
+  }
   delete data;
 
   return a_filename;
@@ -858,9 +862,9 @@ const char* DoCWrite(RDF* a_rdf, const char* a_filename)
   const char * const headernames[] = { "z[A]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14", "15", "16", "17", "18", "19", "20" };
   double* data[500];
   for (int i=0; i<numBins; i++)
-    {
-      data[i] = a_rdf->getDoCAddress(i);
-    }
+  {
+    data[i] = a_rdf->getDoCAddress(i);
+  }
   write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
   return a_filename;
 }
@@ -873,9 +877,9 @@ const char* DoCHistWrite(RDF* a_rdf, const char* a_filename)
   const char * const headernames[] = { "z[A]",  "DoC_0",  "cc_0",  "DoC_1",  "cc_1",  "DoC_1",  "cc_2",  "DoC_3",  "cc_3",  "DoC_4",  "cc_4",  "DoC_5",  "cc_5",  "DoC_6",  "cc_6",  "DoC_7",  "cc_7",  "DoC_8",  "cc_8",  "DoC_9",  "cc_9",  "DoC_10",  "cc_10",  "DoC_11",  "cc_11",  "DoC_12",  "cc_12",  "DoC_13",  "cc_13" };
   double* data[500];
   for (int i=0; i<numBins; i++)
-    {
-      data[i] = a_rdf->getDoCHistAddress(i);
-    }
+  {
+    data[i] = a_rdf->getDoCHistAddress(i);
+  }
   write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
   return a_filename;
 }
@@ -889,20 +893,20 @@ const char* CoordNumHistWrite(RDF* a_rdf, const char* a_filename)
   const char * const headernames[] = { "nodeData" };
   double*** data = new double**[numLayers];
   for (int i=0; i<numLayers; i++)
+  {
+    data[i] = new double*[numBins];
+    for (int j=0; j<numBins; j++)
     {
-      data[i] = new double*[numBins];
-      for (int j=0; j<numBins; j++)
-      	{
-	  data[i][j] =a_rdf->getCoordNumHistAddress(i,j);
-	}
+      data[i][j] =a_rdf->getCoordNumHistAddress(i,j);
     }
+  }
   write_binned_layered_data(a_filename, numBins, binSize, varDim, numLayers, headernames, data);
 
   // delete array of pointers
   for (int i=0; i<numLayers; i++)
-    {
-        delete data[i];
-    }
+  {
+    delete data[i];
+  }
   delete data;
 
   return a_filename;
@@ -919,9 +923,9 @@ const char* CoordNumWrite(RDF* a_rdf, const char* a_filename)
   double** data;
   data = new double* [numLayers];
   for (int i=0; i<numLayers; i++)
-    {
-      data[i] = a_rdf->getCoordNumAddress(i);
-    }
+  {
+    data[i] = a_rdf->getCoordNumAddress(i);
+  }
   write_layered_data(a_filename, numLayers, layers, varDim, headernames, data);
   delete data, layers;
   return a_filename;

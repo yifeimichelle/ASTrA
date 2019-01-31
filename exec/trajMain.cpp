@@ -10,111 +10,117 @@ using namespace std;
 int main(int argc, char** argv)
 {
   if(argc != 2) //!! Make it able to take additional arguments
+  {
+    cout << "this program takes one argument that is the input file ";
+    cout << endl;
+    return 1;
+  }
+
+  // read inputs
+  string inputFile(argv[1]);
+  System system(inputFile); // initialize system
+  Frame frame(system); // initialize trajectory frame reader
+  RDF rdf(system); // initialize rdf
+  AtomCounter ac(system); // initialize atomcounter
+
+  cout << "Reading trajectory ..." << endl;
+
+  // Skip frames
+  if (system.getNumZPFrames() > 0)
+  {
+    for (int i=0; i<system.getNumSkipFrames(); i++)
     {
-      cout << "this program takes one argument that is the input file ";
-      cout << endl;
-      return 1;
+      frame.skipStep();
+      ac.sampleSkip(frame);
+      if (READ_CHARGE_FILE)
+      {
+        frame.skipCharges(); //!!
+      }
     }
 
-    // read inputs
-    string inputFile(argv[1]);
-    System system(inputFile); // initialize system
-    Frame frame(system); // initialize trajectory frame reader
-    RDF rdf(system); // initialize rdf
-    AtomCounter ac(system); // initialize atomcounter
-
-    cout << "Reading trajectory ..." << endl;
-
-    // Skip frames
-    if (system.getNumZPFrames() > 0)
+    // Read zero-potential, zero-charge frames
+    cout << "Analyzing zero-P, zero-Q run of " << system.getNumZPFrames() << " steps..." << endl;
+    for (unsigned int frameCounter = 0; frameCounter<system.getNumZPFrames(); frameCounter++)
+    {
+      frame.readZPStep();
+      if (READ_CHARGE_FILE)
       {
-	for (int i=0; i<system.getNumSkipFrames(); i++)
-	  {
-	    frame.skipStep();
-	    ac.sampleSkip(frame);
-	    if (READ_CHARGE_FILE)
-	      {
-		frame.skipCharges(); //!!
-	      }
-	  }
-
-	// Read zero-potential, zero-charge frames
-	cout << "Analyzing zero-P, zero-Q run of " << system.getNumZPFrames() << " steps..." << endl;
-	for (unsigned int frameCounter = 0; frameCounter<system.getNumZPFrames(); frameCounter++)
-	  {
-	    frame.readZPStep();
-	    if (READ_CHARGE_FILE)
-	      {
-		frame.skipCharges(); //!!
-	      }
-
-	    if (frame.getZPStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
-	      {
-		cout << frame.getZPStepNum() << endl;
-	      }
-
-	    ac.sampleZP(frame);
-	    frame.clearFrame();
-	  }
-	ac.normalizeZP();
+        frame.skipCharges(); //!!
       }
 
-    // Skip frames (potential or charge turned on)
-    for (int i=0; i<system.getNumSkipFrames(); i++)
+      if (frame.getZPStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
       {
-	frame.skipStep();
-	ac.sampleSkip(frame);
+        cout << frame.getZPStepNum() << endl;
       }
 
-    // Read constant-potential or constant-charge frames
-    cout << "Analyzing constant-P or -Q run of " << system.getNumFrames() << " steps..." << endl;
-    for (unsigned int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
-      {
-	// read in step of trajectory
-	frame.readStep();
-	if (READ_CHARGE_FILE)
-	  {
-	    frame.readCharges(); //!!
-	  }
+      ac.sampleZP(frame);
+      frame.clearFrame();
+    }
+    ac.normalizeZP();
+  }
 
-	if ( frame.getStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
-	  {
-	    cout << frame.getStepNum() << endl;
-	  }
+  // Skip frames (potential or charge turned on)
+  for (int i=0; i<system.getNumSkipFrames(); i++)
+  {
+    frame.skipStep();
+    ac.sampleSkip(frame);
+  }
 
-	// sample routines
-	ac.sample(frame);
-        rdf.sample(frame);
-	rdf.computeDegreeOfConfinement(frame);
+  // Read constant-potential or constant-charge frames
+  cout << "Analyzing constant-P or -Q run of " << system.getNumFrames() << " steps..." << endl;
+  for (unsigned int frameCounter = 0; frameCounter<system.getNumFrames(); frameCounter++)
+  {
+    // read in step of trajectory
+    frame.readStep();
+    if (READ_CHARGE_FILE)
+    {
+      frame.readCharges(); //!!
+    }
 
-	// clear frame memory
-	frame.clearFrame();
-	rdf.clearFrame();
-      }
-    // normalize RDF
-    rdf.normalize();
-    ac.normalize();
+    cout << "got here 1" << endl;
+    //if ( frame.getStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
+    //{
+      cout << frame.getStepNum() << endl;
+        int timestep = frame.getTimestep();
+        cout << "Current timestep is " << timestep << endl;
+    //}
+    cout << "got here 2" << endl;
 
-    // print to stdout
-    //ac.printDensity();
-    //rdf.print();
-    //ac.print();
+    // sample routines
+    ac.sample(frame);
+    rdf.sample(frame);
+    cout << "got here 3" << endl;
+    rdf.computeDegreeOfConfinement(frame);
+    cout << "got here 4" << endl;
 
-    // print to a file
-    RDFWrite(&rdf, "rdf");
-    RDFWriteLayers(&rdf, "rdf");
-    RDFWriteLayersClosest(&rdf, "rdfclo");
-    RDFMolecWrite(&rdf, "rdfmol");
-    RDFMolecWriteLayers(&rdf, "rdfmol");
-    RDFMolecWriteLayersClosest(&rdf, "rdfmolclo");
-    DoCWrite(&rdf, "DoC");
-    DoCHistWrite(&rdf, "DoCHist");
-    CoordNumWrite(&rdf, "coordnum");
-    CoordNumHistWrite(&rdf, "coordnumHist");
-    ACWriteAtomCounts(&ac, "atoms");
-    ACWriteDensity(&ac, "density");
-    ACWriteIons(&ac, "ions");
-    ACWriteIonsInLayers(&ac, "layers");
-    ACWriteIonsInLayersTime(&ac, "numionslayers");
-    ACWriteCollectiveVars(&ac, "ionCV");
+    // clear frame memory
+    frame.clearFrame();
+    rdf.clearFrame();
+  }
+  // normalize RDF
+  rdf.normalize();
+  ac.normalize();
+
+  // print to stdout
+  //ac.printDensity();
+  //rdf.print();
+  //ac.print();
+
+  // print to a file
+  RDFWrite(&rdf, "rdf");
+  RDFWriteLayers(&rdf, "rdf");
+  RDFWriteLayersClosest(&rdf, "rdfclo");
+  RDFMolecWrite(&rdf, "rdfmol");
+  RDFMolecWriteLayers(&rdf, "rdfmol");
+  RDFMolecWriteLayersClosest(&rdf, "rdfmolclo");
+  DoCWrite(&rdf, "DoC");
+  DoCHistWrite(&rdf, "DoCHist");
+  CoordNumWrite(&rdf, "coordnum");
+  CoordNumHistWrite(&rdf, "coordnumHist");
+  ACWriteAtomCounts(&ac, "atoms");
+  ACWriteDensity(&ac, "density");
+  ACWriteIons(&ac, "ions");
+  ACWriteIonsInLayers(&ac, "layers");
+  ACWriteIonsInLayersTime(&ac, "numionslayers");
+  ACWriteCollectiveVars(&ac, "ionCV");
 }
