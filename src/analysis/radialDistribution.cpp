@@ -216,41 +216,45 @@ void RDF::sampleMolecules(const Frame& a_frame)
         // For each molecule of second type in pair
         for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
         {
-          // Compute distance
-          double distance = a_frame.computeMolecDistance(*itA,*itB);
-          // Check whether distance is closest for atom type A
-          if (distance < minDistance)
+          if (*itA != *itB)
           {
-            minDistance = distance;
-          }
-          // Check whether distance is closest for atom type B
-          if (distance < minDistanceB[secondIndex])
-          {
-            minDistanceB[secondIndex] = distance;
-          }
-          // Bin it
-          if (distance < m_maxDist)
-          {
-            binMolecPairDistanceLayer(distance, pairIdx, layIdx);
-            if (distance < Rcut)
+            // Compute distance
+            double distance = a_frame.computeMolecDistance(*itA,*itB);
+            // Check whether distance is closest for atom type A
+            if (distance < minDistance)
             {
-              if (computeDoC)
+              minDistance = distance;
+            }
+            // Check whether distance is closest for atom type B
+            if (distance < minDistanceB[secondIndex])
+            {
+              minDistanceB[secondIndex] = distance;
+            }
+            // Bin it
+            if (distance < m_maxDist)
+            {
+              binMolecPairDistanceLayer(distance, pairIdx, layIdx);
+              if (distance < Rcut)
               {
-                DoC += computeSolidAngleFactor(distance);
-                sumElecCharge += a_frame.getAtomOfMolec(*itB).getCharge();
-              }
-              else
-              {
-                coordNum++;
-                // if (coordNum > 20)
-                // {
-                //   cout << pairIdx << " " <<  m_system.getFirstAtomOfMolec(*itA);
-                // 	 cout << " " << m_system.getFirstAtomOfMolec(*itB) << " ";
-                // 	 cout << coordNum << " " << Rcut << " " << distance << endl;
-                // }
+                if (computeDoC)
+                {
+                  DoC += computeSolidAngleFactor(distance);
+                  sumElecCharge += a_frame.getAtomOfMolec(*itB).getCharge();
+                }
+                else
+                {
+                  coordNum++;
+                  // if (coordNum > 20)
+                  // {
+                  //   cout << pairIdx << " " <<  m_system.getFirstAtomOfMolec(*itA);
+                  // 	 cout << " " << m_system.getFirstAtomOfMolec(*itB) << " ";
+                  // 	 cout << coordNum << " " << Rcut << " " << distance << endl;
+                  // }
+                }
               }
             }
           }
+          // increment index for minDistanceB
           secondIndex++;
         }
         if(coordNum > MAX_COORD_NUM)
@@ -524,28 +528,39 @@ const double RDF::getBinSizeCoordNum() const
 
 void RDF::normalize()
 {
+  // FIXME: Need to add normalization based on density in bulk ?
+  // FIXME... Use numbers of molecules in system ? What is the "baseline" ?
   int numFrames = m_system.getNumFrames();
+  // For each bin
   for (int i=0; i<m_numBins; i++)
   {
+    // contribution of volume to normalization factor
     double normFactor = (4./3.)*M_PI*(pow(i+1,3)-pow(i,3))*pow(m_binSize,3);
     normFactor = normFactor * numFrames;
+    // normalization for degree of confinement
     double DoCnormFactor = numFrames * m_phi*2.0;
+    // For each atom-atom pair
     for (int j=0; j<m_system.getNumPairs(); j++)
     {
+      // Normalize overall rdf
       m_rdf[i][j] /= normFactor;
       for (int k=0; k<m_numLayers; k++)
       {
+        // Normalize per-layer rdf
         m_rdfLayer[k][i][j] /= normFactor;
         m_rdfLayerClosest[k][i][j][0] /= normFactor;
         m_rdfLayerClosest[k][i][j][1] /= normFactor;
       }
     }
+    // For each molecule-molecule pair
     for (int j=0; j<m_numMolecPairs; j++)
     {
+      // Normalize overall rdf and DoC
       m_rdfMolec[i][j] /= normFactor;
       m_DoC[i][j] /= DoCnormFactor;
       for (int k=0; k<m_numLayers; k++)
       {
+        // Normalize per-layer rdf
         m_rdfMolecLayer[k][i][j] /= normFactor;
         m_rdfMolecLayerClosest[k][i][j][0] /= normFactor;
         m_rdfMolecLayerClosest[k][i][j][1] /= normFactor;
