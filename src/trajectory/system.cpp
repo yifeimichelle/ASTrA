@@ -10,13 +10,13 @@
 
 using namespace std;
 
-template <typename T>
+  template <typename T>
 T convert_to (const std::string &a_str)
 {
-    istringstream ss(a_str);
-    T retVal;
-    ss >> retVal;
-    return retVal;
+  istringstream ss(a_str);
+  T retVal;
+  ss >> retVal;
+  return retVal;
 }
 
 System::System()
@@ -37,34 +37,34 @@ System::System(const string& a_inputFile)
 void System::printPairCorrelations() const
 {
   for (unsigned int i=0; i<m_numPairs; i++)
-    {
-      cout << "pair " << i << " : ";
-      cout << m_rdfPairs[i].first << " " << m_rdfPairs[i].second << endl;
+  {
+    cout << "pair " << i << " : ";
+    cout << m_rdfPairs[i].first << " " << m_rdfPairs[i].second << endl;
 
-    }
+  }
 }
 
 void System::printTypeAtomIndices() const
 {
   for (unsigned int i=0; i<m_numAtomTypes; i++)
+  {
+    cout << "type " << i << " : " << endl;
+    for (unsigned int j=0; j<m_typeAtomIndices[i].size() ; j++)
     {
-      cout << "type " << i << " : " << endl;
-      for (unsigned int j=0; j<m_typeAtomIndices[i].size() ; j++)
-	{
-	  cout << m_typeAtomIndices[i][j] << " ";
-	}
-      cout << endl;
+      cout << m_typeAtomIndices[i][j] << " ";
     }
+    cout << endl;
+  }
 }
 
 
-template <typename T>
+  template <typename T>
 void System::getInput(T* a_value, int a_col)
 {
   *a_value = convert_to<T>(m_inputs[m_inputRow][a_col]);
 }
 
-template <typename T1, typename T2>
+  template <typename T1, typename T2>
 void System::getInputs2(T1* a_value1, T2* a_value2)
 {
   *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0]);
@@ -72,7 +72,7 @@ void System::getInputs2(T1* a_value1, T2* a_value2)
 }
 
 
-template <typename T1, typename T2, typename T3>
+  template <typename T1, typename T2, typename T3>
 void System::getInputs3(T1* a_value1, T2* a_value2, T3* a_value3)
 {
   *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0]);
@@ -80,7 +80,7 @@ void System::getInputs3(T1* a_value1, T2* a_value2, T3* a_value3)
   *a_value3 = convert_to<T3>(m_inputs[m_inputRow][2]);
 }
 
-template <typename T1, typename T2, typename T3, typename T4>
+  template <typename T1, typename T2, typename T3, typename T4>
 void System::getInputs4(T1* a_value1, T2* a_value2, T3* a_value3, T4* a_value4)
 {
   *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0]);
@@ -89,14 +89,14 @@ void System::getInputs4(T1* a_value1, T2* a_value2, T3* a_value3, T4* a_value4)
   *a_value4 = convert_to<T4>(m_inputs[m_inputRow][3]);
 }
 
-template <typename T1, typename T2>
+  template <typename T1, typename T2>
 void System::getInputs2(T1* a_value1, T2* a_value2, int a_offset)
 {
   *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0+a_offset]);
   *a_value2 = convert_to<T2>(m_inputs[m_inputRow][1+a_offset]);
 }
 
-template <typename T1, typename T2, typename T3>
+  template <typename T1, typename T2, typename T3>
 void System::getInputs3(T1* a_value1, T2* a_value2, T3* a_value3, int a_offset)
 {
   *a_value1 = convert_to<T1>(m_inputs[m_inputRow][0+a_offset]);
@@ -116,10 +116,10 @@ void System::setInput()
   getInput(&m_trajFile, 0);
 
   if (m_readFluctuatingCharge) //!!
-    {
-      nextRow();
-      getInput(&m_chgFile, 0);
-    }
+  {
+    nextRow();
+    getInput(&m_chgFile, 0);
+  }
 
   nextRow();
   getInputs2(&m_totalFrames,&m_readFrameEvery);
@@ -129,26 +129,26 @@ void System::setInput()
 
   nextRow();
   for (int i=0; i<DIM; i++)
-    {
-      getInput(&m_boxDims[i],i);
-    }
+  {
+    getInput(&m_boxDims[i],i);
+  }
   for (int i=0; i<DIM; i++)
-    {
-      getInput(&m_boxPeriodic[i],i+3);
-    }
+  {
+    getInput(&m_boxPeriodic[i],i+3);
+  }
   getInput(&m_zSymmetrized,6);
   if (m_zSymmetrized == 1)
-    {
-      m_zLo = -1.0*m_boxDims[2]/2.0;
-    }
+  {
+    m_zLo = -1.0*m_boxDims[2]/2.0;
+  }
   else if (m_zSymmetrized == 2)
-    {
-      getInput(&m_zLo,7);
-    }
+  {
+    getInput(&m_zLo,7);
+  }
   else
-    {
-      m_zLo = 0.0;
-    }
+  {
+    m_zLo = 0.0;
+  }
 
   nextRow();
   getInputs2(&m_lowerElecTop,&m_upperElecBot);
@@ -160,19 +160,19 @@ void System::setInput()
   m_numMolecules = 0;
   m_numAtoms = 0;
   for (unsigned int i=0; i<m_numMolecTypes; i++)
+  {
+    nextRow();
+    getInputs2(&m_numMolecs[i],&m_numMembersMolec[i]);
+    m_numMolecules += m_numMolecs[i];
+    m_numAtomTypes += m_numMembersMolec[i];
+    m_numAtoms += m_numMolecs[i]*m_numMembersMolec[i];
+
+    for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
     {
       nextRow();
-      getInputs2(&m_numMolecs[i],&m_numMembersMolec[i]);
-      m_numMolecules += m_numMolecs[i];
-      m_numAtomTypes += m_numMembersMolec[i];
-      m_numAtoms += m_numMolecs[i]*m_numMembersMolec[i];
-
-      for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
-	{
-	  nextRow();
-	  getInputs2(&m_masses[i][j], &m_charges[i][j]);
-	}
+      getInputs2(&m_masses[i][j], &m_charges[i][j]);
     }
+  }
 
   nextRow();
   getInputs4(&m_cationID, &m_anionID, &m_lowerElecID, &m_upperElecID);
@@ -181,30 +181,30 @@ void System::setInput()
   nextRow();
   getInput(&m_anodeIsLower,0);
   if (m_anodeIsLower)
-    {
-      m_anodeID = m_lowerElecID;
-      m_cathodeID = m_upperElecID;
-    }
+  {
+    m_anodeID = m_lowerElecID;
+    m_cathodeID = m_upperElecID;
+  }
   else
-    {
-      m_anodeID = m_upperElecID;
-      m_cathodeID = m_lowerElecID;
-    }
+  {
+    m_anodeID = m_upperElecID;
+    m_cathodeID = m_lowerElecID;
+  }
 
   nextRow();
   getInput(&m_solventID,0);
   if (m_solventID == 0)
-    {
-      m_boolWithSolvent = 0;
-      m_numElectrolyteSpecies = 2;
-      m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID);
-    }
+  {
+    m_boolWithSolvent = 0;
+    m_numElectrolyteSpecies = 2;
+    m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID);
+  }
   else
-    {
-      m_boolWithSolvent = 1;
-      m_numElectrolyteSpecies = 3;
-      m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID) + getNumMolecsOfType(m_solventID);
-    }
+  {
+    m_boolWithSolvent = 1;
+    m_numElectrolyteSpecies = 3;
+    m_numElectrolyteMolecs = getNumMolecsOfType(m_cationID) + getNumMolecsOfType(m_anionID) + getNumMolecsOfType(m_solventID);
+  }
 
   nextRow();
   getInput(&m_capID,0);
@@ -226,17 +226,17 @@ void System::setInput()
   cout << "Atom-atom pair correlations:" << endl;
 
   for (unsigned int i=0; i<m_numPairs; i++)
-    {
-      unsigned int molecA, atomA, molecB, atomB;
+  {
+    unsigned int molecA, atomA, molecB, atomB;
 
-      nextRow();
-      getInputs2(&molecA,&atomA);
-      getInputs2(&molecB,&atomB,2);
-      unsigned int atomTypeA = getAtomType(molecA-1, atomA-1);
-      unsigned int atomTypeB = getAtomType(molecB-1, atomB-1);
-      cout << i << " " << atomTypeA << " " << atomTypeB << endl;
-      m_rdfPairs[i] = make_pair(atomTypeA, atomTypeB);
-    }
+    nextRow();
+    getInputs2(&molecA,&atomA);
+    getInputs2(&molecB,&atomB,2);
+    unsigned int atomTypeA = getAtomType(molecA-1, atomA-1);
+    unsigned int atomTypeB = getAtomType(molecB-1, atomB-1);
+    cout << i << " " << atomTypeA << " " << atomTypeB << endl;
+    m_rdfPairs[i] = make_pair(atomTypeA, atomTypeB);
+  }
 
   nextRow();
   getInput(&m_numMolecPairs,0);
@@ -246,24 +246,24 @@ void System::setInput()
   cout << "Molecule-molecule COM pair correlations:" << endl;
 
   for (unsigned int i=0; i<m_numMolecPairs; i++)
-    {
-      unsigned int molecA, molecB;
-      double cutoff;
-      nextRow();
-      getInputs3(&molecA,&molecB,&cutoff);
-      cout << i << " " << molecA-1 << " " << molecB-1 << endl;
-      m_rdfMolecPairs[i] = make_pair(molecA-1, molecB-1);
-      m_rdfMolecCutoffs[i] = cutoff;
-    }
+  {
+    unsigned int molecA, molecB;
+    double cutoff;
+    nextRow();
+    getInputs3(&molecA,&molecB,&cutoff);
+    cout << i << " " << molecA-1 << " " << molecB-1 << endl;
+    m_rdfMolecPairs[i] = make_pair(molecA-1, molecB-1);
+    m_rdfMolecCutoffs[i] = cutoff;
+  }
 
-  m_numFramesInclSkip = m_totalFrames - m_zpFramesInclSkip;
-  m_numFrames = m_numFramesInclSkip - m_skipFrames;
+  m_numFramesInclSkip = m_totalFrames - m_zpFramesInclSkip; // number of non-zero-potential frames
+  m_numFrames = m_numFramesInclSkip - m_skipFrames;         // number of non-zero-potential production frames (minus skip)
   if ( m_zpFramesInclSkip > 0 ) {
-      m_zpFrames = m_zpFramesInclSkip - m_skipFrames;
+    m_zpFrames = m_zpFramesInclSkip - m_skipFrames;
   }
   else if (m_zpFramesInclSkip == 0 )
   {
-      m_zpFrames = 0;
+    m_zpFrames = 0;
   }
 
   m_frameTime = m_stepInterval * m_stepTime;
@@ -271,24 +271,24 @@ void System::setInput()
   m_molecMembersOfType.resize(m_numAtomTypes);
   unsigned int atomCounter=0;
   for (unsigned int i=0; i<m_numMolecTypes; i++)
+  {
+    for (unsigned int j=0; j<m_numMolecs[i]; j++)
     {
-      for (unsigned int j=0; j<m_numMolecs[i]; j++)
-	{
-	  m_firstAtomOfMolec.push_back(atomCounter);
-	  for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
-	    {
-	      m_typeAtomIndices[getAtomType(i,k)].push_back(atomCounter);
-	      atomCounter++;
-	    }
-	}
+      m_firstAtomOfMolec.push_back(atomCounter);
+      for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
+      {
+        m_typeAtomIndices[getAtomType(i,k)].push_back(atomCounter);
+        atomCounter++;
+      }
     }
+  }
   for (unsigned int i=0; i<m_numMolecTypes; i++)
+  {
+    for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
     {
-      for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
-	{
-	  m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
-	}
+      m_molecMembersOfType[getAtomType(i,j)] = make_pair(i+1,j+1);
     }
+  }
 }
 
 
@@ -299,30 +299,30 @@ void System::readInput(const string& a_inputFile)
   string delimiter=" ";
   char inputline[256];
   while ( ! ssystem.eof() )
+  {
+    ssystem.getline(inputline,256);
+    vector<string > newLine = readNextLine(inputline, delimiter);
+    if( newLine.size() > 0 )
     {
-      ssystem.getline(inputline,256);
-      vector<string > newLine = readNextLine(inputline, delimiter);
-      if( newLine.size() > 0 )
-	{
-	  m_inputs.push_back(newLine);
-	}
-   }
+      m_inputs.push_back(newLine);
+    }
+  }
 }
 
 vector<string > System::readNextLine(char* a_inputline, string& a_delimiter)
 {
   char ignoreChar[] = "#";
   if( strncmp(a_inputline,ignoreChar,1) != 0 )
-    {
-      return lineToString(a_inputline, a_delimiter);
-    }
+  {
+    return lineToString(a_inputline, a_delimiter);
+  }
   else
-    {
-      //cout << "comment found!" << endl;
-      vector<string > newVector;
-      //return null;
-      return newVector;
-    }
+  {
+    //cout << "comment found!" << endl;
+    vector<string > newVector;
+    //return null;
+    return newVector;
+  }
 }
 
 vector<string > System::lineToString(char* a_inputline, string& a_delimiter)
@@ -372,12 +372,12 @@ const unsigned int System::getNumMolecules() const
 
 const double System::getFrameTime() const
 {
-    return m_frameTime;
+  return m_frameTime;
 }
 
 const string& System::getTrajFile() const
 {
-    return m_trajFile;
+  return m_trajFile;
 }
 
 const string& System::getChargesFile() const
@@ -399,12 +399,12 @@ const unsigned int System::getMolecIndex(unsigned int a_type, unsigned int a_mem
 {
   unsigned int retVal = 0;
   for (unsigned int i=0; i<a_type; i++)
+  {
+    for (unsigned int j=0; j<a_member; j++)
     {
-      for (unsigned int j=0; j<a_member; j++)
-	{
-	  retVal++;
-	}
+      retVal++;
     }
+  }
   return retVal;
 }
 
@@ -412,9 +412,9 @@ const unsigned int System::getAtomType(unsigned int a_molecType, unsigned int a_
 {
   unsigned int retVal = 0;
   for (unsigned int i=0; i<a_molecType; i++)
-    {
-      retVal += m_numMembersMolec[i];
-    }
+  {
+    retVal += m_numMembersMolec[i];
+  }
   retVal += a_molecAtom;
   return retVal;
 }
@@ -509,21 +509,21 @@ const unsigned int System::getLayer(array<double, DIM>& a_position) const
   unsigned int retVal;
   double z=a_position[DIM-1];
   if (m_zSymmetrized == 1 || m_zSymmetrized == 2)
-    {
-      z -= m_zLo;
-    }
+  {
+    z -= m_zLo;
+  }
   if (z < m_lowerElecTop )
-    {
-      retVal = 0;
-    }
+  {
+    retVal = 0;
+  }
   else if (z < m_upperElecBot )
-    {
-      retVal = 1;
-    }
+  {
+    retVal = 1;
+  }
   else
-    {
-      retVal = 2;
-    }
+  {
+    retVal = 2;
+  }
   return retVal;
 }
 
@@ -540,25 +540,25 @@ const array<double, MAX_MEMBERS_PER_MOLEC > System::getChargesOfType(int a_type)
 unsigned int System::isElectrolyte(int a_molecType, int* a_electrolyteID) const
 {
   if (a_molecType == m_cationID-1)
-    {
-      *a_electrolyteID = 0;
-      return 1;
-    }
+  {
+    *a_electrolyteID = 0;
+    return 1;
+  }
   else if (a_molecType == m_anionID-1)
-    {
-      *a_electrolyteID = 1;
-      return 1;
-    }
+  {
+    *a_electrolyteID = 1;
+    return 1;
+  }
   else if (a_molecType == m_solventID-1)
-    {
-      *a_electrolyteID = 2;
-      return 1;
-    }
+  {
+    *a_electrolyteID = 2;
+    return 1;
+  }
   else
-    {
-      *a_electrolyteID = -1;
-      return 0;
-    }
+  {
+    *a_electrolyteID = -1;
+    return 0;
+  }
 }
 
 void System::getLayerUpperBounds(int a_numLayers, double* a_layers) const
@@ -590,24 +590,24 @@ unsigned int System::hasChargeFile() const
   return m_readFluctuatingCharge;
 }
 
-	/// Returns anode ID.
+/// Returns anode ID.
 unsigned int System::getAnodeID() const
 {
   return m_anodeID;
 }
 
-	/// Returns cathode ID.
+/// Returns cathode ID.
 unsigned int System::getCathodeID() const
 {
   return m_cathodeID;
 }
 
-	/// Returns whether molecule is anion.
+/// Returns whether molecule is anion.
 unsigned int System::isAnion(unsigned int a_molID) const
 {
   return a_molID == m_anionID - 1;
 }
-	/// Returns whether molecule is cation.
+/// Returns whether molecule is cation.
 unsigned int System::isCation(unsigned int a_molID) const
 {
   return a_molID == m_cationID - 1;

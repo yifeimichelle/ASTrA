@@ -20,8 +20,8 @@ int main(int argc, char** argv)
   string inputFile(argv[1]);
   System system(inputFile); // initialize system
   Frame frame(system); // initialize trajectory frame reader
-  RDF rdf(system); // initialize rdf
   AtomCounter ac(system); // initialize atomcounter
+  RDF rdf(system,ac); // initialize rdf with system AND atomcounter
 
   cout << "Reading trajectory ..." << endl;
 

@@ -1,5 +1,6 @@
 #include "frame.h"
 #include "system.h"
+#include "atomCounter.h"
 #include "atom.h"
 #include "radialDistribution.h"
 #include <vector>
@@ -14,12 +15,13 @@ RDF::RDF()
 {
 };
 
-RDF::RDF(System& a_system)
+RDF::RDF(System& a_system, AtomCounter& a_ac)
 {
   m_maxDist = 14.0;
   m_numBins = 500;
   m_binSize = m_maxDist / m_numBins;
   m_system = a_system;
+  m_ac = a_ac;
   m_numPairs = m_system.getNumPairs();
   m_numMolecPairs = m_system.getNumMolecPairs();
   m_numLayers = m_system.getNumLayers();
@@ -128,6 +130,10 @@ const System& RDF::getSystem() const
   return m_system;
 }
 
+const AtomCounter& RDF::getAtomCounter() const
+{
+  return m_ac;
+}
 
 void RDF::sampleZP(Frame& a_frame)
 {
@@ -529,7 +535,18 @@ const double RDF::getBinSizeCoordNum() const
 void RDF::normalize()
 {
   // FIXME: Need to add normalization based on density in bulk ?
-  // FIXME... Use numbers of molecules in system ? What is the "baseline" ?
+  double* volLayer;
+  volLayer = new double[m_numLayers];
+  m_system.getLayerUpperBounds(m_numLayers,volLayer);
+  double boxArea = m_system.getBoxDim(0)*m_system.getBoxDim(1);
+  double** avgIonsInLayer;
+  avgIonsInLayer = new double* [m_numLayers];
+  for (int i=0; i<m_numLayers; i++)
+  {
+    volLayer[i] *= boxArea;
+    avgIonsInLayer[i] = m_ac.getACIonsLayersAddress(i);
+  }
+
   int numFrames = m_system.getNumFrames();
   // For each bin
   for (int i=0; i<m_numBins; i++)
@@ -538,7 +555,7 @@ void RDF::normalize()
     double normFactor = (4./3.)*M_PI*(pow(i+1,3)-pow(i,3))*pow(m_binSize,3);
     normFactor = normFactor * numFrames;
     // normalization for degree of confinement
-    double DoCnormFactor = numFrames * m_phi*2.0;
+    double DoCnormFactor = numFrames * m_phi * 2.0;
     // For each atom-atom pair
     for (int j=0; j<m_system.getNumPairs(); j++)
     {
@@ -553,6 +570,7 @@ void RDF::normalize()
       }
     }
     // For each molecule-molecule pair
+    // FIXME: Add
     for (int j=0; j<m_numMolecPairs; j++)
     {
       // Normalize overall rdf and DoC
@@ -561,7 +579,7 @@ void RDF::normalize()
       for (int k=0; k<m_numLayers; k++)
       {
         // Normalize per-layer rdf
-        m_rdfMolecLayer[k][i][j] /= normFactor;
+        m_rdfMolecLayer[k][i][j] /= normFactor * volLayer[k] * avgIonsInLayer[k][j];
         m_rdfMolecLayerClosest[k][i][j][0] /= normFactor;
         m_rdfMolecLayerClosest[k][i][j][1] /= normFactor;
       }
