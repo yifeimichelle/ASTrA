@@ -77,21 +77,17 @@ int main(int argc, char** argv)
       frame.readCharges(); //!!
     }
 
-    cout << "got here 1" << endl;
-    //if ( frame.getStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
-    //{
+    if ( frame.getStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
+    {
       cout << frame.getStepNum() << endl;
-        int timestep = frame.getTimestep();
-        cout << "Current timestep is " << timestep << endl;
-    //}
-    cout << "got here 2" << endl;
+      int timestep = frame.getTimestep();
+      cout << "Current timestep is " << timestep << endl;
+    }
 
     // sample routines
     ac.sample(frame);
     rdf.sample(frame);
-    cout << "got here 3" << endl;
     rdf.computeDegreeOfConfinement(frame);
-    cout << "got here 4" << endl;
 
     // clear frame memory
     frame.clearFrame();
