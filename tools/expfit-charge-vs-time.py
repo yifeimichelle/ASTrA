@@ -8,9 +8,10 @@ def func(x, a, b):
 xdata=data[:,0]
 ydata=data[:,4]
 popt, pcov = curve_fit(func, xdata, ydata)
+expfit=func(xdata, *popt)
 
 plt.plot(xdata, ydata, 'b-', label='data')
-plt.plot(xdata, func(xdata, *popt), 'r-', label='fit:  a=%1.6e, b=%1.6e' % tuple(popt))
+plt.plot(xdata, expfit, 'r-', label='fit:  a=%1.6e, b=%1.6e' % tuple(popt))
 
 plt.xlabel('x')
 plt.ylabel('y')
@@ -19,3 +20,4 @@ plt.savefig("netcharge_expfit.png")
 
 np.savetxt("charging_expfit_params",popt)
 np.savetxt("charging_expfit_pcovar",pcov)
+np.savetxt("charging_expfit",np.transpose([xdata,expfit]))

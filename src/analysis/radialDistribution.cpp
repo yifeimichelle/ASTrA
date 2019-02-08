@@ -464,9 +464,9 @@ void RDF::computeDegreeOfConfinement(const Frame& a_frame)
   // For molec pair
   for (int pairIdx = 0; pairIdx < m_numMolecPairs; pairIdx++)
   {
-    pair<unsigned int, unsigned int > atomPair = m_system.getMolecPairCorrelation(pairIdx);
-    unsigned int pairFirst = atomPair.first;
-    unsigned int pairSecond = atomPair.second;
+    pair<unsigned int, unsigned int > molecPair = m_system.getMolecPairCorrelation(pairIdx);
+    unsigned int pairFirst = molecPair.first;
+    unsigned int pairSecond = molecPair.second;
     int layer = -1;
     double sum = 0.0;
     // Layer = bottom if 2nd type is anode, top if cathode, skip if neither
@@ -541,7 +541,7 @@ void RDF::normalize(AtomCounter* a_ac)
   double boxArea = m_system.getBoxDim(0)*m_system.getBoxDim(1);
   double** avgIonsInLayer;
   avgIonsInLayer = new double* [m_numLayers];
-  for (int i=1; i<m_numLayers; i++)
+  for (int i=m_numLayers-1; i>0; i--)
   {
     volLayer[i] = volLayer[i] - volLayer[i-1];
   }
@@ -577,15 +577,27 @@ void RDF::normalize(AtomCounter* a_ac)
     // FIXME: Add
     for (int j=0; j<m_numMolecPairs; j++)
     {
+      pair<unsigned int, unsigned int > molecPair = m_system.getMolecPairCorrelation(j);
+      int pairFirst = molecPair.first;
+      int pairSecond = molecPair.second;
+
       // Normalize overall rdf and DoC
       m_rdfMolec[i][j] /= normFactor;
       m_DoC[i][j] /= DoCnormFactor;
       for (int k=0; k<m_numLayers; k++)
       {
+        double densNormFactor;
+        if (pairFirst < 3 && pairSecond < 3) {
+        densNormFactor = avgIonsInLayer[pairFirst][j] / volLayer[k];
+        cout << k << " " << j << " " << pairFirst << " " << pairSecond << " ";
+        cout << avgIonsInLayer[pairFirst][j] << " " << avgIonsInLayer[pairSecond][j] << " " << volLayer[k] << " " << densNormFactor << endl;
+        }
+        else
+        {
+          densNormFactor=1;
+        }
         // Normalize per-layer rdf
-        cout << volLayer[k] << endl;
-        cout << avgIonsInLayer[k][j] << endl;
-        m_rdfMolecLayer[k][i][j] /= normFactor * (avgIonsInLayer[k][j] / volLayer[k]);
+        m_rdfMolecLayer[k][i][j] /= normFactor * densNormFactor;
         m_rdfMolecLayerClosest[k][i][j][0] /= normFactor;
         m_rdfMolecLayerClosest[k][i][j][1] /= normFactor;
       }
