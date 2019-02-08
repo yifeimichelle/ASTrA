@@ -34,7 +34,7 @@ class RDF
     /// Samples zero-potential part of trajectory.
     void sampleZP(Frame& a_frame);
     /// Normalizes the rdf by bin volume.
-    void normalize();
+    void normalize(AtomCounter* a_ac);
     /// Prints the rdf to stdout.
     void print();
     /// Get number of pairs for which pair correlations must be computed.

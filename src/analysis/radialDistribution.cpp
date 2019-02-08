@@ -532,7 +532,7 @@ const double RDF::getBinSizeCoordNum() const
 }
 
 
-void RDF::normalize()
+void RDF::normalize(AtomCounter* a_ac)
 {
   // FIXME: Need to add normalization based on density in bulk ?
   double* volLayer;
@@ -541,10 +541,14 @@ void RDF::normalize()
   double boxArea = m_system.getBoxDim(0)*m_system.getBoxDim(1);
   double** avgIonsInLayer;
   avgIonsInLayer = new double* [m_numLayers];
+  for (int i=1; i<m_numLayers; i++)
+  {
+    volLayer[i] = volLayer[i] - volLayer[i-1];
+  }
   for (int i=0; i<m_numLayers; i++)
   {
     volLayer[i] *= boxArea;
-    avgIonsInLayer[i] = m_ac.getACIonsLayersAddress(i);
+    avgIonsInLayer[i] = a_ac->getACIonsLayersAddress(i);
   }
 
   int numFrames = m_system.getNumFrames();
@@ -579,7 +583,9 @@ void RDF::normalize()
       for (int k=0; k<m_numLayers; k++)
       {
         // Normalize per-layer rdf
-        m_rdfMolecLayer[k][i][j] /= normFactor * volLayer[k] * avgIonsInLayer[k][j];
+        cout << volLayer[k] << endl;
+        cout << avgIonsInLayer[k][j] << endl;
+        m_rdfMolecLayer[k][i][j] /= normFactor * (avgIonsInLayer[k][j] / volLayer[k]);
         m_rdfMolecLayerClosest[k][i][j][0] /= normFactor;
         m_rdfMolecLayerClosest[k][i][j][1] /= normFactor;
       }

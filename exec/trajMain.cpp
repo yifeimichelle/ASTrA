@@ -94,7 +94,7 @@ int main(int argc, char** argv)
     rdf.clearFrame();
   }
   // normalize RDF
-  rdf.normalize();
+  rdf.normalize(&ac);
   ac.normalize();
 
   // print to stdout
