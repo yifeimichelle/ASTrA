@@ -94,8 +94,8 @@ int main(int argc, char** argv)
     rdf.clearFrame();
   }
   // normalize RDF
-  rdf.normalize(&ac);
   ac.normalize();
+  rdf.normalize(&ac);
 
   // print to stdout
   //ac.printDensity();

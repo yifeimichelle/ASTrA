@@ -588,9 +588,9 @@ void RDF::normalize(AtomCounter* a_ac)
       {
         double densNormFactor;
         if (pairFirst < 3 && pairSecond < 3) {
-        densNormFactor = avgIonsInLayer[pairFirst][j] / volLayer[k];
-        cout << k << " " << j << " " << pairFirst << " " << pairSecond << " ";
-        cout << avgIonsInLayer[pairFirst][j] << " " << avgIonsInLayer[pairSecond][j] << " " << volLayer[k] << " " << densNormFactor << endl;
+          densNormFactor = avgIonsInLayer[k][pairFirst]*avgIonsInLayer[k][pairSecond] / volLayer[k];
+          //cout << k << " " << j << " " << pairFirst << " " << pairSecond << " ";
+          //cout << avgIonsInLayer[k][pairFirst] << " " << avgIonsInLayer[k][pairSecond] << " " << volLayer[k] << " " << densNormFactor << endl;
         }
         else
         {
