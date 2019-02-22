@@ -222,7 +222,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
         // For each molecule of second type in pair
         for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
         {
-          if (*itA != *itB)
+          if (*itA != *itB) // exclude self-self pair
           {
             // Compute distance
             double distance = a_frame.computeMolecDistance(*itA,*itB);
@@ -534,17 +534,22 @@ const double RDF::getBinSizeCoordNum() const
 
 void RDF::normalize(AtomCounter* a_ac)
 {
-  // FIXME: Need to add normalization based on density in bulk ?
+  // Store layer upper bounds in volLayer
   double* volLayer;
   volLayer = new double[m_numLayers];
   m_system.getLayerUpperBounds(m_numLayers,volLayer);
-  double boxArea = m_system.getBoxDim(0)*m_system.getBoxDim(1);
-  double** avgIonsInLayer;
-  avgIonsInLayer = new double* [m_numLayers];
+  // Subtract to get height of layer
   for (int i=m_numLayers-1; i>0; i--)
   {
     volLayer[i] = volLayer[i] - volLayer[i-1];
   }
+  // Get cross sectional area of unit cell
+  double boxArea = m_system.getBoxDim(0)*m_system.getBoxDim(1);
+  // Create array to hold number of ions in layer
+  double** avgIonsInLayer;
+  avgIonsInLayer = new double* [m_numLayers];
+  // Multiply layer height by area to get layer volume
+  // Assign pointers to address of ions in layer from AtomCounter
   for (int i=0; i<m_numLayers; i++)
   {
     volLayer[i] *= boxArea;
@@ -556,6 +561,7 @@ void RDF::normalize(AtomCounter* a_ac)
   for (int i=0; i<m_numBins; i++)
   {
     // contribution of volume to normalization factor
+    // (4/3)*pi*(R^3-r^3)
     double normFactor = (4./3.)*M_PI*(pow(i+1,3)-pow(i,3))*pow(m_binSize,3);
     normFactor = normFactor * numFrames;
     // normalization for degree of confinement
@@ -574,9 +580,9 @@ void RDF::normalize(AtomCounter* a_ac)
       }
     }
     // For each molecule-molecule pair
-    // FIXME: Add
     for (int j=0; j<m_numMolecPairs; j++)
     {
+      // Get molecule IDs for pair
       pair<unsigned int, unsigned int > molecPair = m_system.getMolecPairCorrelation(j);
       int pairFirst = molecPair.first;
       int pairSecond = molecPair.second;
@@ -584,16 +590,20 @@ void RDF::normalize(AtomCounter* a_ac)
       // Normalize overall rdf and DoC
       m_rdfMolec[i][j] /= normFactor;
       m_DoC[i][j] /= DoCnormFactor;
+
+      // Get layer- and ion-specific normalization factor for rdfMolecLayer
       for (int k=0; k<m_numLayers; k++)
       {
         double densNormFactor;
         if (pairFirst < 3 && pairSecond < 3) {
+          // Only do this for cation, anion, and solvent (molecules 0, 1, 2)
           densNormFactor = avgIonsInLayer[k][pairFirst]*avgIonsInLayer[k][pairSecond] / volLayer[k];
           //cout << k << " " << j << " " << pairFirst << " " << pairSecond << " ";
           //cout << avgIonsInLayer[k][pairFirst] << " " << avgIonsInLayer[k][pairSecond] << " " << volLayer[k] << " " << densNormFactor << endl;
         }
         else
         {
+          // Otherwise don't multiply by factor
           densNormFactor=1;
         }
         // Normalize per-layer rdf
