@@ -19,7 +19,7 @@ AtomCounter::AtomCounter(System& a_system)
   m_saveFrameEvery = 1;
   m_numSavedFrames = ceil(m_system.getNumTotalFrames() / m_saveFrameEvery) ;
   m_zLo = m_system.getZLo();
-  m_binSize = 0.05; //!! FIXME
+  m_binSize = 0.05; //!! FIXME make this choose a bin size automatically based on cell size?
   m_numBins = ceil(m_system.getBoxDim(2) / m_binSize );
   m_numLayers = m_system.getNumLayers();
   // resize vectors
@@ -77,7 +77,7 @@ void AtomCounter::sample(Frame& a_frame)
     {
       totalMass += masses[k];
     }
-    // For each molecule of type
+    // For each molecule of type i
     for (int j=0; j < m_system.getNumMolecsOfType(i); j++)
     {
       com.fill(0); // fill with zeros, otherwise will keep same data as before
@@ -155,14 +155,16 @@ void AtomCounter::sample(Frame& a_frame)
       m_avgIonsInLayer[i][j] += currentIonsInLayer[i][j]; // different for ZP and skip
     }
   }
+  // If this frame is to be saved, write number of ions in each layer
   if ( (a_frame.getTotalStepNum() % m_saveFrameEvery == 0) || ( a_frame.getTotalStepNum() == m_system.getNumTotalFrames() ) )
   {
+    // index into numIonsInLayerTime ( frame number from beginning of trajectory, w/o "skipping" any steps )
+    int timeIndex = (ceil)( ((double)a_frame.getTotalStepNum()) / ((double)m_saveFrameEvery) );
     for (int i=0; i<m_numLayers; i++)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
       {
-        int timeIndex = (ceil)( ((double)a_frame.getTotalStepNum()) / ((double)m_saveFrameEvery) );
-        m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // FIXME: keep same for ZP but check that this is being computed correctly!! also do it during skip steps, just for tracking
+        m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // store number of ions in layer at this frame
       }
     }
   }
@@ -260,12 +262,12 @@ void AtomCounter::sampleZP(Frame& a_frame)
   }
   if ( (a_frame.getTotalStepNum() % m_saveFrameEvery == 0) || ( a_frame.getTotalStepNum() == m_system.getNumTotalFrames() ) )
   {
+    int timeIndex = (ceil)( ((double)a_frame.getTotalStepNum()) / ((double)m_saveFrameEvery) );
     for (int i=0; i<m_numLayers; i++)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
       {
-        int timeIndex = (ceil)( ((double)a_frame.getTotalStepNum()) / ((double)m_saveFrameEvery) );
-        m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // FIXME: keep same for ZP but check that this is being computed correctly!! also do it during skip steps, just for tracking
+        m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // store number of ions in layer at this frame
       }
     }
   }
@@ -353,11 +355,11 @@ void AtomCounter::sampleSkip(Frame& a_frame)
 
   if ( (a_frame.getTotalStepNum() % m_saveFrameEvery == 0) || ( a_frame.getTotalStepNum() == m_system.getNumTotalFrames() ) )
   {
+    int timeIndex = (ceil)( ((double)a_frame.getTotalStepNum()) / ((double)m_saveFrameEvery) );
     for (int i=0; i<m_numLayers; i++)
     {
       for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
       {
-        int timeIndex = (ceil)( ((double)a_frame.getTotalStepNum()) / ((double)m_saveFrameEvery) );
         m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // during skip steps, just for tracking
       }
     }
