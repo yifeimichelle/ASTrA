@@ -102,6 +102,8 @@ class System
     const array<double, MAX_MEMBERS_PER_MOLEC > getChargesOfType(int a_type) const;
     /// Returns whether molecule is an electrolyte component and stores ID of component (cation, anion, solvent) in second argument.
     unsigned int isElectrolyte(int a_molecType, int* a_electrolyteID) const;
+    /// Returns whether molecule is an electrode atom and stores ID of component (cathode, anode) in second argument.
+    unsigned int isElectrode(int a_molecType, int* a_electrodeID) const;
     /// Inserts layers into array pointer
     void getLayerUpperBounds(int a_numLayers, double* a_layers) const;
     /// Returns whether anode is the "lower" electrode in the system.

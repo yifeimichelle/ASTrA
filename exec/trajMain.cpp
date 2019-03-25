@@ -115,6 +115,7 @@ int main(int argc, char** argv)
   CoordNumHistWrite(&rdf, "coordnumHist");
   ACWriteAtomCounts(&ac, "atoms");
   ACWriteDensity(&ac, "density");
+  ACWriteElectrodeCharge(&ac, "elecharge");
   ACWriteIons(&ac, "ions");
   ACWriteIonsInLayers(&ac, "layers");
   ACWriteIonsInLayersTime(&ac, "numionslayers");

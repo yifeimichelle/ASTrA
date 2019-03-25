@@ -27,6 +27,7 @@ AtomCounter::AtomCounter(System& a_system)
 
   m_numAtomsProfile.resize(m_numBins);
   m_densityProfile.resize(m_numBins);
+  m_electrodeChargeProfile.resize(m_numBins);
   m_numIonsProfile.resize(m_numBins);
   m_avgIonsInLayer.resize( m_numLayers );
   m_numIonsInLayerTime.resize(m_numSavedFrames);
@@ -46,11 +47,11 @@ AtomCounter::AtomCounter(System& a_system)
 
 void AtomCounter::sample(Frame& a_frame)
 {
-
   // setup
   int molecIndex = 0;
   int atomIndex = 0;
   int isElectrolyte = 0;
+  int isElectrode = 0;
   array<double, DIM > com;
   array<double, DIM > x0;
   vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
@@ -61,6 +62,7 @@ void AtomCounter::sample(Frame& a_frame)
   {
     int numMembers = m_system.getNumMembersMolec(i);
     int* electrolyteID = new int;
+    int* electrodeID = new int;
     // Detect whether molecule is electrolyte or not (affects binning routines later on)
     if (m_system.isElectrolyte(i, electrolyteID))
     {
@@ -69,6 +71,14 @@ void AtomCounter::sample(Frame& a_frame)
     else
     {
       isElectrolyte = 0;
+    }
+    if (m_system.isElectrode(i, electrodeID))
+    {
+      isElectrode = 1;
+    }
+    else
+    {
+      isElectrode = 0;
     }
     // Get masses of molecule members, and molecule's total mass, to calculate COM
     array<double , MAX_MEMBERS_PER_MOLEC > masses = m_system.getMassesOfType(i);
@@ -83,15 +93,12 @@ void AtomCounter::sample(Frame& a_frame)
       com.fill(0); // fill with zeros, otherwise will keep same data as before
       x0.fill(0);
       // For each molecule member
-#ifdef DEBUG
-      cout << "Computing center of mass for " << molecIndex << ". Positions: " << endl;
-#endif
       for (int k=0; k < numMembers; k++)
       {
         // Get position of atom
         array<double, DIM> position = a_frame.getAtom(atomIndex).getPosition();
         // Bin atom by type and add to density
-        binAtom(a_frame, atomIndex, position, i, k, masses[k], isElectrolyte);
+        binAtom(a_frame, atomIndex, position, i, k, masses[k], isElectrolyte, isElectrode);
         // Compute center of mass
         if (k == 0)
         {
@@ -99,13 +106,7 @@ void AtomCounter::sample(Frame& a_frame)
           {
             x0[l] = position[l];
             com[l] += position[l]*masses[k];
-#ifdef DEBUG
-            cout << position[l] << " ";
-#endif
           }
-#ifdef DEBUG
-          cout <<  masses[k] << endl;
-#endif
         }
         else if (k > 0)
         {
@@ -118,34 +119,20 @@ void AtomCounter::sample(Frame& a_frame)
               dx -= round(dx/dim) * dim;
             }
             com[l] += (x0[l]+dx)*masses[k];
-#ifdef DEBUG
-            cout << position[l] << "(" << x0[l]+dx << ")" << " ";
-#endif
           }
-#ifdef DEBUG
-          cout << masses[k] << endl;
-#endif
         }
         atomIndex++;
       }
-#ifdef DEBUG
-      cout << "COM is: " << endl;
-#endif
       for (int l=0; l<DIM; l++)
       {
         com[l] /= totalMass;
-#ifdef DEBUG
-        cout << com[l] << " ";
-#endif
       }
-#ifdef DEBUG
-      cout << endl;
-#endif
       m_COMs[molecIndex]=com;
       binElectrolyteCOM(a_frame, molecIndex, com, i, currentIonsInLayer, *electrolyteID, isElectrolyte); // different for ZP and skip
       molecIndex++;
     }
     delete electrolyteID;
+    delete electrodeID;
   }
   for (int i=0; i<m_numLayers; i++)
   {
@@ -422,7 +409,7 @@ void AtomCounter::binSkipElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array
     a_currentIonsInLayer[layer][a_electrolyteID]++;
   }
 }
-void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte)
+void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte, int& a_isElectrode)
 {
   double pos_z = a_position[2] - m_zLo;
   int bin = floor(pos_z / m_binSize);
@@ -436,6 +423,11 @@ void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>&
   {
     // Increment density of electrolyte in bin
     m_densityProfile[bin] += a_mass;
+  }
+  if (a_isElectrode)
+  {
+    // Increment electrode charge in bin
+    m_electrodeChargeProfile[bin] += a_frame.getAtom(a_atomIndex).getCharge();
   }
   unsigned int layer = m_system.getLayer(a_position);
   a_frame.assignAtomToLayer(a_atomIndex, atomType, layer);
@@ -539,6 +531,7 @@ void AtomCounter::normalize()
       m_numIonsProfile[i][j] /= numFrames;
     }
     m_densityProfile[i] /= normDensity ;
+    m_electrodeChargeProfile[i] /= numFrames;
   }
 }
 
@@ -608,6 +601,11 @@ double* AtomCounter::getACAtomsAddress(int i)
 double* AtomCounter::getACDensityAddress(int i)
 {
   return &(m_densityProfile[i]);
+}
+
+double* AtomCounter::getACElectrodeChargeAddress(int i)
+{
+  return &(m_electrodeChargeProfile[i]);
 }
 
 double* AtomCounter::getACIonsAddress(int i)
@@ -718,6 +716,23 @@ const char* ACWriteDensity(AtomCounter* a_ac, const char* a_filename)
   for (int i=0; i<numBins; i++)
   {
     data[i] = a_ac->getACDensityAddress(i);
+  }
+  write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
+  delete data;
+  return a_filename;
+}
+
+const char* ACWriteElectrodeCharge(AtomCounter* a_ac, const char* a_filename)
+{
+  double binSize = a_ac->getBinSize();
+  int numBins = a_ac->getNumBins();
+  int varDim = 1;
+  const char * const headernames[] = { "z[A]", "charge[e]" };
+  double** data;
+  data = new double* [numBins];
+  for (int i=0; i<numBins; i++)
+  {
+    data[i] = a_ac->getACElectrodeChargeAddress(i);
   }
   write_binned_data(a_filename, numBins, binSize, varDim, headernames, data);
   delete data;

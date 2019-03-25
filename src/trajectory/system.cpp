@@ -561,6 +561,25 @@ unsigned int System::isElectrolyte(int a_molecType, int* a_electrolyteID) const
   }
 }
 
+unsigned int System::isElectrode(int a_molecType, int* a_electrodeID) const
+{
+  if (a_molecType == m_cathodeID-1)
+  {
+    *a_electrodeID = 0;
+    return 1;
+  }
+  else if (a_molecType == m_anodeID-1)
+  {
+    *a_electrodeID = 1;
+    return 1;
+  }
+  else
+  {
+    *a_electrodeID = -1;
+    return 0;
+  }
+}
+
 void System::getLayerUpperBounds(int a_numLayers, double* a_layers) const
 {
   assert(a_numLayers == 3);
