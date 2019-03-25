@@ -427,7 +427,8 @@ void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>&
   if (a_isElectrode)
   {
     // Increment electrode charge in bin
-    m_electrodeChargeProfile[bin] += a_frame.getAtom(a_atomIndex).getCharge();
+    double charge = a_frame.getAtom(a_atomIndex).getCharge();
+    m_electrodeChargeProfile[bin] += charge;
   }
   unsigned int layer = m_system.getLayer(a_position);
   a_frame.assignAtomToLayer(a_atomIndex, atomType, layer);
@@ -506,12 +507,6 @@ void AtomCounter::normalize()
   // Divide by number of frames read
   double numFrames = m_system.getNumFrames();
   // Convert density to g/ml
-#ifdef DEBUG
-  cout << 10./avogadro << endl;
-  cout << m_system.getBoxDim(0) << endl;
-  cout << m_system.getBoxDim(1) << endl;
-  cout << m_binSize << endl;
-#endif
   double normDensity = numFrames * m_binSize * m_system.getBoxDim(0) * m_system.getBoxDim(1) * avogadro / 10.;
   for (int i=0; i<m_numLayers; i++)
   {
@@ -534,7 +529,6 @@ void AtomCounter::normalize()
     m_electrodeChargeProfile[i] /= numFrames;
   }
 }
-
 
 void AtomCounter::print()
 {
