@@ -8,11 +8,16 @@ File inputs:
 
 Outputs (filename):
 - Radial distribution functions (rdf)
-- Degree of confinement (DoC)
+- Degree of confinement (DoC): as described in Merlet et al.[2]
 - Coordination numbers (coordnum)
-- Atom counts (atoms)
-- Density (density)
-- Ions (ions)
-- Ions in layers (layers)
-- Ions in layers as time series (numionslayers)
-- Collective variables (ionCV)
+- Atom counts (atoms): binned number of atoms (separated by type) throughout production run
+- Density (density): binned density throughout production run
+- Ions (ions): binned number of ions (by type, based on COM) throughout production run
+- Ions in layers (layers): average number of ions in layers (anode, cathode, bulk) throughout production run
+- Ions in layers as time series (numionslayers): number of ions in layers over time throughout full simulation
+- Collective variables (ionCV): charging parameter over time, can implement other CVs as well
+
+References:
+[1] Liu, Y. M. et al. Mechanisms of Charge Storage in Zeolite-Templated Carbon Supercapacitors. In prep.
+[2] Merlet, C. et al. On the molecular origin of supercapacitance in nanoporous carbon electrodes. Nat. Mater. 11, 306–310. issn: 1476-1122 (2012).
+
