@@ -9,7 +9,7 @@ File inputs:
 Outputs (filename):
 - Radial distribution functions (rdf)
 - Degree of confinement (DoC): as described in Merlet et al.[2]
-- Coordination numbers (coordnum)
+- Coordination numbers (coordnum): as in Merlet et al. [3]
 - Atom counts (atoms): binned number of atoms (separated by type) throughout production run
 - Density (density): binned density throughout production run
 - Ions (ions): binned number of ions (by type, based on COM) throughout production run
@@ -18,6 +18,10 @@ Outputs (filename):
 - Collective variables (ionCV): charging parameter over time, can implement other CVs as well
 
 References:
+
 [1] Liu, Y. M. et al. Mechanisms of Charge Storage in Zeolite-Templated Carbon Supercapacitors. In prep.
-[2] Merlet, C. et al. On the molecular origin of supercapacitance in nanoporous carbon electrodes. Nat. Mater. 11, 306–310. issn: 1476-1122 (2012).
+
+[2] Merlet, C. et al. Highly confined ions store charge more efficiently in supercapacitors. Nat. Commun. 4, 2701. issn: 2041-1723 (Dec. 2013).
+
+[3] Merlet, C. et al. On the molecular origin of supercapacitance in nanoporous carbon electrodes. Nat. Mater. 11, 306–310. issn: 1476-1122 (2012).
 
