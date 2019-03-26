@@ -10,6 +10,8 @@
 #define MAX_NUM_TYPES 10
 #define MAX_MEMBERS_PER_MOLEC 3
 #define NUM_ION_TYPES 3
+#define NUM_ELECTRODES 2
+#define NUM_ELEC_SLICES 2
 #define NUM_LAYERS 3
 #ifndef READ_CHARGE_FILE
 #define READ_CHARGE_FILE 0
@@ -106,8 +108,10 @@ class System
     unsigned int isElectrode(int a_molecType, int* a_electrodeID) const;
     /// Inserts layers into array pointer
     void getLayerUpperBounds(int a_numLayers, double* a_layers) const;
+    /// Get upper bound of specified layer
+    const double getLayerUpperBound(int a_layer) const;
     /// Returns whether anode is the "lower" electrode in the system.
-    unsigned int isAnodeLower() const;
+    unsigned int isCathodeLower() const;
     /// Returns whether ID is cathode molecule.
     unsigned int isCathode(unsigned int a_molID) const;
     /// Returns whether ID anode molecule.
@@ -162,9 +166,7 @@ class System
     unsigned int m_anionID;
     unsigned int m_anodeID;
     unsigned int m_cathodeID;
-    unsigned int m_lowerElecID;
-    unsigned int m_upperElecID;
-    unsigned int m_anodeIsLower;
+    unsigned int m_cathodeIsLower;
     unsigned int m_solventID;
     unsigned int m_capID;
     unsigned int m_boolWithSolvent;

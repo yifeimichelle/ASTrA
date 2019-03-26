@@ -83,21 +83,23 @@ void Frame::readZPStep()
 
 void Frame::readZPStep(int a_every)
 {
+  int currentTimestep;
   // discard step from traj file
   for (int istep=0; istep < a_every-1; istep++)
+  {
+    char tmp[256];
+    m_traj >> tmp >> tmp >> tmp >> tmp;
+    for (unsigned int i=0; i<m_numAtoms; i++)
     {
-      char tmp[256];
       m_traj >> tmp >> tmp >> tmp >> tmp;
-      for (unsigned int i=0; i<m_numAtoms; i++)
-	{
-	  m_traj >> tmp >> tmp >> tmp >> tmp;
-	}
     }
+  }
   // read step from traj file
   m_zpStepNum++;
   m_totalStepNum++;
   char tmp[256];
-  m_traj >> tmp >> tmp >> tmp >> tmp;
+  m_traj >> tmp >> tmp >> tmp >> currentTimestep;
+  m_timestep = currentTimestep;
   string atomName;
   double x, y, z;
   for (unsigned int i=0; i<m_numAtoms; i++)
@@ -199,7 +201,7 @@ void Frame::skipCharges()
   for (unsigned int i=0; i<m_numFluctuatingCharges; i++)
     {
       m_chg >> id >> q;
-      //m_atoms[id-1].setCharge(q);
+      m_atoms[id-1].setCharge(q);
     }
 }
 

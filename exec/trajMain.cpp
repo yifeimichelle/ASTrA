@@ -31,11 +31,11 @@ int main(int argc, char** argv)
     for (int i=0; i<system.getNumSkipFrames(); i++)
     {
       frame.skipStep();
-      ac.sampleSkip(frame);
       if (READ_CHARGE_FILE)
       {
-        frame.skipCharges(); //!!
+        frame.skipCharges();
       }
+      ac.sampleSkip(frame);
     }
 
     // Read zero-potential, zero-charge frames
@@ -45,12 +45,14 @@ int main(int argc, char** argv)
       frame.readZPStep();
       if (READ_CHARGE_FILE)
       {
-        frame.skipCharges(); //!!
+        frame.skipCharges();
       }
 
       if (frame.getZPStepNum() % int(ceil(system.getNumTotalFrames()/10.0)) == 0)
       {
         cout << frame.getZPStepNum() << endl;
+        int timestep = frame.getTimestep();
+        cout << "Current timestep is " << timestep << endl;
       }
 
       ac.sampleZP(frame);
@@ -63,6 +65,10 @@ int main(int argc, char** argv)
   for (int i=0; i<system.getNumSkipFrames(); i++)
   {
     frame.skipStep();
+    if (READ_CHARGE_FILE)
+    {
+      frame.skipCharges();
+    }
     ac.sampleSkip(frame);
   }
 
@@ -119,5 +125,6 @@ int main(int argc, char** argv)
   ACWriteIons(&ac, "ions");
   ACWriteIonsInLayers(&ac, "layers");
   ACWriteIonsInLayersTime(&ac, "numionslayers");
+  ACWriteElecChargeSlicesTime(&ac, "elecchargeslices");
   ACWriteCollectiveVars(&ac, "ionCV");
 }

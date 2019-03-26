@@ -175,21 +175,10 @@ void System::setInput()
   }
 
   nextRow();
-  getInputs4(&m_cationID, &m_anionID, &m_lowerElecID, &m_upperElecID);
-  //getInputs2(&m_lowerElecID,&m_upperElecID,2);
+  getInputs4(&m_cationID, &m_anionID, &m_cathodeID, &m_anodeID);
 
   nextRow();
-  getInput(&m_anodeIsLower,0);
-  if (m_anodeIsLower)
-  {
-    m_anodeID = m_lowerElecID;
-    m_cathodeID = m_upperElecID;
-  }
-  else
-  {
-    m_anodeID = m_upperElecID;
-    m_cathodeID = m_lowerElecID;
-  }
+  getInput(&m_cathodeIsLower,0);
 
   nextRow();
   getInput(&m_solventID,0);
@@ -588,10 +577,18 @@ void System::getLayerUpperBounds(int a_numLayers, double* a_layers) const
   a_layers[2] = m_boxDims[2];
 }
 
-/// Returns whether anode is the "lower" electrode in the system.
-unsigned int System::isAnodeLower() const
+const double System::getLayerUpperBound(int a_layer) const
 {
-  return m_anodeIsLower;
+  if (a_layer == 0) return m_lowerElecTop;
+  else if (a_layer == 1) return m_upperElecBot;
+  else if (a_layer == 2) return m_boxDims[2];
+  else return 0.0;
+}
+
+/// Returns whether anode is the "lower" electrode in the system.
+unsigned int System::isCathodeLower() const
+{
+  return m_cathodeIsLower;
 }
 /// Returns whether ID is cathode molecule.
 unsigned int System::isCathode(unsigned int a_molID) const

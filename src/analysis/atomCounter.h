@@ -53,6 +53,8 @@ class AtomCounter
     double* getACIonsLayersAddress(int i);
     /// Gets the address of the element in the array of ions per layer per time.
     double* getACIonsLayersTimeAddress(int i, int j);
+    /// Gets the address of the element in the array of electrode charge per slice per time.
+    double* getACElecChargeSlicesTimeAddress(int i, int j);
     /// Gets address of the first element in the charging mechanism CV.
     double* getChargingParamAddress(int i);
     /// Returns system.
@@ -84,6 +86,8 @@ class AtomCounter
     vector<array<double, DIM > > m_COMs;
     /// Collective variables for atom and COM counts, during entire trajectory (Z-P/Q and C-P/Q).
     vector<vector<array<double, NUM_ION_TYPES > > > m_numIonsInLayerTime;
+    vector<vector<array<double, NUM_ELECTRODES > > > m_elecSliceCharge;
+    vector<double > m_layerBounds;
 
     /// Counter of all atoms in bins.
     vector<array<double, MAX_NUM_TYPES > > m_numAtomsProfile;
@@ -112,6 +116,7 @@ class AtomCounter
     double m_binSize;
     int m_numAtomTypes;
     int m_numLayers;
+    double m_sliceHeight;
     double m_zLo;
 };
 
@@ -122,6 +127,7 @@ const char* ACWriteIons(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIonsInLayers(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteCollectiveVars(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename);
+const char* ACWriteElecChargeSlicesTime(AtomCounter* a_ac, const char* a_filename);
 
 
 #endif

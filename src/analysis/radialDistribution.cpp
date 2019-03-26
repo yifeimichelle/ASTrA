@@ -178,22 +178,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
       unsigned int isCounterCharge = 0;
       if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
       {
-        if ( m_system.isAnodeLower() )
-        {
-          layer = 2;
-        }
-        else
-        {
-          layer = 0;
-        }
-        if ( m_system.isAnion(pairFirst ) )
-        {
-          isCounterCharge = 1;
-        }
-      }
-      else if ( m_system.isAnode( pairSecond ) or m_system.isAnode( pairFirst ) )
-      {
-        if ( m_system.isAnodeLower() )
+        if ( m_system.isCathodeLower() )
         {
           layer = 0;
         }
@@ -202,6 +187,21 @@ void RDF::sampleMolecules(const Frame& a_frame)
           layer = 2;
         }
         if ( m_system.isCation(pairFirst ) )
+        {
+          isCounterCharge = 1;
+        }
+      }
+      else if ( m_system.isAnode( pairSecond ) or m_system.isAnode( pairFirst ) )
+      {
+        if ( m_system.isCathodeLower() )
+        {
+          layer = 2;
+        }
+        else
+        {
+          layer = 0;
+        }
+        if ( m_system.isAnion(pairFirst ) )
         {
           isCounterCharge = 1;
         }
@@ -472,24 +472,24 @@ void RDF::computeDegreeOfConfinement(const Frame& a_frame)
     // Layer = bottom if 2nd type is anode, top if cathode, skip if neither
     if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
     {
-      if ( m_system.isAnodeLower() )
+      if ( m_system.isCathodeLower() )
       {
-        layer = 2;
+        layer = 0;
       }
       else
       {
-        layer = 0;
+        layer = 2;
       }
     }
     else if ( m_system.isAnode( pairSecond ) or m_system.isAnode( pairFirst ) )
     {
-      if ( m_system.isAnodeLower() )
+      if ( m_system.isCathodeLower() )
       {
-        layer = 0;
+        layer = 2;
       }
       else
       {
-        layer = 2;
+        layer = 0;
       }
     }
     // If molecule is anode or cathode, layer will be set to something nonzero. Otherwise don't compute degree of confinement.
