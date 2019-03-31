@@ -110,6 +110,7 @@ class RDF
     // Constants for calculating DoC and coordination number
     double m_Rj;
     double m_phi;
+    double m_ionCharge;
     unsigned int m_numBinsDoC;
     double m_binSizeDoC;
     unsigned int m_numBinsCoordNum;

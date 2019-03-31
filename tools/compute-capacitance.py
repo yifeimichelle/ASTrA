@@ -92,7 +92,7 @@ capPerAtom /= counter
 outputArray=np.vstack([time,anoNetChg,catNetChg,anoNetChg+catNetChg,(catNetChg-anoNetChg)/(2.0*numatoms)]).T
 mean=np.mean(outputArray[skip:,1:3], axis=0)
 meanchgmag=0.5*(abs(mean[0]) + abs(mean[1]))
-np.savetxt('netcharge',outputArray,header="time[ps] anoNetChg catNetChg sum avgChgPerAtom . USER:"+username,comments="#")
+np.savetxt('netcharge',outputArray,header="time[ps] catNetChg anoNetChg sum avgChgPerAtom . USER:"+username,comments="#")
 np.savetxt('avgNetCharge',mean,header="anode cathode",comments="#")
 #print(mean[1]*facGrav/(halfvoltage*2.0),"F/g")
 #print(mean[1]*facVol/(halfvoltage*2.0),"F/cm3")

@@ -7,7 +7,7 @@
 #include <array>
 #include <vector>
 #include <string>
-#define MAX_NUM_TYPES 10
+#define MAX_NUM_TYPES 20
 #define MAX_MEMBERS_PER_MOLEC 3
 #define NUM_ION_TYPES 3
 #define NUM_ELECTRODES 2

@@ -53,6 +53,7 @@ RDF::RDF(System& a_system, AtomCounter& a_ac)
   // Constants for calculating DoC
   m_Rj = 0.715; // half of carbon-carbon distance in SP2 structure
   m_phi = 0.6046; // coverage of surface covered by hexagonally tiled structure
+  m_ionCharge = 0.78;
   m_solidAngleFactor.resize(m_numBins);
   m_numBinsDoC = 100;
   m_binSizeDoC = 1.0/m_numBinsDoC;
@@ -176,6 +177,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
       int layer = -1;
       unsigned int computeDoC = 0;
       unsigned int isCounterCharge = 0;
+      // If any of the atoms in the pair are electrode atoms, then rdf/doc only exists in that electrode's layer
       if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
       {
         if ( m_system.isCathodeLower() )
@@ -430,7 +432,7 @@ double RDF::binDoC(double a_doc, double a_elecCharge, unsigned int a_isCounterCh
   if(a_doc<1.0)
   {
     m_DoCHist[bin][2*a_pair]++;
-    m_DoCHist[bin][2*a_pair+1] += a_elecCharge / 0.78;
+    m_DoCHist[bin][2*a_pair+1] += a_elecCharge / m_ionCharge;
     //m_counterCharge[bin][a_pair] += a_elecCharge / 0.78;
     m_countIonsDoC[a_pair]++;
   }
@@ -920,7 +922,7 @@ const char* DoCWrite(RDF* a_rdf, const char* a_filename)
   double binSize = a_rdf->getBinSize();
   int numBins = a_rdf->getNumBins();
   int varDim = a_rdf->getNumMolecPairs();
-  const char * const headernames[] = { "z[A]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14", "15", "16", "17", "18", "19", "20" };
+  const char * const headernames[] = { "z[A]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14", "15", "16", "17", "18", "19", "20", "21", "22" };
   double* data[500];
   for (int i=0; i<numBins; i++)
   {
@@ -980,7 +982,7 @@ const char* CoordNumWrite(RDF* a_rdf, const char* a_filename)
   double* layers;
   layers = new double[numLayers];
   a_rdf->getSystem().getLayerUpperBounds(numLayers,layers);
-  const char * const headernames[] = { "z[A]", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+  const char * const headernames[] = { "z[A]", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" };
   double** data;
   data = new double* [numLayers];
   for (int i=0; i<numLayers; i++)

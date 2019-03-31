@@ -34,9 +34,9 @@ ele-emt-test
 # type6
 728 1
 12.01 0
-# cation anion anode cathode
+# cation anion cathode anode
 1 2 4 5
-# anodeIsLower
+# cathodeIsLower
 1
 # solventID
 3
@@ -70,15 +70,15 @@ ele-emt-test
 #2 1 3 1
 #2 1 3 3
 # numMolecPairs
-5
+11
 1 1 6.3
 2 2 6.3
 1 2 7.7
 1 3 6.5
 2 3 6.2
-#1 4 6.3
-#2 4 6.3
-#3 4 6.3
-#1 5 6.3
-#2 5 6.3
-#3 5 6.3
+1 4 6.3
+2 4 6.3
+3 4 6.3
+1 5 6.3
+2 5 6.3
+3 5 6.3
