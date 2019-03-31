@@ -73,11 +73,9 @@ RDF::RDF(System& a_system, AtomCounter& a_ac)
     m_DoC[i].resize(m_numMolecPairs);
   }
   m_DoCHist.resize(m_numBinsDoC);
-  //m_counterCharge.resize(m_numBinsDoC);
   for (int i=0; i<m_numBinsDoC; i++)
   {
     m_DoCHist[i].resize(2*m_numMolecPairs);
-    //m_counterCharge[i].resize(m_numMolecPairs);
   }
   // end constants for calculating DoC
 
@@ -433,7 +431,6 @@ double RDF::binDoC(double a_doc, double a_elecCharge, unsigned int a_isCounterCh
   {
     m_DoCHist[bin][2*a_pair]++;
     m_DoCHist[bin][2*a_pair+1] += a_elecCharge / m_ionCharge;
-    //m_counterCharge[bin][a_pair] += a_elecCharge / 0.78;
     m_countIonsDoC[a_pair]++;
   }
 }
@@ -619,7 +616,6 @@ void RDF::normalize(AtomCounter* a_ac)
   {
     for (int j=0; j<m_numMolecPairs; j++)
     {
-      //m_counterCharge[i][j] /= m_DoCHist[i][j];
       if ( m_countIonsDoC[j] > 0)
       {
         m_DoCHist[i][2*j+1] /= m_DoCHist[i][2*j];

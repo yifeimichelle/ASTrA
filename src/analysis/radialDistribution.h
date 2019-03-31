@@ -121,8 +121,7 @@ class RDF
     vector<vector<vector<double > > > m_coordNumHist;
     vector<vector<double > > m_countCoordNum;
     vector<vector<double > > m_DoC;
-    vector<vector<double > > m_DoCHist; // columns are DoC and
-    vector<vector<double > > m_counterCharge;
+    vector<vector<double > > m_DoCHist; // columns are DoC_1, countercharge_1, DoC_2, countercharge_2, ...
     // end constants for calculating DoC
     /// Puts atom-atom pair distance into a bin based on layer.
     void binPairDistanceLayer(double a_distance, unsigned int a_pair, unsigned int a_layer);
