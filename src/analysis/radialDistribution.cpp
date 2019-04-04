@@ -5,6 +5,7 @@
 #include "radialDistribution.h"
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <assert.h>
 #include "writer.h"
 #include <math.h>
@@ -15,8 +16,14 @@ RDF::RDF()
 {
 };
 
+RDF::~RDF()
+{
+  m_DoCIndicesFile.close();
+}
+
 RDF::RDF(System& a_system, AtomCounter& a_ac)
 {
+  m_DoCIndicesFile.open("DoCIndices.out", ios::out | ios::trunc);
   m_maxDist = 14.0;
   m_numBins = 500;
   m_binSize = m_maxDist / m_numBins;
@@ -75,7 +82,7 @@ RDF::RDF(System& a_system, AtomCounter& a_ac)
   m_DoCHist.resize(m_numBinsDoC);
   for (int i=0; i<m_numBinsDoC; i++)
   {
-    m_DoCHist[i].resize(2*m_numMolecPairs);
+    m_DoCHist[i].resize(3*m_numMolecPairs);
   }
   // end constants for calculating DoC
 
@@ -218,6 +225,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
         int secondIndex = 0;
         double DoC = 0.0;
         double sumElecCharge = 0.0;
+        int numCoordCarbons = 0;
         double coordNum = 0.0;
         // For each molecule of second type in pair
         for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
@@ -246,6 +254,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
                 {
                   DoC += computeSolidAngleFactor(distance);
                   sumElecCharge += a_frame.getAtomOfMolec(*itB).getCharge();
+                  numCoordCarbons += 1;
                 }
                 else
                 {
@@ -271,7 +280,7 @@ void RDF::sampleMolecules(const Frame& a_frame)
         if (computeDoC)
         {
           DoC /= (2.0*m_phi);
-          binDoC(DoC, sumElecCharge, isCounterCharge, pairIdx);
+          binDoC(a_frame, m_system.getFirstAtomOfMolec(*itA), DoC, sumElecCharge, isCounterCharge, pairIdx, numCoordCarbons);
         }
         if(minDistance < m_maxDist)
         {
@@ -424,14 +433,32 @@ double RDF::computeSolidAngleFactor(double a_distance)
   return retVal;
 }
 
-double RDF::binDoC(double a_doc, double a_elecCharge, unsigned int a_isCounterCharge, unsigned int a_pair)
+double RDF::binDoC(const Frame& a_frame, int a_atomID, double a_doc, double a_elecCharge, unsigned int a_isCounterCharge, unsigned int a_pair, int a_numCoordCarbons)
 {
   int bin = floor(a_doc / m_binSizeDoC);
   if(a_doc<1.0)
   {
-    m_DoCHist[bin][2*a_pair]++;
-    m_DoCHist[bin][2*a_pair+1] += a_elecCharge / m_ionCharge;
+    m_DoCHist[bin][3*a_pair]++;
+    m_DoCHist[bin][3*a_pair+1] += a_elecCharge / m_ionCharge;
+    m_DoCHist[bin][3*a_pair+2] += a_numCoordCarbons;
     m_countIonsDoC[a_pair]++;
+    for (int i=0; i<m_system.getNumDoCThresholds(); i++)
+    {
+      if (a_doc > m_system.getDoCThresholdLo(i))
+      {
+        if (a_doc < m_system.getDoCThresholdHi(i))
+        {
+          const Atom& atom = a_frame.getAtom(a_atomID);
+          const array<double, DIM>& pos = atom.getPosition();
+
+          // save timestep and atom indices
+          m_DoCIndicesFile << " " << atom.getName() << " " << pos[0] << " " << pos[1] << " " << pos[2];
+          m_DoCIndicesFile << " " << a_doc << " " << a_elecCharge << " " << a_numCoordCarbons;
+          m_DoCIndicesFile << " " << a_atomID << " " << a_frame.getTimestep() << endl;
+          //writeDoCIndicesToFile();
+        }
+      }
+    }
   }
 }
 
@@ -618,9 +645,10 @@ void RDF::normalize(AtomCounter* a_ac)
     {
       if ( m_countIonsDoC[j] > 0)
       {
-        m_DoCHist[i][2*j+1] /= m_DoCHist[i][2*j];
+        m_DoCHist[i][3*j+1] /= m_DoCHist[i][3*j];
+        m_DoCHist[i][3*j+2] /= m_DoCHist[i][3*j];
       }
-      m_DoCHist[i][2*j] /= (numFrames * m_countIonsDoC[j] *  m_binSizeDoC);
+      m_DoCHist[i][3*j] /= (numFrames * m_countIonsDoC[j] *  m_binSizeDoC);
     }
   }
   for (int i=0; i<m_numLayers; i++)
@@ -932,8 +960,8 @@ const char* DoCHistWrite(RDF* a_rdf, const char* a_filename)
 {
   double binSize = a_rdf->getBinSizeDoC();
   int numBins = a_rdf->getNumBinsDoC();
-  int varDim = 2*a_rdf->getNumMolecPairs();
-  const char * const headernames[] = { "z[A]",  "DoC_0",  "cc_0",  "DoC_1",  "cc_1",  "DoC_1",  "cc_2",  "DoC_3",  "cc_3",  "DoC_4",  "cc_4",  "DoC_5",  "cc_5",  "DoC_6",  "cc_6",  "DoC_7",  "cc_7",  "DoC_8",  "cc_8",  "DoC_9",  "cc_9",  "DoC_10",  "cc_10",  "DoC_11",  "cc_11",  "DoC_12",  "cc_12",  "DoC_13",  "cc_13" };
+  int varDim = 3*a_rdf->getNumMolecPairs();
+  const char * const headernames[] = { "z[A]",  "DoC_0",  "cc_0", "cpc_0", "DoC_1",  "cc_1", "cpc_1",  "DoC_1",  "cc_2", "cpc_2",  "DoC_3",  "cc_3", "cpc_3",  "DoC_4",  "cc_4", "cpc_4",  "DoC_5",  "cc_5", "cpc_5",  "DoC_6",  "cc_6", "cpc_6",  "DoC_7",  "cc_7", "cpc_7",  "DoC_8",  "cc_8", "cpc_8",  "DoC_9",  "cc_9", "cpc_9",  "DoC_10",  "cc_10", "cpc_10",  "DoC_11",  "cc_11", "cpc_11",  "DoC_12",  "cc_12", "cpc_12",  "DoC_13",  "cc_13", "cpc_13" };
   double* data[500];
   for (int i=0; i<numBins; i++)
   {

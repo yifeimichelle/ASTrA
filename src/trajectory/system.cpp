@@ -270,6 +270,23 @@ void System::setInput()
     m_rdfMolecCutoffs[i] = cutoff;
   }
 
+  nextRow();
+  getInput(&m_numDoCThresholds,0);
+  m_DoCThresholdLo.resize(m_numDoCThresholds);
+  m_DoCThresholdHi.resize(m_numDoCThresholds);
+  cout << "DoC threshholds to mark:" << endl;
+
+  for (unsigned int i=0; i<m_numDoCThresholds; i++)
+  {
+    double DoCLo, DoCHi;
+    nextRow();
+    getInputs2(&DoCLo,&DoCHi);
+    cout << " " << DoCLo << " " << DoCHi << endl;
+    m_DoCThresholdLo[i] = DoCLo;
+    m_DoCThresholdHi[i] = DoCHi;
+  }
+
+
   m_numFramesInclSkip = m_totalFrames - m_zpFramesInclSkip; // number of non-zero-potential frames
   m_numFrames = m_numFramesInclSkip - m_skipFrames;         // number of non-zero-potential production frames (minus skip)
   if ( m_zpFramesInclSkip > 0 ) {
@@ -354,6 +371,13 @@ void System::setInput()
       }
     }
   }
+#ifndef DEBUG
+  for (int i=0; i<m_firstAtomOfMolec.size(); i++)
+  {
+    //cout << m_firstAtomOfMolec[i] << endl;
+  }
+#endif
+  cout << endl;
   for (unsigned int i=0; i<m_numMolecTypes; i++)
   {
     for (unsigned int j=0; j<m_numMembersMolec[i]; j++)
@@ -748,4 +772,21 @@ vector<unsigned int> System::getAtomIndexToGroup(int a_elecAtomIndex) const
 vector<unsigned int> System::getAtomGroupToIndex(int a_eleGrpIndex) const
 {
   return m_elecAtomGroupToIndex[a_eleGrpIndex];
+}
+
+/// Return number of DoC thresholds
+const int System::getNumDoCThresholds() const
+{
+  return m_numDoCThresholds;
+}
+
+/// Return array of DoC thresholds
+const double System::getDoCThresholdLo(int a_index) const
+{
+  return m_DoCThresholdLo[a_index];
+}
+/// Return array of DoC thresholds
+const double System::getDoCThresholdHi(int a_index) const
+{
+  return m_DoCThresholdHi[a_index];
 }

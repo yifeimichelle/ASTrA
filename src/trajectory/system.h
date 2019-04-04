@@ -139,9 +139,16 @@ class System
     const string& getEleGrpsFile() const;
     /// Return electrode atom offset
     const int getElectrodeAtomIndexOffset() const;
-    /// Return iterator to elecAtomIndexToGroup
+    /// Return elecAtomIndexToGroup for specified atom
     vector<unsigned int> getAtomIndexToGroup(int a_elecAtomIndex) const;
+    /// Return elecAtomGroupToIndex for specified group
     vector<unsigned int> getAtomGroupToIndex(int a_eleGrpIndex) const;
+    /// Return number of DoC thresholds
+    const int getNumDoCThresholds() const;
+    /// Return array of DoC thresholds
+    const double getDoCThresholdLo(int a_index) const;
+    /// Return array of DoC thresholds
+    const double getDoCThresholdHi(int a_index) const;
   private:
     void readInput(const string& a_inputFile);
     void setInput();
@@ -190,6 +197,9 @@ class System
     unsigned int m_numMolecules;
     unsigned int m_readFrameEvery;
     unsigned int m_zSymmetrized;
+    unsigned int m_numDoCThresholds;
+    vector<double> m_DoCThresholdLo;
+    vector<double> m_DoCThresholdHi;
     double m_zLo;
     vector<int > m_firstAtomOfMolec;
     array<array<double , MAX_MEMBERS_PER_MOLEC >, MAX_NUM_TYPES > m_masses;

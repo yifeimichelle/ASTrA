@@ -73,6 +73,7 @@ void Frame::skipStep(int a_every)
     {
       m_traj >> atomName >> x >> y >> z;
       m_atoms[i].setPosition(x,y,z);
+      m_atoms[i].setName(atomName.c_str());
     }
 }
 
@@ -106,6 +107,7 @@ void Frame::readZPStep(int a_every)
   {
     m_traj >> atomName >> x >> y >> z;
     m_atoms[i].setPosition(x,y,z);
+    m_atoms[i].setName(atomName.c_str());
   }
 }
 
@@ -167,6 +169,7 @@ void Frame::readStep(int a_every)
   {
     m_traj >> atomName >> x >> y >> z;
     m_atoms[i].setPosition(x,y,z);
+    m_atoms[i].setName(atomName.c_str());
   }
 
 }
@@ -230,10 +233,12 @@ void Frame::clearFrame()
   for (unsigned int i=0; i<m_numAtoms; i++)
     {
       m_atoms[i].setPosition(-1, -1, -1);
+      m_atoms[i].setName("");
     }
     for (unsigned int i=0; i<m_numMolecules; i++)
     {
       m_COMs[i].setPosition(-1, -1, -1);
+      m_atoms[i].setName("");
     }
   for (unsigned int i=0; i<NUM_LAYERS; i++)
     {
@@ -344,6 +349,9 @@ void Frame::setCOMs(vector<array<double, DIM >  > a_COMs)
   for (int i=0; i<m_numMolecules; i++)
     {
       m_COMs[i].setPosition(a_COMs[i][0],a_COMs[i][1],a_COMs[i][2]);
+      char str[100];
+      sprintf(str, "%d", i);
+      m_COMs[i].setName(str);
     }
 }
 
