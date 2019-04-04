@@ -54,6 +54,33 @@ void write_binned_data(const char *a_filename, int a_numBins, double a_binSize, 
   }
   close_file();
 }
+void write_binned_data(const char *a_filename, int a_numBins, double a_binSize, double a_binOffset, int a_varDim, const char * const *a_headernames, double **a_vars)
+{
+  open_file(a_filename);
+  // print headers
+  for (unsigned int iHeader=0; iHeader<a_varDim+1; iHeader++)
+  {
+    char str[128];
+    sprintf(str, " %s", a_headernames[iHeader]);
+    writeString(str);
+  }
+  writeString("\n");
+  // print data
+  for (unsigned int iBin=0; iBin<a_numBins; iBin++)
+  {
+    char str[128];
+    sprintf(str, "%f", 1.0*iBin*a_binSize+a_binOffset);
+    writeString(str);
+    for (unsigned int jElement=0; jElement<a_varDim; jElement++)
+    {
+      char str[128];
+      sprintf(str, " %f", a_vars[iBin][jElement]);
+      writeString(str);
+    }
+    writeString("\n");
+  }
+  close_file();
+}
 
 // Writes layered data, with multiple variables to a single file
 void write_layered_data(const char *a_filename, int a_numLayers, double *a_layers, int a_varDim, const char * const *a_headernames, double **a_vars)

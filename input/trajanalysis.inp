@@ -2,6 +2,8 @@
 prod-emt-test.xyz
 # chargename
 ele-emt-test
+# define electrode atom groups
+elegrps 3
 # frames
 10 1
 # equil skip

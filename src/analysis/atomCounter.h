@@ -67,26 +67,42 @@ class AtomCounter
     const int getNumCVFrames() const;
     /// Returns vector of COMs.
     //const vector<array<double, DIM > > getCOMs() const;
+    const double getBinSizeAtomCharge() const;
+    const int getNumBinsAtomCharge() const;
+    const double getMaxAtomCharge() const;
+    double* getElecAtomChargeHistAddress(int i);
+
 
   private:
     /// Computes the charging mechanisms parameter from Forse 2016 "New perspectives on the charging mechanisms of supercapacitors".
     array<double, 2> computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer);
     /// Bin and layer atom, and add to density profile, during zero-P, zero-Q run.
-    void binZPAtom(Frame& a_frame, int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte);
+    void binZPAtom(Frame& a_frame, int& a_atomIndex, array<double, DIM>& a_position,
+        int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte);
     /// Bin and layer electrolyte COM, during zero-P, zero-Q run.
-    void binZPElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, 3> >& a_IonsInLayer,  int& a_electrolyteID, int& a_isElectrolyte);
+    void binZPElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double,
+        DIM>& a_position, int& a_molecType, vector<array<int, 3> >& a_IonsInLayer,
+        int& a_electrolyteID, int& a_isElectrolyte);
     /// Compute number of ions in layers during skipped frames of run.
-    void binSkipElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, 3> >& a_IonsInLayer,  int& a_electrolyteID, int& a_isElectrolyte);
+    void binSkipElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double,
+        DIM>& a_position, int& a_molecType, vector<array<int, 3> >& a_IonsInLayer,
+        int& a_electrolyteID, int& a_isElectrolyte);
     /// Bin and layer atom, and add to density profile.
-    void binAtom(Frame& a_frame, int& a_atomIndex, array<double, DIM>& a_position, int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte, int& a_isElectrode);
+    void binAtom(Frame& a_frame, int& a_atomIndex, array<double, DIM>& a_position,
+        int& a_molecType, int& a_molecMember, double& a_mass, int& a_isElectrolyte,
+        int& a_isElectrode);
     /// Bin and layer electrolyte COM.
-    void binElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double, DIM>& a_position, int& a_molecType, vector<array<int, 3> >& a_IonsInLayer,  int& a_electrolyteID, int& a_isElectrolyte);
+    void binElectrolyteCOM(Frame& a_frame, int& a_molecIndex, array<double,
+        DIM>& a_position, int& a_molecType, vector<array<int, 3> >& a_IonsInLayer,
+        int& a_electrolyteID, int& a_isElectrolyte);
     System m_system;
     /// Center of masses for this timestep.
     vector<array<double, DIM > > m_COMs;
-    /// Collective variables for atom and COM counts, during entire trajectory (Z-P/Q and C-P/Q).
+    /// Collective variables for atom and COM counts, during entire trajectory (Zero-P/Q and Const-P/Q).
     vector<vector<array<double, NUM_ION_TYPES > > > m_numIonsInLayerTime;
+    /// Charge in electrode slice during entire trajectory
     vector<vector<array<double, NUM_ELECTRODES > > > m_elecSliceCharge;
+    /// Stores bounds of electrode/bulk layers
     vector<double > m_layerBounds;
 
     /// Counter of all atoms in bins.
@@ -99,6 +115,11 @@ class AtomCounter
     vector<array<double, NUM_ION_TYPES > > m_numIonsProfile;
     /// Counter of ion and solvent COMs in layers (anode, cathode, liquid).
     vector<array<double, NUM_ION_TYPES > > m_avgIonsInLayer;
+    /// Stores histogram of instantaneous charge on electrode atoms
+    vector< vector<double> > m_elecAtomChargeHist;
+    int m_numBinsAtomCharge;
+    double m_maxAtomCharge;
+    double m_binSizeAtomCharge;
 
     /// Counter of all atoms in bins, during zero-P, zero-Q run.
     vector<array<double, MAX_NUM_TYPES > > m_numZPAtomsProfile;
@@ -128,6 +149,7 @@ const char* ACWriteIonsInLayers(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteCollectiveVars(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteElecChargeSlicesTime(AtomCounter* a_ac, const char* a_filename);
+const char* ACWriteElecAtomChargeHist(AtomCounter* a_ac, const char* a_filename);
 
 
 #endif

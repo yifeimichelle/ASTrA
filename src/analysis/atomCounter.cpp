@@ -22,6 +22,9 @@ AtomCounter::AtomCounter(System& a_system)
   m_binSize = 0.05; //!! FIXME make this choose a bin size automatically based on cell size?
   m_numBins = ceil(m_system.getBoxDim(2) / m_binSize );
   m_numLayers = m_system.getNumLayers();
+  m_maxAtomCharge = 0.04; // [e]
+  m_numBinsAtomCharge = 800; // for positive and negative
+  m_binSizeAtomCharge = m_maxAtomCharge*2.0 / (1.0*m_numBinsAtomCharge) ;
   // resize vectors
   m_COMs.resize(m_system.getNumMolecules());
 
@@ -53,6 +56,12 @@ AtomCounter::AtomCounter(System& a_system)
 
   m_numAtomTypes=m_system.getNumAtomTypes();
   m_chargingParam.resize( m_system.getNumFrames() );
+
+  m_elecAtomChargeHist.resize( m_numBinsAtomCharge );
+  for (int i=0; i<m_numBinsAtomCharge; i++)
+  {
+    m_elecAtomChargeHist[i].resize( m_system.getNumEleGrps() );
+  }
 };
 
 void AtomCounter::sample(Frame& a_frame)
@@ -569,6 +578,27 @@ void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>&
     // Increment electrode charge in bin
     double charge = a_frame.getAtom(a_atomIndex).getCharge();
     m_electrodeChargeProfile[bin] += charge;
+    int binAtomCharge = floor(charge / m_binSizeAtomCharge) + m_numBinsAtomCharge/2; // accounts for negative charges
+    if (binAtomCharge < 0)
+    {
+      binAtomCharge = 0;
+    }
+    else if (binAtomCharge > m_numBinsAtomCharge-1)
+    {
+      binAtomCharge = m_numBinsAtomCharge-1;
+    }
+
+    // return iterator to all subgroupings that this electrode atom belongs to
+    // for now just anode and cathode
+    vector<unsigned int> thisElecAtomGroups = m_system.getAtomIndexToGroup(a_atomIndex-m_system.getElectrodeAtomIndexOffset());
+    vector<unsigned int>::iterator atomGrpItr = thisElecAtomGroups.begin();
+    while (atomGrpItr != thisElecAtomGroups.end())
+    {
+      // bin charge
+      m_elecAtomChargeHist[binAtomCharge][*atomGrpItr] += 1.0;
+      atomGrpItr++;
+    }
+
   }
   unsigned int layer = m_system.getLayer(a_position);
   a_frame.assignAtomToLayer(a_atomIndex, atomType, layer);
@@ -668,6 +698,18 @@ void AtomCounter::normalize()
     m_densityProfile[i] /= normDensity ;
     m_electrodeChargeProfile[i] /= numFrames;
   }
+  // normalize histogram of charges
+  // for number of electrode atom groups, divide by number of prod timesteps and number of atoms in group
+  for (int i=0; i<m_system.getNumEleGrps(); i++)
+  {
+    double normElecAtomChargeHist = numFrames * m_system.getAtomGroupToIndex(i).size();
+    // for number of bins
+    for (int j=0; j<m_numBinsAtomCharge; j++)
+    {
+      m_elecAtomChargeHist[j][i] /= normElecAtomChargeHist;
+    }
+  }
+
 }
 
 void AtomCounter::print()
@@ -820,6 +862,23 @@ const int AtomCounter::getNumCVFrames() const
   return m_system.getNumFrames();
 }
 
+const double AtomCounter::getBinSizeAtomCharge() const
+{
+  return m_binSizeAtomCharge;
+}
+const int AtomCounter::getNumBinsAtomCharge() const
+{
+  return m_numBinsAtomCharge;
+}
+const double AtomCounter::getMaxAtomCharge() const
+{
+  return m_maxAtomCharge;
+}
+double* AtomCounter::getElecAtomChargeHistAddress(int i)
+{
+  return &(m_elecAtomChargeHist[i][0]);
+}
+
 // const vector<array<double, DIM >  > AtomCounter::getCOMs() const
 // {
 //   return m_COMs;
@@ -924,7 +983,6 @@ const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename)
   data = new double** [numFrames];
   for (int i=0; i<numFrames; i++)
   {
-    // FIXME need better way to access pointers than doing this every time, it is very tedious
     data[i] = new double* [numLayers];
     for (int j=0; j<numLayers; j++)
     {
@@ -947,7 +1005,6 @@ const char* ACWriteElecChargeSlicesTime(AtomCounter* a_ac, const char* a_filenam
   data = new double** [numFrames];
   for (int i=0; i<numFrames; i++)
   {
-    // FIXME need better way to access pointers than doing this every time, it is very tedious
     data[i] = new double* [numLayers];
     for (int j=0; j<numLayers; j++)
     {
@@ -973,4 +1030,22 @@ const char* ACWriteCollectiveVars(AtomCounter* a_ac, const char* a_filename)
   }
   write_time_data(a_filename, numFrames, saveFrameEvery, varDim, headernames, data);
   delete data;
+}
+
+const char* ACWriteElecAtomChargeHist(AtomCounter* a_ac, const char* a_filename)
+{
+  double binSize = a_ac->getBinSizeAtomCharge();
+  int numBins = a_ac->getNumBinsAtomCharge();
+  int varDim = a_ac->getSystem().getNumEleGrps();
+  double binOffset = -1.0*a_ac->getMaxAtomCharge();
+  const char * const headernames[] = { "q[e]",  "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",  "10",  "11",  "12",  "13", "14", "15", "16", "17", "18", "19", "20" };
+  double** data;
+  data = new double* [numBins];
+  for (int i=0; i<numBins; i++)
+  {
+    data[i] = a_ac->getElecAtomChargeHistAddress(i);
+  }
+  write_binned_data(a_filename, numBins, binSize, binOffset, varDim, headernames, data);
+  delete data;
+  return a_filename;
 }

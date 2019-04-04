@@ -7,8 +7,20 @@
 #include <string>
 #include "system.h"
 #include <assert.h>
+#include <algorithm>
+#include <sys/stat.h>
 
 using namespace std;
+
+// check if a file exists
+bool fileExists(const std::string& file) {
+  struct stat buf;
+  return (stat(file.c_str(), &buf) == 0);
+}
+bool fileExists(const char* file) {
+  struct stat buf;
+  return (stat(file, &buf) == 0);
+}
 
   template <typename T>
 T convert_to (const std::string &a_str)
@@ -122,6 +134,9 @@ void System::setInput()
   }
 
   nextRow();
+  getInputs2(&m_elegrpsFile,&m_numEleGrps);
+
+  nextRow();
   getInputs2(&m_totalFrames,&m_readFrameEvery);
 
   nextRow();
@@ -176,6 +191,16 @@ void System::setInput()
 
   nextRow();
   getInputs4(&m_cationID, &m_anionID, &m_cathodeID, &m_anodeID);
+  if ( m_numMolecs[m_cathodeID-1]*m_numMembersMolec[m_cathodeID-1]
+      == m_numMolecs[m_anodeID-1]*m_numMembersMolec[m_anodeID-1] )
+  {
+    m_numElectrodeAtoms = m_numMolecs[m_anodeID-1]*m_numMembersMolec[m_anodeID-1];
+  }
+  else
+  {
+    cout << "ERROR! Number of electrode atoms do not match between anode and cathode" << endl;
+    exit(77);
+  }
 
   nextRow();
   getInput(&m_cathodeIsLower,0);
@@ -255,18 +280,76 @@ void System::setInput()
     m_zpFrames = 0;
   }
 
+  // set up electrode atom groups
+  m_elecAtomIndexToGroup.resize( m_numElectrodeAtoms*2 );
+  if (fileExists(m_elegrpsFile.c_str()))
+  {
+    m_elegrpsExists = 1;
+    ifstream elegrps;
+    elegrps.open(m_elegrpsFile.c_str());
+    int numCustomEleGrps;
+    elegrps >> numCustomEleGrps;
+    assert(m_numEleGrps == numCustomEleGrps + 2);
+    m_elecAtomGroupToIndex.resize( m_numEleGrps );
+    int numAtomsPerGroup;
+    int atomIndex;
+    for (int i = 0; i<numCustomEleGrps; i++)
+    {
+      // read in custom ele grps
+      elegrps >> numAtomsPerGroup;
+      for (int j = 0; j<numAtomsPerGroup; j++)
+      {
+        elegrps >> atomIndex;
+        m_elecAtomGroupToIndex[i+2].push_back(atomIndex);
+        // FIXME: check that atom index is greater than offset, which is calculated later
+      }
+    }
+    elegrps.close();
+  }
+  else
+  {
+    m_elegrpsExists = 0;
+    m_elecAtomGroupToIndex.resize( 2 );
+  }
+
   m_frameTime = m_stepInterval * m_stepTime;
   m_typeAtomIndices.resize(m_numAtomTypes);
   m_molecMembersOfType.resize(m_numAtomTypes);
   unsigned int atomCounter=0;
+  unsigned int elecAtomCounter=0;
+  int electrodeID = -1;
+  m_electrodeAtomIndexOffset = -1;
   for (unsigned int i=0; i<m_numMolecTypes; i++)
   {
+    isElectrode(i, &electrodeID); // tells if molecule type is electrode
     for (unsigned int j=0; j<m_numMolecs[i]; j++)
     {
       m_firstAtomOfMolec.push_back(atomCounter);
       for (unsigned int k=0; k<m_numMembersMolec[i]; k++)
       {
         m_typeAtomIndices[getAtomType(i,k)].push_back(atomCounter);
+        // Find all electrode groups that this atom belongs to
+        if (electrodeID > -1)
+        {
+          if (m_electrodeAtomIndexOffset == -1)
+          {
+            m_electrodeAtomIndexOffset = atomCounter;
+          }
+          m_elecAtomGroupToIndex[electrodeID].push_back(atomCounter);
+          m_elecAtomIndexToGroup[elecAtomCounter].push_back(electrodeID);
+          // Iterate through all groups
+          for (unsigned int elegrpIdx = 2; elegrpIdx<m_numEleGrps; elegrpIdx++)
+          {
+            // If this atom index is listed in the group
+            if ( find(m_elecAtomGroupToIndex[elegrpIdx].begin(), m_elecAtomGroupToIndex[elegrpIdx].end(),
+                  elecAtomCounter+m_electrodeAtomIndexOffset) != m_elecAtomGroupToIndex[elegrpIdx].end() )
+            {
+              // Add group to list of groups for given atom index
+              m_elecAtomIndexToGroup[elecAtomCounter].push_back(elegrpIdx);
+            }
+          }
+          elecAtomCounter++;
+        }
         atomCounter++;
       }
     }
@@ -372,6 +455,11 @@ const string& System::getTrajFile() const
 const string& System::getChargesFile() const
 {
   return m_chgFile;
+}
+
+const string& System::getEleGrpsFile() const
+{
+  return m_elegrpsFile;
 }
 
 const unsigned int System::getNumOfType(unsigned int a_type) const
@@ -492,7 +580,15 @@ const unsigned int System::getNumElectrolyteMolecs() const
   return m_numElectrolyteMolecs;
 }
 
+const unsigned int System::getNumElectrodeAtoms() const
+{
+  return m_numElectrodeAtoms;
+}
 
+const unsigned int System::getNumEleGrps() const
+{
+  return m_numEleGrps;
+}
 const unsigned int System::getLayer(array<double, DIM>& a_position) const
 {
   unsigned int retVal;
@@ -618,6 +714,11 @@ unsigned int System::getCathodeID() const
   return m_cathodeID;
 }
 
+const int System::getElectrodeAtomIndexOffset() const
+{
+  return m_electrodeAtomIndexOffset;
+}
+
 /// Returns whether molecule is anion.
 unsigned int System::isAnion(unsigned int a_molID) const
 {
@@ -637,4 +738,14 @@ const unsigned int System::getFirstAtomOfMolec(unsigned int a_molecIndex) const
 const unsigned int System::getReadFrameEvery() const
 {
   return m_readFrameEvery;
+}
+
+vector<unsigned int> System::getAtomIndexToGroup(int a_elecAtomIndex) const
+{
+  return m_elecAtomIndexToGroup[a_elecAtomIndex];
+}
+
+vector<unsigned int> System::getAtomGroupToIndex(int a_eleGrpIndex) const
+{
+  return m_elecAtomGroupToIndex[a_eleGrpIndex];
 }

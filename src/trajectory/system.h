@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cmath>
 #include <cstring>
+#include <fstream>
 #include <array>
 #include <vector>
 #include <string>
@@ -96,6 +97,10 @@ class System
     const unsigned int getNumElectrolyteSpecies() const;
     /// Get total number of molecules of electrolytes
     const unsigned int getNumElectrolyteMolecs() const;
+    /// Get number of atoms in a single electrode
+    const unsigned int getNumElectrodeAtoms() const;
+    /// Get number of electrode atom groupings (total including anode/cathode)
+    const unsigned int getNumEleGrps() const;
     /// Identify the layer that a set of coordinates is in.
     const unsigned int getLayer(array<double, DIM>& a_position) const;
     /// Return masses of atoms in specified molecule type.
@@ -130,6 +135,13 @@ class System
     const unsigned int getFirstAtomOfMolec(unsigned int a_molecIndex) const;
     /// Returns read interval for trajectory steps
     const unsigned int getReadFrameEvery() const;
+    /// Returns name of electrode atom groups file (elegrpsfile)
+    const string& getEleGrpsFile() const;
+    /// Return electrode atom offset
+    const int getElectrodeAtomIndexOffset() const;
+    /// Return iterator to elecAtomIndexToGroup
+    vector<unsigned int> getAtomIndexToGroup(int a_elecAtomIndex) const;
+    vector<unsigned int> getAtomGroupToIndex(int a_eleGrpIndex) const;
   private:
     void readInput(const string& a_inputFile);
     void setInput();
@@ -150,6 +162,7 @@ class System
     unsigned int m_inputRow;
     string m_trajFile;
     string m_chgFile;
+    string m_elegrpsFile;
     unsigned int m_totalFrames;
     unsigned int m_numFramesInclSkip; // Number of constant-P or constant-Q "production" frames.
     unsigned int m_numFrames; // Number of constant-P or constant-Q "production" frames.
@@ -173,6 +186,7 @@ class System
     unsigned int m_boolWithCap;
     unsigned int m_numElectrolyteSpecies;
     unsigned int m_numElectrolyteMolecs;
+    unsigned int m_numElectrodeAtoms;
     unsigned int m_numMolecules;
     unsigned int m_readFrameEvery;
     unsigned int m_zSymmetrized;
@@ -196,5 +210,11 @@ class System
     array<unsigned int, MAX_NUM_TYPES > m_numMolecs;
     vector<string > lineToString(char* a_inputline, string& a_delimiter);
     vector<string > readNextLine(char* a_inputline, string& a_delimiter);
+    unsigned int m_numEleGrps;
+    int m_electrodeAtomIndexOffset;
+    bool m_elegrpsExists;
+    vector<vector<unsigned int > > m_elecAtomIndexToGroup;
+    vector<vector<unsigned int > > m_elecAtomGroupToIndex;
+    //ifstream m_elegrps;
 };
 #endif
