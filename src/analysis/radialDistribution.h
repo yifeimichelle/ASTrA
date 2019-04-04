@@ -141,7 +141,7 @@ class RDF
     double binDoC(const Frame& a_frame, int a_atomID, double a_doc, double a_elecCharge, unsigned int a_isCounterCharge, unsigned int a_pair, int a_numCoordCarbons);
     double binCoordNum(double a_coordNum, unsigned int a_pair, unsigned int a_layer);
     //void writeDoCIndicesToFile(ofstream a_file, double a_doc, double a_elecCharge, int a_atomIndex, int a_timestep);
-    ofstream m_DoCIndicesFile;
+    vector<ofstream> m_DoCIndicesFile;
 };
 
 const char* RDFWrite(RDF* a_rdf, const char* a_filename);
