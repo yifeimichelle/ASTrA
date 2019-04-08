@@ -37,15 +37,15 @@ Frame::Frame(System& a_system)
 
   // Initialize reading of charges file
   if (m_system.hasChargeFile())
-    {
-      m_chg.open(m_system.getChargesFile().c_str());
-      unsigned int chgNumAtoms;
-      char tmp[256];
-      m_chg >> tmp >> tmp >> tmp >> tmp >> tmp >> tmp >> tmp;
-      m_chg >> chgNumAtoms;
-      m_numFluctuatingCharges = chgNumAtoms;
-      m_chg.seekg(0, m_chg.beg);
-    }
+  {
+    m_chg.open(m_system.getChargesFile().c_str());
+    unsigned int chgNumAtoms;
+    char tmp[256];
+    m_chg >> tmp >> tmp >> tmp >> tmp >> tmp >> tmp >> tmp;
+    m_chg >> chgNumAtoms;
+    m_numFluctuatingCharges = chgNumAtoms;
+    m_chg.seekg(0, m_chg.beg);
+  }
 
 };
 void Frame::skipStep()
@@ -56,25 +56,25 @@ void Frame::skipStep(int a_every)
 {
   // discard step from traj file
   for (int istep=0; istep < a_every-1; istep++)
+  {
+    char tmp[256];
+    m_traj >> tmp >> tmp >> tmp >> tmp;
+    for (unsigned int i=0; i<m_numAtoms; i++)
     {
-      char tmp[256];
       m_traj >> tmp >> tmp >> tmp >> tmp;
-      for (unsigned int i=0; i<m_numAtoms; i++)
-	{
-	  m_traj >> tmp >> tmp >> tmp >> tmp;
-	}
     }
+  }
   m_totalStepNum++;
   char tmp[256];
   m_traj >> tmp >> tmp >> tmp >> tmp;
   string atomName;
   double x, y, z;
   for (unsigned int i=0; i<m_numAtoms; i++)
-    {
-      m_traj >> atomName >> x >> y >> z;
-      m_atoms[i].setPosition(x,y,z);
-      m_atoms[i].setName(atomName.c_str());
-    }
+  {
+    m_traj >> atomName >> x >> y >> z;
+    m_atoms[i].setPosition(x,y,z);
+    m_atoms[i].setName(atomName.c_str());
+  }
 }
 
 void Frame::readZPStep()
@@ -179,16 +179,16 @@ void Frame::readCharges()
   char tmp[256];
   // skip lines
   for (unsigned int i=0; i<24; i++)
-    {
-      m_chg >> tmp;
-    }
+  {
+    m_chg >> tmp;
+  }
   int id;
   double q;
   for (unsigned int i=0; i<m_numFluctuatingCharges; i++)
-    {
-      m_chg >> id >> q;
-      m_atoms[id-1].setCharge(q);
-    }
+  {
+    m_chg >> id >> q;
+    m_atoms[id-1].setCharge(q);
+  }
 }
 
 void Frame::skipCharges()
@@ -196,16 +196,16 @@ void Frame::skipCharges()
   char tmp[256];
   // skip lines
   for (unsigned int i=0; i<24; i++)
-    {
-      m_chg >> tmp;
-    }
+  {
+    m_chg >> tmp;
+  }
   int id;
   double q;
   for (unsigned int i=0; i<m_numFluctuatingCharges; i++)
-    {
-      m_chg >> id >> q;
-      m_atoms[id-1].setCharge(q);
-    }
+  {
+    m_chg >> id >> q;
+    m_atoms[id-1].setCharge(q);
+  }
 }
 
 const int Frame::getTimestep() const
@@ -231,25 +231,25 @@ const int Frame::getZPStepNum() const
 void Frame::clearFrame()
 {
   for (unsigned int i=0; i<m_numAtoms; i++)
-    {
-      m_atoms[i].setPosition(-1, -1, -1);
-      m_atoms[i].setName("");
-    }
-    for (unsigned int i=0; i<m_numMolecules; i++)
-    {
-      m_COMs[i].setPosition(-1, -1, -1);
-      m_atoms[i].setName("");
-    }
+  {
+    m_atoms[i].setPosition(-1, -1, -1);
+    m_atoms[i].setName("");
+  }
+  for (unsigned int i=0; i<m_numMolecules; i++)
+  {
+    m_COMs[i].setPosition(-1, -1, -1);
+    m_atoms[i].setName("");
+  }
   for (unsigned int i=0; i<NUM_LAYERS; i++)
+  {
+    for (unsigned int j=0; j<MAX_NUM_TYPES; j++)
     {
-      for (unsigned int j=0; j<MAX_NUM_TYPES; j++)
-	{
-	  m_atomLayers[i][j].clear();
-	  m_COMLayers[i][j].clear();
-	  m_ZPatomLayers[i][j].clear();
-	  m_ZPCOMLayers[i][j].clear();
-	}
+      m_atomLayers[i][j].clear();
+      m_COMLayers[i][j].clear();
+      m_ZPatomLayers[i][j].clear();
+      m_ZPCOMLayers[i][j].clear();
     }
+  }
 }
 
 const Atom& Frame::getAtom(int a_atomIndex) const
@@ -286,16 +286,16 @@ const double Frame::computeDistance(int a_i, int a_j) const
   double retVal = 0.0;
   double dim;
   for (int i=0; i<DIM; i++)
+  {
+    dim = m_system.getBoxDim(i);
+    double dist = posI[i] - posJ[i];
+    if(m_system.isPeriodic(i))
     {
-      dim = m_system.getBoxDim(i);
-      double dist = posI[i] - posJ[i];
-      if(m_system.isPeriodic(i))
-	{
-	  dist -= round(dist/dim) * dim;
-	}
-
-      retVal += dist*dist;
+      dist -= round(dist/dim) * dim;
     }
+
+    retVal += dist*dist;
+  }
   retVal = sqrt(retVal);
   return retVal;
 }
@@ -307,15 +307,15 @@ const double Frame::computeMolecDistance(int a_i, int a_j) const
   double retVal = 0.0;
   double dim;
   for (int i=0; i<DIM; i++)
+  {
+    dim = m_system.getBoxDim(i);
+    double dist = posI[i] - posJ[i];
+    if(m_system.isPeriodic(i))
     {
-      dim = m_system.getBoxDim(i);
-      double dist = posI[i] - posJ[i];
-      if(m_system.isPeriodic(i))
-	{
-	  dist -= round(dist/dim) * dim;
-	}
-      retVal += dist*dist;
+      dist -= round(dist/dim) * dim;
     }
+    retVal += dist*dist;
+  }
   retVal = sqrt(retVal);
   // if (retVal == 0) //!!
   //   {
@@ -347,12 +347,12 @@ const unsigned int Frame::getLayerOfMolec(unsigned int a_index) const
 void Frame::setCOMs(vector<array<double, DIM >  > a_COMs)
 {
   for (int i=0; i<m_numMolecules; i++)
-    {
-      m_COMs[i].setPosition(a_COMs[i][0],a_COMs[i][1],a_COMs[i][2]);
-      char str[100];
-      sprintf(str, "%d", i);
-      m_COMs[i].setName(str);
-    }
+  {
+    m_COMs[i].setPosition(a_COMs[i][0],a_COMs[i][1],a_COMs[i][2]);
+    char str[100];
+    sprintf(str, "%d", i);
+    m_COMs[i].setName(str);
+  }
 }
 
 
@@ -391,41 +391,41 @@ void Frame::printAtomsInLayer(unsigned int a_layer)
 {
   cout << "Atom indices in layer " << a_layer <<":" << endl;
   for (int type = 0; type < m_system.getNumAtomTypes(); type++)
+  {
+    cout << "  Type " << type << ":";
+    for (vector<int>::iterator it = m_atomLayers[a_layer][type].begin(); it != m_atomLayers[a_layer][type].end(); it++)
     {
-      cout << "  Type " << type << ":";
-      for (vector<int>::iterator it = m_atomLayers[a_layer][type].begin(); it != m_atomLayers[a_layer][type].end(); it++)
-	{
-	  cout << " " << *it;
-	}
-      cout << endl;
+      cout << " " << *it;
     }
+    cout << endl;
+  }
 }
 
 void Frame::printAtomsInLayerCheck(unsigned int a_layer)
 {
   array<vector<int >, MAX_NUM_TYPES > retVals;
   for (int type=0; type < m_system.getNumAtomTypes(); type++)
-    {
+  {
     for (int atom=0; atom<m_system.getNumOfType(type); atom++)
+    {
+      int index = m_system.getIndexOfType(type, atom);
+      int layer = getLayerOf(index);
+      if (layer == a_layer)
       {
-	int index = m_system.getIndexOfType(type, atom);
-	int layer = getLayerOf(index);
-	if (layer == a_layer)
-	  {
-	    retVals[type].push_back(index);
-	  }
+        retVals[type].push_back(index);
       }
     }
+  }
   cout << "Atom indices in layer " << a_layer << " (debug purposes):" << endl;
   for (int type = 0; type < m_system.getNumAtomTypes(); type++)
+  {
+    cout << "  Type " << type << ":";
+    for (vector<int>::iterator it = retVals[type].begin(); it != retVals[type].end(); it++)
     {
-      cout << "  Type " << type << ":";
-      for (vector<int>::iterator it = retVals[type].begin(); it != retVals[type].end(); it++)
-	{
-	  cout << " " << *it;
-	}
-      cout << endl;
+      cout << " " << *it;
     }
+    cout << endl;
+  }
 
 }
 
@@ -433,14 +433,14 @@ void Frame::printMolecsInLayer(unsigned int a_layer)
 {
   cout << "Molecule indices in layer " << a_layer <<":" << endl;
   for (int type = 0; type < m_system.getNumMolecTypes(); type++)
+  {
+    cout << "  Type " << type << ":";
+    for (vector<int>::iterator it = m_COMLayers[a_layer][type].begin(); it != m_COMLayers[a_layer][type].end(); it++)
     {
-      cout << "  Type " << type << ":";
-      for (vector<int>::iterator it = m_COMLayers[a_layer][type].begin(); it != m_COMLayers[a_layer][type].end(); it++)
-	{
-	  cout << " " << *it;
-	}
-      cout << endl;
+      cout << " " << *it;
     }
+    cout << endl;
+  }
 }
 const unsigned int Frame::getCurrentNumAtomsInLayer(int a_layerIdx, int a_molID) const
 {
@@ -457,19 +457,19 @@ void Frame::setCharges(const System& a_system)
   unsigned int atomIdx = 0;
   double q;
   for (unsigned int i=0; i<a_system.getNumMolecTypes(); i++)
+  {
+    array<double , MAX_MEMBERS_PER_MOLEC > charges = a_system.getChargesOfType(i);
+    unsigned int numMolecs=a_system.getNumMolecsOfType(i);
+    for (unsigned int j=0; j<numMolecs; j++)
     {
-      array<double , MAX_MEMBERS_PER_MOLEC > charges = a_system.getChargesOfType(i);
-      unsigned int numMolecs=a_system.getNumMolecsOfType(i);
-      for (unsigned int j=0; j<numMolecs; j++)
-	{
-	  unsigned int numMembers=a_system.getNumMembersMolec(i);
-	  for (unsigned int k=0; k<numMembers; k++)
-	    {
-	      m_atoms[atomIdx].setCharge(charges[k]);
-	      atomIdx++;
-	    }
-	}
+      unsigned int numMembers=a_system.getNumMembersMolec(i);
+      for (unsigned int k=0; k<numMembers; k++)
+      {
+        m_atoms[atomIdx].setCharge(charges[k]);
+        atomIdx++;
+      }
     }
+  }
 }
 
 const double Frame::sumCharges(const System& a_system, int a_molID) const
@@ -477,20 +477,20 @@ const double Frame::sumCharges(const System& a_system, int a_molID) const
   double sum = 0;
   unsigned int atomIdx = 0;
   for (unsigned int i=0; i<a_system.getNumMolecTypes(); i++)
+  {
+    unsigned int numMolecs=a_system.getNumMolecsOfType(i);
+    for (unsigned int j=0; j<numMolecs; j++)
     {
-      unsigned int numMolecs=a_system.getNumMolecsOfType(i);
-      for (unsigned int j=0; j<numMolecs; j++)
-	{
-	  unsigned int numMembers=a_system.getNumMembersMolec(i);
-	  for (unsigned int k=0; k<numMembers; k++)
-	    {
-	      if ( i == a_molID-1 )
-		{
-		  sum += m_atoms[atomIdx].getCharge();
-		}
-	      atomIdx++;
-	    }
-	}
+      unsigned int numMembers=a_system.getNumMembersMolec(i);
+      for (unsigned int k=0; k<numMembers; k++)
+      {
+        if ( i == a_molID-1 )
+        {
+          sum += m_atoms[atomIdx].getCharge();
+        }
+        atomIdx++;
+      }
     }
+  }
   return sum;
 }

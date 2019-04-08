@@ -34,6 +34,7 @@ RDF::RDF(System& a_system, AtomCounter& a_ac)
     sprintf(filename, "%s-%d", "DoCIndices", i);
     sprintf(full_filename, "%s.out", filename);
     m_DoCIndicesFile[i].open(full_filename, ios::out | ios::trunc);
+    m_DoCIndicesFile[i] << "#atom x y z doc qsum ncoordc idx timestep" << endl;
   }
   m_maxDist = 14.0;
   m_numBins = 500;
@@ -463,7 +464,7 @@ double RDF::binDoC(const Frame& a_frame, int a_atomID, double a_doc, double a_el
           const array<double, DIM>& pos = atom.getPosition();
 
           // save timestep and atom indices
-          m_DoCIndicesFile[i] << " " << atom.getName() << " " << pos[0] << " " << pos[1] << " " << pos[2];
+          m_DoCIndicesFile[i] << atom.getName() << " " << pos[0] << " " << pos[1] << " " << pos[2];
           m_DoCIndicesFile[i] << " " << a_doc << " " << a_elecCharge << " " << a_numCoordCarbons;
           m_DoCIndicesFile[i] << " " << a_atomID << " " << a_frame.getTimestep() << endl;
           //writeDoCIndicesToFile();
