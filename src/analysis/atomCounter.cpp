@@ -25,6 +25,7 @@ AtomCounter::AtomCounter(System& a_system)
   m_maxAtomCharge = 0.04; // [e]
   m_numBinsAtomCharge = 800; // for positive and negative
   m_binSizeAtomCharge = m_maxAtomCharge*2.0 / (1.0*m_numBinsAtomCharge) ;
+  m_numElectrolyteSpecies = m_system.getNumElectrolyteSpecies() ;
   // resize vectors
   m_COMs.resize(m_system.getNumMolecules());
 
@@ -36,6 +37,7 @@ AtomCounter::AtomCounter(System& a_system)
   m_numIonsInLayerTime.resize(m_numSavedFrames);
 
   m_elecSliceCharge.resize(m_numSavedFrames);
+  m_elecSliceNumIons.resize(m_numSavedFrames);
 
   m_layerBounds.resize(m_numLayers);
   for (int i=0; i<m_numLayers; i++)
@@ -48,6 +50,7 @@ AtomCounter::AtomCounter(System& a_system)
   {
     m_numIonsInLayerTime[i].resize( m_numLayers );
     m_elecSliceCharge[i].resize( NUM_ELEC_SLICES );
+    m_elecSliceNumIons[i].resize( NUM_ELEC_SLICES*m_numElectrolyteSpecies );
   }
   m_numZPAtomsProfile.resize(m_numBins);
   m_ZPdensityProfile.resize(m_numBins);
@@ -75,10 +78,14 @@ void AtomCounter::sample(Frame& a_frame)
   array<double, DIM > x0;
   vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
   currentIonsInLayer.resize(m_numLayers);
+  vector<array<int, NUM_ION_TYPES> > currentIonsInAnodeSlice;
+  vector<array<int, NUM_ION_TYPES> > currentIonsInCathodeSlice;
   vector<double > cathodeChargeSlice;
   vector<double > anodeChargeSlice;
   cathodeChargeSlice.resize(NUM_ELEC_SLICES);
   anodeChargeSlice.resize(NUM_ELEC_SLICES);
+  currentIonsInAnodeSlice.resize(NUM_ELEC_SLICES);
+  currentIonsInCathodeSlice.resize(NUM_ELEC_SLICES);
   // Starting loop...
   // For each molecule type
   for (int i=0; i<m_system.getNumMolecTypes(); i++)
@@ -144,6 +151,47 @@ void AtomCounter::sample(Frame& a_frame)
             com[l] += (x0[l]+dx)*masses[k];
           }
         }
+        // Sample slices FIXME: needs to be streamlined
+        if (isElectrolyte)
+        {
+          double z;
+          if (m_system.isZSymmetrized())
+          {
+            z = position[2] - m_system.getZLo();
+          }
+          else
+          {
+            z = position[2];
+          }
+          if (z < m_layerBounds[0])
+          {
+            double h = z - 3.0;
+            int slice = floor(h/m_sliceHeight);
+            assert(slice < 2);
+            if (m_system.isCathodeLower())
+            {
+              currentIonsInCathodeSlice[slice][*electrolyteID] += 1;
+            }
+            else
+            {
+              currentIonsInAnodeSlice[slice][*electrolyteID] += 1;
+            }
+          }
+          else if (z > m_layerBounds[1])
+          {
+            double h = z - m_layerBounds[1];
+            int slice = floor(h/m_sliceHeight);
+            assert(slice < 2);
+            if (m_system.isCathodeLower())
+            {
+              currentIonsInAnodeSlice[slice][*electrolyteID] += 1;
+            }
+            else
+            {
+              currentIonsInCathodeSlice[slice][*electrolyteID] += 1;
+            }
+          }
+        }
         if (isElectrode)
         {
           double q = a_frame.getAtom(atomIndex).getCharge();
@@ -158,17 +206,37 @@ void AtomCounter::sample(Frame& a_frame)
           }
           if (*electrodeID == 0)
           {
-            double h = z - 3.0;
-            int slice = floor(h/m_sliceHeight);
-            assert(slice < 2);
-            cathodeChargeSlice[slice] += q;
+            if(m_system.isCathodeLower())
+            {
+              double h = z - 3.0;
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              cathodeChargeSlice[slice] += q;
+            }
+            else
+            {
+              double h = z - m_layerBounds[1];
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              cathodeChargeSlice[slice] += q;
+            }
           }
           else if (*electrodeID == 1)
           {
-            double h = z - m_layerBounds[1];
-            int slice = floor(h/m_sliceHeight);
-            assert(slice < 2);
-            anodeChargeSlice[slice] += q;
+            if(m_system.isCathodeLower())
+            {
+              double h = z - m_layerBounds[1];
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              anodeChargeSlice[slice] += q;
+            }
+            else
+            {
+              double h = z - 3.0;
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              anodeChargeSlice[slice] += q;
+            }
           }
         }
         atomIndex++;
@@ -186,7 +254,7 @@ void AtomCounter::sample(Frame& a_frame)
   }
   for (int i=0; i<m_numLayers; i++)
   {
-    for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+    for (int j=0; j<m_numElectrolyteSpecies; j++)
     {
       // compute average number of ions j in layer i
       m_avgIonsInLayer[i][j] += currentIonsInLayer[i][j]; // different for ZP and skip
@@ -201,10 +269,15 @@ void AtomCounter::sample(Frame& a_frame)
     {
       m_elecSliceCharge[timeIndex][i][0] += cathodeChargeSlice[i];
       m_elecSliceCharge[timeIndex][i][1] += anodeChargeSlice[i];
+      for (int j=0; j<m_numElectrolyteSpecies; j++)
+      {
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][0] += currentIonsInCathodeSlice[i][j];
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][1] += currentIonsInAnodeSlice[i][j];
+      }
     }
     for (int i=0; i<m_numLayers; i++)
     {
-      for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+      for (int j=0; j<m_numElectrolyteSpecies; j++)
       {
         m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // store number of ions in layer at this frame
       }
@@ -227,10 +300,14 @@ void AtomCounter::sampleZP(Frame& a_frame)
   array<double, DIM > x0;
   vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
   currentIonsInLayer.resize(m_numLayers);
+  vector<array<int, NUM_ION_TYPES> > currentIonsInAnodeSlice;
+  vector<array<int, NUM_ION_TYPES> > currentIonsInCathodeSlice;
   vector<double > cathodeChargeSlice;
   vector<double > anodeChargeSlice;
   cathodeChargeSlice.resize(NUM_ELEC_SLICES);
   anodeChargeSlice.resize(NUM_ELEC_SLICES);
+  currentIonsInAnodeSlice.resize(NUM_ELEC_SLICES);
+  currentIonsInCathodeSlice.resize(NUM_ELEC_SLICES);
   // Starting loop...
   // For each molecule type
   for (int i=0; i<m_system.getNumMolecTypes(); i++)
@@ -296,6 +373,47 @@ void AtomCounter::sampleZP(Frame& a_frame)
             com[l] += (x0[l]+dx)*masses[k];
           }
         }
+        // Sample slices FIXME: needs to be streamlined
+        if (isElectrolyte)
+        {
+          double z;
+          if (m_system.isZSymmetrized())
+          {
+            z = position[2] - m_system.getZLo();
+          }
+          else
+          {
+            z = position[2];
+          }
+          if (z < m_layerBounds[0])
+          {
+            double h = z - 3.0;
+            int slice = floor(h/m_sliceHeight);
+            assert(slice < 2);
+            if (m_system.isCathodeLower())
+            {
+              currentIonsInCathodeSlice[slice][*electrolyteID] += 1;
+            }
+            else
+            {
+              currentIonsInAnodeSlice[slice][*electrolyteID] += 1;
+            }
+          }
+          else if (z > m_layerBounds[1])
+          {
+            double h = z - m_layerBounds[1];
+            int slice = floor(h/m_sliceHeight);
+            assert(slice < 2);
+            if (m_system.isCathodeLower())
+            {
+              currentIonsInAnodeSlice[slice][*electrolyteID] += 1;
+            }
+            else
+            {
+              currentIonsInCathodeSlice[slice][*electrolyteID] += 1;
+            }
+          }
+        }
         if (isElectrode)
         {
           double q = a_frame.getAtom(atomIndex).getCharge();
@@ -310,17 +428,37 @@ void AtomCounter::sampleZP(Frame& a_frame)
           }
           if (*electrodeID == 0)
           {
-            double h = z - 3.0;
-            int slice = floor(h/m_sliceHeight);
-            assert(slice < 2);
-            cathodeChargeSlice[slice] += q;
+            if(m_system.isCathodeLower())
+            {
+              double h = z - 3.0;
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              cathodeChargeSlice[slice] += q;
+            }
+            else
+            {
+              double h = z - m_layerBounds[1];
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              cathodeChargeSlice[slice] += q;
+            }
           }
           else if (*electrodeID == 1)
           {
-            double h = z - m_layerBounds[1];
-            int slice = floor(h/m_sliceHeight);
-            assert(slice < 2);
-            anodeChargeSlice[slice] += q;
+            if(m_system.isCathodeLower())
+            {
+              double h = z - m_layerBounds[1];
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              anodeChargeSlice[slice] += q;
+            }
+            else
+            {
+              double h = z - 3.0;
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              anodeChargeSlice[slice] += q;
+            }
           }
         }
         atomIndex++;
@@ -339,7 +477,7 @@ void AtomCounter::sampleZP(Frame& a_frame)
   }
   for (int i=0; i<m_numLayers; i++)
   {
-    for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+    for (int j=0; j<m_numElectrolyteSpecies; j++)
     {
       m_avgZPIonsInLayer[i][j] += currentIonsInLayer[i][j]; // different for ZP and skip
     }
@@ -351,10 +489,15 @@ void AtomCounter::sampleZP(Frame& a_frame)
     {
       m_elecSliceCharge[timeIndex][i][0] += cathodeChargeSlice[i];
       m_elecSliceCharge[timeIndex][i][1] += anodeChargeSlice[i];
+      for (int j=0; j<m_numElectrolyteSpecies; j++)
+      {
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][0] += currentIonsInCathodeSlice[i][j];
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][1] += currentIonsInAnodeSlice[i][j];
+      }
     }
     for (int i=0; i<m_numLayers; i++)
     {
-      for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+      for (int j=0; j<m_numElectrolyteSpecies; j++)
       {
         m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // store number of ions in layer at this frame
       }
@@ -375,10 +518,14 @@ void AtomCounter::sampleSkip(Frame& a_frame)
   array<double, DIM > x0;
   vector<array<int, NUM_ION_TYPES> > currentIonsInLayer;
   currentIonsInLayer.resize(m_numLayers);
+  vector<array<int, NUM_ION_TYPES> > currentIonsInAnodeSlice;
+  vector<array<int, NUM_ION_TYPES> > currentIonsInCathodeSlice;
   vector<double > cathodeChargeSlice;
   vector<double > anodeChargeSlice;
   cathodeChargeSlice.resize(NUM_ELEC_SLICES);
   anodeChargeSlice.resize(NUM_ELEC_SLICES);
+  currentIonsInAnodeSlice.resize(NUM_ELEC_SLICES);
+  currentIonsInCathodeSlice.resize(NUM_ELEC_SLICES);
   // Starting loop...
   // For each molecule type
   for (int i=0; i<m_system.getNumMolecTypes(); i++)
@@ -443,6 +590,47 @@ void AtomCounter::sampleSkip(Frame& a_frame)
             com[l] += (x0[l]+dx)*masses[k];
           }
         }
+        // Sample slices FIXME: needs to be streamlined
+        if (isElectrolyte)
+        {
+          double z;
+          if (m_system.isZSymmetrized())
+          {
+            z = position[2] - m_system.getZLo();
+          }
+          else
+          {
+            z = position[2];
+          }
+          if (z < m_layerBounds[0])
+          {
+            double h = z - 3.0;
+            int slice = floor(h/m_sliceHeight);
+            assert(slice < 2);
+            if (m_system.isCathodeLower())
+            {
+              currentIonsInCathodeSlice[slice][*electrolyteID] += 1;
+            }
+            else
+            {
+              currentIonsInAnodeSlice[slice][*electrolyteID] += 1;
+            }
+          }
+          else if (z > m_layerBounds[1])
+          {
+            double h = z - m_layerBounds[1];
+            int slice = floor(h/m_sliceHeight);
+            assert(slice < 2);
+            if (m_system.isCathodeLower())
+            {
+              currentIonsInAnodeSlice[slice][*electrolyteID] += 1;
+            }
+            else
+            {
+              currentIonsInCathodeSlice[slice][*electrolyteID] += 1;
+            }
+          }
+        }
         if (isElectrode)
         {
           double q = a_frame.getAtom(atomIndex).getCharge();
@@ -457,17 +645,37 @@ void AtomCounter::sampleSkip(Frame& a_frame)
           }
           if (*electrodeID == 0)
           {
-            double h = z - 3.0;
-            int slice = floor(h/m_sliceHeight);
-            assert(slice < 2);
-            cathodeChargeSlice[slice] += q;
+            if(m_system.isCathodeLower())
+            {
+              double h = z - 3.0;
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              cathodeChargeSlice[slice] += q;
+            }
+            else
+            {
+              double h = z - m_layerBounds[1];
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              cathodeChargeSlice[slice] += q;
+            }
           }
           else if (*electrodeID == 1)
           {
-            double h = z - m_layerBounds[1];
-            int slice = floor(h/m_sliceHeight);
-            assert(slice < 2);
-            anodeChargeSlice[slice] += q;
+            if(m_system.isCathodeLower())
+            {
+              double h = z - m_layerBounds[1];
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              anodeChargeSlice[slice] += q;
+            }
+            else
+            {
+              double h = z - 3.0;
+              int slice = floor(h/m_sliceHeight);
+              assert(slice < 2);
+              anodeChargeSlice[slice] += q;
+            }
           }
         }
         atomIndex++;
@@ -491,10 +699,15 @@ void AtomCounter::sampleSkip(Frame& a_frame)
     {
       m_elecSliceCharge[timeIndex][i][0] += cathodeChargeSlice[i];
       m_elecSliceCharge[timeIndex][i][1] += anodeChargeSlice[i];
+      for (int j=0; j<m_numElectrolyteSpecies; j++)
+      {
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][0] += currentIonsInCathodeSlice[i][j];
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][1] += currentIonsInAnodeSlice[i][j];
+      }
     }
     for (int i=0; i<m_numLayers; i++)
     {
-      for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+      for (int j=0; j<m_numElectrolyteSpecies; j++)
       {
         m_numIonsInLayerTime[timeIndex][i][j] = currentIonsInLayer[i][j]; // during skip steps, just for tracking
       }
@@ -651,7 +864,7 @@ void AtomCounter::normalizeZP()
   double normDensity = numFrames * m_binSize * m_system.getBoxDim(0) * m_system.getBoxDim(1) * 10. / avogadro;
   for (int i=0; i<m_numLayers; i++)
   {
-    for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+    for (int j=0; j<m_numElectrolyteSpecies; j++)
     {
       m_avgZPIonsInLayer[i][j] /= numFrames;
     }
@@ -680,7 +893,7 @@ void AtomCounter::normalize()
   double normDensity = numFrames * m_binSize * m_system.getBoxDim(0) * m_system.getBoxDim(1) * avogadro / 10.;
   for (int i=0; i<m_numLayers; i++)
   {
-    for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+    for (int j=0; j<m_numElectrolyteSpecies; j++)
     {
       m_avgIonsInLayer[i][j] /= numFrames;
     }
@@ -730,7 +943,7 @@ void AtomCounter::print()
   cout << endl;
   for (int i=0; i<m_numLayers; i++)
   {
-    for (int j=0; j<m_system.getNumElectrolyteSpecies(); j++)
+    for (int j=0; j<m_numElectrolyteSpecies; j++)
     {
       cout << m_avgIonsInLayer[i][j] << " ";
     }
@@ -741,7 +954,7 @@ void AtomCounter::print()
   {
     for (int j=0; j<m_numLayers; j++)
     {
-      for (int k=0; k<m_system.getNumElectrolyteSpecies(); k++)
+      for (int k=0; k<m_numElectrolyteSpecies; k++)
       {
         cout << m_numIonsInLayerTime[i][j][k] << " ";
       }
@@ -802,6 +1015,11 @@ double* AtomCounter::getACIonsLayersTimeAddress(int i, int j)
 double* AtomCounter::getACElecChargeSlicesTimeAddress(int i, int j)
 {
   return &(m_elecSliceCharge[i][j][0]);
+}
+
+double* AtomCounter::getACElecNumIonsSlicesTimeAddress(int i, int j)
+{
+  return &(m_elecSliceNumIons[i][j][0]);
 }
 
 double* AtomCounter::getChargingParamAddress(int i)
@@ -877,6 +1095,10 @@ const double AtomCounter::getMaxAtomCharge() const
 double* AtomCounter::getElecAtomChargeHistAddress(int i)
 {
   return &(m_elecAtomChargeHist[i][0]);
+}
+const int AtomCounter::getNumElectrolyteSpecies() const
+{
+  return m_numElectrolyteSpecies;
 }
 
 // const vector<array<double, DIM >  > AtomCounter::getCOMs() const
@@ -1009,6 +1231,28 @@ const char* ACWriteElecChargeSlicesTime(AtomCounter* a_ac, const char* a_filenam
     for (int j=0; j<numLayers; j++)
     {
       data[i][j] = a_ac->getACElecChargeSlicesTimeAddress(i,j);
+    }
+  }
+  write_layered_time_data_by_var(a_filename, numFrames, saveFrameEvery, numLayers, varDim, headernames, data);
+  delete data;
+  return a_filename;
+}
+
+const char* ACWriteElecNumIonsSlicesTime(AtomCounter* a_ac, const char* a_filename)
+{
+  int numFrames = a_ac->getNumSavedFrames();
+  float saveFrameEvery = a_ac->getSaveFrameInterval()*a_ac->getSystem().getFrameTime();
+  int numLayers = NUM_ELEC_SLICES*a_ac->getNumElectrolyteSpecies();
+  int varDim = 2; // number of electrodes is always 2
+  const char * const headernames[] = { "t", "data" };
+  double*** data;
+  data = new double** [numFrames];
+  for (int i=0; i<numFrames; i++)
+  {
+    data[i] = new double* [numLayers];
+    for (int j=0; j<numLayers; j++)
+    {
+      data[i][j] = a_ac->getACElecNumIonsSlicesTimeAddress(i,j);
     }
   }
   write_layered_time_data_by_var(a_filename, numFrames, saveFrameEvery, numLayers, varDim, headernames, data);

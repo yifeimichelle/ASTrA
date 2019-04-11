@@ -55,6 +55,8 @@ class AtomCounter
     double* getACIonsLayersTimeAddress(int i, int j);
     /// Gets the address of the element in the array of electrode charge per slice per time.
     double* getACElecChargeSlicesTimeAddress(int i, int j);
+    /// Gets the address of the element in the array of number of molecules of given electrolyte species per slice per time
+    double* getACElecNumIonsSlicesTimeAddress(int i, int j);
     /// Gets address of the first element in the charging mechanism CV.
     double* getChargingParamAddress(int i);
     /// Returns system.
@@ -71,6 +73,7 @@ class AtomCounter
     const int getNumBinsAtomCharge() const;
     const double getMaxAtomCharge() const;
     double* getElecAtomChargeHistAddress(int i);
+    const int getNumElectrolyteSpecies() const;
 
 
   private:
@@ -102,6 +105,7 @@ class AtomCounter
     vector<vector<array<double, NUM_ION_TYPES > > > m_numIonsInLayerTime;
     /// Charge in electrode slice during entire trajectory
     vector<vector<array<double, NUM_ELECTRODES > > > m_elecSliceCharge;
+    vector<vector<array<double, NUM_ELECTRODES > > > m_elecSliceNumIons;
     /// Stores bounds of electrode/bulk layers
     vector<double > m_layerBounds;
 
@@ -139,6 +143,7 @@ class AtomCounter
     int m_numLayers;
     double m_sliceHeight;
     double m_zLo;
+    int m_numElectrolyteSpecies;
 };
 
 const char* ACWriteAtomCounts(AtomCounter* a_ac, const char* a_filename);
@@ -150,6 +155,7 @@ const char* ACWriteCollectiveVars(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteElecChargeSlicesTime(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteElecAtomChargeHist(AtomCounter* a_ac, const char* a_filename);
+const char* ACWriteElecNumIonsSlicesTime(AtomCounter* a_ac, const char* a_filename);
 
 
 #endif

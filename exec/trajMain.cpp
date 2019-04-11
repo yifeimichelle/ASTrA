@@ -126,6 +126,7 @@ int main(int argc, char** argv)
   ACWriteIonsInLayers(&ac, "layers");
   ACWriteIonsInLayersTime(&ac, "numionslayers");
   ACWriteElecChargeSlicesTime(&ac, "elecchargeslices");
+  ACWriteElecNumIonsSlicesTime(&ac, "numionselecslices");
   ACWriteCollectiveVars(&ac, "ionCV");
   ACWriteElecAtomChargeHist(&ac, "elecatomchargehist");
 }

@@ -705,7 +705,7 @@ const double System::getLayerUpperBound(int a_layer) const
   else return 0.0;
 }
 
-/// Returns whether anode is the "lower" electrode in the system.
+/// Returns whether cathode is the "lower" electrode in the system.
 unsigned int System::isCathodeLower() const
 {
   return m_cathodeIsLower;

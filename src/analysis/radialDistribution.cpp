@@ -469,7 +469,7 @@ double RDF::binDoC(const Frame& a_frame, int a_atomID, double a_doc, double a_el
 
           // save timestep and atom indices
           m_DoCIndicesFile[i] << atom.getName() << " " << pos[0] << " " << pos[1] << " " << pos[2];
-          m_DoCIndicesFile[i] << " " << a_doc << " " << a_elecCharge << " " << a_numCoordCarbons << a_avgdist;
+          m_DoCIndicesFile[i] << " " << a_doc << " " << a_elecCharge << " " << a_numCoordCarbons << " " << a_avgdist;
           m_DoCIndicesFile[i] << " " << a_atomID << " " << a_frame.getTimestep() << endl;
           //writeDoCIndicesToFile();
         }
