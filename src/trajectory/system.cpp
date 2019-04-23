@@ -287,6 +287,11 @@ void System::setInput()
   }
 
 
+  // divide number of frames by read frame interval
+  m_totalFrames = m_totalFrames/m_readFrameEvery;
+  m_zpFramesInclSkip = m_zpFramesInclSkip/m_readFrameEvery;
+  m_skipFrames = m_skipFrames/m_readFrameEvery;
+
   m_numFramesInclSkip = m_totalFrames - m_zpFramesInclSkip; // number of non-zero-potential frames
   m_numFrames = m_numFramesInclSkip - m_skipFrames;         // number of non-zero-potential production frames (minus skip)
   if ( m_zpFramesInclSkip > 0 ) {
