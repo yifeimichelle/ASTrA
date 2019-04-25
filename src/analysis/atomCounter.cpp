@@ -271,8 +271,8 @@ void AtomCounter::sample(Frame& a_frame)
       m_elecSliceCharge[timeIndex][i][1] += anodeChargeSlice[i];
       for (int j=0; j<m_numElectrolyteSpecies; j++)
       {
-        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][0] += currentIonsInCathodeSlice[i][j];
-        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][1] += currentIonsInAnodeSlice[i][j];
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][0] = currentIonsInCathodeSlice[i][j];
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][1] = currentIonsInAnodeSlice[i][j];
       }
     }
     for (int i=0; i<m_numLayers; i++)
@@ -491,8 +491,8 @@ void AtomCounter::sampleZP(Frame& a_frame)
       m_elecSliceCharge[timeIndex][i][1] += anodeChargeSlice[i];
       for (int j=0; j<m_numElectrolyteSpecies; j++)
       {
-        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][0] += currentIonsInCathodeSlice[i][j];
-        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][1] += currentIonsInAnodeSlice[i][j];
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][0] = currentIonsInCathodeSlice[i][j];
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][1] = currentIonsInAnodeSlice[i][j];
       }
     }
     for (int i=0; i<m_numLayers; i++)
@@ -701,8 +701,8 @@ void AtomCounter::sampleSkip(Frame& a_frame)
       m_elecSliceCharge[timeIndex][i][1] += anodeChargeSlice[i];
       for (int j=0; j<m_numElectrolyteSpecies; j++)
       {
-        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][0] += currentIonsInCathodeSlice[i][j];
-        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][1] += currentIonsInAnodeSlice[i][j];
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][0] = currentIonsInCathodeSlice[i][j];
+        m_elecSliceNumIons[timeIndex][i*m_numElectrolyteSpecies+j][1] = currentIonsInAnodeSlice[i][j];
       }
     }
     for (int i=0; i<m_numLayers; i++)
