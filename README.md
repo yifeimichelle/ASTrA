@@ -1,5 +1,6 @@
 # ASTrA:
 **A**tomistic **S**upercapacitor **Tr**ajectory **A**nalysis
+A program to compute local and collective properties of interest for studying the charging dynamics and capacitance of supercapacitors (electrical double-layer capacitors, or EDLCs)
 
 File inputs:
 1. input file containing system information and specifying analyses to run
