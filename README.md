@@ -6,16 +6,19 @@ File inputs:
 2. xyz trajectory file
 3. (optional) LAMMPS-formatted dump file containing charges of atoms
 
-Outputs (filename):
-- Radial distribution functions (rdf)
-- Degree of confinement (DoC): as described in Merlet et al.[2]
-- Coordination numbers (coordnum): as in Merlet et al. [3]
-- Atom counts (atoms): binned number of atoms (separated by type) throughout production run
-- Density (density): binned density throughout production run
-- Ions (ions): binned number of ions (by type, based on COM) throughout production run
-- Ions in layers (layers): average number of ions in layers (anode, cathode, bulk) throughout production run
-- Ions in layers as time series (numionslayers): number of ions in layers over time throughout full simulation
-- Collective variables (ionCV): charging parameter over time, can implement other CVs as well
+Outputs [filename]:
+- Radial distribution functions [rdf]
+- Average degree of confinement [DoC]: as described in Merlet et al.[2]
+- Individual ion degrees of confinement + indices [DoCIndices]
+- Coordination numbers [coordnum]: as in Merlet et al. [3]
+- Atom counts [atoms]: binned number of atoms (separated by type) throughout production run
+- Density [density]: binned density throughout production run
+- Ions [ions]: binned number of ions (by type, based on COM) throughout production run
+- Ions in layers [layers]: average number of ions in layers (anode, cathode, bulk) throughout production run
+- Ions in layers as time series [numionslayers]: number of ions in layers over time throughout full simulation
+- Collective variables [ionCV]: charging parameter
+- Number of ions in electrode slices [numionselecslices]
+- Charge in electrode slices [elecchargeslices]
 
 References:
 
