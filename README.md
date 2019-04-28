@@ -5,7 +5,7 @@ File inputs:
 1. input file containing system information and specifying analyses to run
 2. xyz trajectory file
 3. (optional) LAMMPS-formatted dump file containing charges of atoms
-4. elegrps file specifying groups of electrode atoms
+4. elegrps file specifying groups of electrode atoms for charge distribution
 
 Outputs [filename]:
 - Radial distribution functions [rdf]
@@ -20,6 +20,7 @@ Outputs [filename]:
 - Collective variables [ionCV]: charging parameter
 - Number of ions in electrode slices [numionselecslices]
 - Charge in electrode slices [elecchargeslices]
+- Charge distribution for groups of electrode atoms [elecatomchargehist]
 
 References:
 
