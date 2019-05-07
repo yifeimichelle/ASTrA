@@ -621,11 +621,7 @@ const unsigned int System::getNumEleGrps() const
 const unsigned int System::getLayer(array<double, DIM>& a_position) const
 {
   unsigned int retVal;
-  double z=a_position[DIM-1];
-  if (m_zSymmetrized == 1 || m_zSymmetrized == 2)
-  {
-    z -= m_zLo;
-  }
+  double z=a_position[DIM-1]-m_zLo;
   if (z < m_lowerElecTop )
   {
     retVal = 0;

@@ -94,22 +94,8 @@ void AtomCounter::sample(Frame& a_frame)
     int* electrolyteID = new int;
     int* electrodeID = new int;
     // Detect whether molecule is electrolyte or not (affects binning routines later on)
-    if (m_system.isElectrolyte(i, electrolyteID))
-    {
-      isElectrolyte = 1;
-    }
-    else
-    {
-      isElectrolyte = 0;
-    }
-    if (m_system.isElectrode(i, electrodeID))
-    {
-      isElectrode = 1;
-    }
-    else
-    {
-      isElectrode = 0;
-    }
+    isElectrolyte = m_system.isElectrolyte(i, electrolyteID);
+    isElectrode = m_system.isElectrode(i, electrodeID);
     // Get masses of molecule members, and molecule's total mass, to calculate COM
     array<double , MAX_MEMBERS_PER_MOLEC > masses = m_system.getMassesOfType(i);
     double totalMass = 0;
@@ -155,14 +141,7 @@ void AtomCounter::sample(Frame& a_frame)
         if (isElectrolyte)
         {
           double z;
-          if (m_system.isZSymmetrized())
-          {
-            z = position[2] - m_system.getZLo();
-          }
-          else
-          {
-            z = position[2];
-          }
+          z = position[2] - m_zLo;
           if (z < m_layerBounds[0])
           {
             double h = z - 3.0;
@@ -196,14 +175,7 @@ void AtomCounter::sample(Frame& a_frame)
         {
           double q = a_frame.getAtom(atomIndex).getCharge();
           double z;
-          if (m_system.isZSymmetrized())
-          {
-            z = position[2] - m_system.getZLo();
-          }
-          else
-          {
-            z = position[2];
-          }
+          z = position[2] - m_zLo;
           if (*electrodeID == 0)
           {
             if(m_system.isCathodeLower())
@@ -316,22 +288,8 @@ void AtomCounter::sampleZP(Frame& a_frame)
     int* electrolyteID = new int;
     int* electrodeID = new int;
     // Detect whether molecule is electrolyte or not (affects binning routines later on)
-    if (m_system.isElectrolyte(i, electrolyteID))
-    {
-      isElectrolyte = 1;
-    }
-    else
-    {
-      isElectrolyte = 0;
-    }
-    if (m_system.isElectrode(i, electrodeID))
-    {
-      isElectrode = 1;
-    }
-    else
-    {
-      isElectrode = 0;
-    }
+    isElectrolyte = m_system.isElectrolyte(i, electrolyteID);
+    isElectrode = m_system.isElectrode(i, electrodeID);
     // Get masses of molecule members, and molecule's total mass, to calculate COM
     array<double , MAX_MEMBERS_PER_MOLEC > masses = m_system.getMassesOfType(i);
     double totalMass = 0;
@@ -377,14 +335,7 @@ void AtomCounter::sampleZP(Frame& a_frame)
         if (isElectrolyte)
         {
           double z;
-          if (m_system.isZSymmetrized())
-          {
-            z = position[2] - m_system.getZLo();
-          }
-          else
-          {
-            z = position[2];
-          }
+          z = position[2] - m_zLo;
           if (z < m_layerBounds[0])
           {
             double h = z - 3.0;
@@ -418,14 +369,7 @@ void AtomCounter::sampleZP(Frame& a_frame)
         {
           double q = a_frame.getAtom(atomIndex).getCharge();
           double z;
-          if (m_system.isZSymmetrized())
-          {
-            z = position[2] - m_system.getZLo();
-          }
-          else
-          {
-            z = position[2];
-          }
+          z = position[2] - m_zLo;
           if (*electrodeID == 0)
           {
             if(m_system.isCathodeLower())
@@ -534,22 +478,8 @@ void AtomCounter::sampleSkip(Frame& a_frame)
     int* electrolyteID = new int;
     int* electrodeID = new int;
     // Detect whether molecule is electrolyte or not (affects binning routines later on)
-    if (m_system.isElectrolyte(i, electrolyteID))
-    {
-      isElectrolyte = 1;
-    }
-    else
-    {
-      isElectrolyte = 0;
-    }
-    if (m_system.isElectrode(i, electrodeID))
-    {
-      isElectrode = 1;
-    }
-    else
-    {
-      isElectrode = 0;
-    }
+    isElectrolyte = m_system.isElectrolyte(i, electrolyteID);
+    isElectrode = m_system.isElectrode(i, electrodeID);
     // Get masses of molecule members, and molecule's total mass, to calculate COM
     array<double , MAX_MEMBERS_PER_MOLEC > masses = m_system.getMassesOfType(i);
     double totalMass = 0;
@@ -594,14 +524,7 @@ void AtomCounter::sampleSkip(Frame& a_frame)
         if (isElectrolyte)
         {
           double z;
-          if (m_system.isZSymmetrized())
-          {
-            z = position[2] - m_system.getZLo();
-          }
-          else
-          {
-            z = position[2];
-          }
+          z = position[2] - m_zLo;
           if (z < m_layerBounds[0])
           {
             double h = z - 3.0;
@@ -635,14 +558,7 @@ void AtomCounter::sampleSkip(Frame& a_frame)
         {
           double q = a_frame.getAtom(atomIndex).getCharge();
           double z;
-          if (m_system.isZSymmetrized())
-          {
-            z = position[2] - m_system.getZLo();
-          }
-          else
-          {
-            z = position[2];
-          }
+          z = position[2] - m_zLo;
           if (*electrodeID == 0)
           {
             if(m_system.isCathodeLower())
