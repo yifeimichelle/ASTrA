@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 from scipy.optimize import curve_fit
+from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 import sys
 import os
@@ -13,14 +14,16 @@ def rmse_norm(predictions, targets):
     return np.sqrt((((predictions - targets)/average) ** 2).mean())
 
 COMPARE_TRAJ=False
-
-if len(sys.argv) > 1:
-    COMPARE_TRAJ=True
-    plot_compare_folder = sys.argv[1]
-    path=os.getcwd()
-    split=path.split('/')
-    compare_path='../../'+plot_compare_folder+'/'+split[-1]+'/'
-    print(compare_path)
+PLOT_TWO_TAU=True
+structure=""
+if len(sys.argv) == 2:
+    #COMPARE_TRAJ=True
+    #plot_compare_folder = sys.argv[1]
+    #path=os.getcwd()
+    #split=path.split('/')
+    #compare_path='../../'+plot_compare_folder+'/'+split[-1]+'/'
+    #print(compare_path)
+    structure = sys.argv[1]
 
 filename="netcharge"
 
@@ -67,20 +70,28 @@ if(COMPARE_TRAJ):
     ycompare=comparedata[:,4]
     plt.plot(xcompare, ycompare, '-', c='cyan', label='indpt simulation')
 plt.plot(xdata, expfit, '-', c='red', label=r'fit:  Q$_{max}$=%1.3e e, $\tau$=%.1f ps' % (Qmax, tau))
-plt.plot(xdata, expfit_1tau, '-', c='gold', label=r'fit:  Q$_{max}$=%1.3e e, $\tau$=%.1f ps' % (Qmax_1tau, tau_1tau))
-plt.plot(xdata, expfit_2tau, '-', c='orange', label=r'fit:  Q$_{max}$=%1.3e e, $\tau$=%.1f ps' % (Qmax_2tau, tau_2tau))
+if(PLOT_TWO_TAU):
+    plt.plot(xdata, expfit_1tau, '-', c='gold', label=r'fit:  Q$_{max}$=%1.3e e, $\tau$=%.1f ps' % (Qmax_1tau, tau_1tau))
+    plt.plot(xdata, expfit_2tau, '-', c='orange', label=r'fit:  Q$_{max}$=%1.3e e, $\tau$=%.1f ps' % (Qmax_2tau, tau_2tau))
 
 plt.xticks(fontsize=12)
 plt.yticks(fontsize=12)
 plt.xlabel('time [ps]', fontsize=12)
 plt.ylabel('charge per atom [e]', fontsize=12)
 plt.legend(fontsize=12)
+plt.title(structure)
 plt.tight_layout()
 plt.savefig("netcharge_expfit.png")
 
 np.savetxt("charging_expfit_params", [[popt[1], popt[0], popt_1tau[1], popt_1tau[0], popt_2tau[1], popt_2tau[0]]])
 np.savetxt("charging_expfit_rmse", [[rmse_fullfit_1tau, rmse_fullfit_2tau, rmse_1taufit_1tau, rmse_1taufit_2tau, rmse_2taufit_1tau, rmse_2taufit_2tau]])
 np.savetxt("charging_expfit_pcovar", pcov)
-np.savetxt("charging_expfit", np.transpose([xdata,expfit,expfit_1tau,expfit_2tau]))
+data_exp_ratio=ydata/expfit
+data_exp_ratio[0]=1
+data_exp_ratio_filtered=savgol_filter(data_exp_ratio,101,3)
+data_exp_diff=ydata-expfit
+data_exp_diff[0]=0
+data_exp_diff_filtered=savgol_filter(data_exp_diff,101,3)
+np.savetxt("charging_expfit", np.transpose([xdata,ydata,expfit,expfit_1tau,expfit_2tau,data_exp_ratio_filtered,data_exp_diff_filtered]))
 
 # compute sum of squared residuals for first

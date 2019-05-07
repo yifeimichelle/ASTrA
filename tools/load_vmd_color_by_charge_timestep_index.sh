@@ -51,22 +51,22 @@ mol drawframes top 0 {now}
 mol representation VDW
 mol addrep top
 mol scaleminmax top 1 -0.010000 0.010000
-mol modselect 1 top "type 9 and within 6.3 of index $index"
+mol modselect 1 top "type 9 and pbwithin 6.3 of index $index"
 
 mol representation VDW
 mol addrep top
-mol modselect 2 top "type 3 4 5 and within 7.7 of index $index"
+mol modselect 2 top "type 3 4 5 and pbwithin 7.7 of index $index"
 mol modcolor 2 top ColorID 3
 
 mol representation VDW
 mol addrep top
-mol modselect 3 top "type 1 and within 7.7 of index $index"
+mol modselect 3 top "type 1 and pbwithin 7.7 of index $index"
 mol modcolor 3 top ColorID 7
 
 # solvent
 mol representation VDW
 mol addrep top
-mol modselect 4 top "type 2 6 7 and within 6.5 of index $index"
+mol modselect 4 top "type 2 6 7 and pbwithin 6.5 of index $index"
 mol modcolor 4 top ColorID 9
 mol modmaterial 4 top Transparent
 
