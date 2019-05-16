@@ -93,5 +93,3 @@ data_exp_diff=ydata-expfit
 data_exp_diff[0]=0
 data_exp_diff_filtered=savgol_filter(data_exp_diff,101,3)
 np.savetxt("charging_expfit", np.transpose([xdata,ydata,expfit,expfit_1tau,expfit_2tau,data_exp_ratio_filtered,data_exp_diff_filtered]))
-
-# compute sum of squared residuals for first
