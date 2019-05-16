@@ -167,12 +167,22 @@ void RDF::sample(const Frame& a_frame)
 
 void RDF::sampleMolecules(const Frame& a_frame)
 {
+
+  // For each pair
+  //   Get molecules in layer
+  //   For each pair (first, second)
+  //     computeDoC := True if either first or second is an electrode atom corresponding to current layer
+  //     Reset minDistanceB vectors
+  //     For each molecule of type first
+  //       Reset minDistance
+  //       For each molecule of type second
+  //         Compute distance between first/second
+  //         Check distances (whether is min)
+  //         Bin
+
   double pairDistance;
   double minDistance;
-  // For each pair
-  //   For each layer
-  //     Iterate through atoms (or ions) in layer
-  //       Compute distance and bin
+  int nearestNeighbor;
 
   // For each layer
   for (int layIdx = 0; layIdx < m_numLayers; layIdx++)
@@ -187,14 +197,16 @@ void RDF::sampleMolecules(const Frame& a_frame)
       int pairFirst = molecPair.first;
       int pairSecond = molecPair.second;
       vector<double > minDistanceB;
+      vector<int > nearestNeighborAtoB;
       int pairSecondSize = molecsInLayer[pairSecond].size();
       minDistanceB.resize(pairSecondSize,1000.0);
+      nearestNeighborAtoB.resize(pairSecondSize,-1);
 
-      // Find out whether to compute DoC
+      // compute DoC if either first or second is an electrode atom corresponding to current layer
       int layer = -1;
       unsigned int computeDoC = 0;
       unsigned int isCounterCharge = 0;
-      // If any of the atoms in the pair are electrode atoms, then rdf/doc only exists in that electrode's layer
+      // Find out whether either of the atoms is electrode and get corresponding layer
       if ( m_system.isCathode( pairSecond ) or  m_system.isCathode( pairFirst ))
       {
         if ( m_system.isCathodeLower() )
@@ -225,15 +237,18 @@ void RDF::sampleMolecules(const Frame& a_frame)
           isCounterCharge = 1;
         }
       }
+      // If electrode layer matches the current layer
       if ( layIdx == layer)
       {
         computeDoC = 1;
       }
       // For each molecule of first type in pair
       //cout << layIdx << " " << pairIdx << " " << molecsInLayer[pairFirst].size() << " " << molecsInLayer[pairSecond].size() << endl;
-      for (vector<int>::iterator itA = molecsInLayer[pairFirst].begin(); itA != molecsInLayer[pairFirst].end(); ++itA)
+      for (vector<int>::iterator itA = molecsInLayer[pairFirst].begin();
+          itA != molecsInLayer[pairFirst].end(); ++itA)
       {
         minDistance = 1000.0;
+        nearestNeighbor = -1;
         int secondIndex = 0;
         double DoC = 0.0;
         double avgdist = 0.0;
@@ -241,7 +256,8 @@ void RDF::sampleMolecules(const Frame& a_frame)
         int numCoordCarbons = 0;
         double coordNum = 0.0;
         // For each molecule of second type in pair
-        for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin(); itB != molecsInLayer[pairSecond].end(); ++itB)
+        for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin();
+            itB != molecsInLayer[pairSecond].end(); ++itB)
         {
           if (*itA != *itB) // exclude self-self pair
           {
@@ -251,11 +267,13 @@ void RDF::sampleMolecules(const Frame& a_frame)
             if (distance < minDistance)
             {
               minDistance = distance;
+              nearestNeighbor = *itB;
             }
             // Check whether distance is closest for atom type B
             if (distance < minDistanceB[secondIndex])
             {
               minDistanceB[secondIndex] = distance;
+              nearestNeighborAtoB[secondIndex] = *itA;
             }
             // Bin it
             if (distance < m_maxDist)
@@ -295,21 +313,41 @@ void RDF::sampleMolecules(const Frame& a_frame)
         {
           DoC /= (2.0*m_phi);
           avgdist /= numCoordCarbons;
-          binDoC(a_frame, m_system.getFirstAtomOfMolec(*itA), DoC, sumElecCharge, isCounterCharge, pairIdx, numCoordCarbons, avgdist);
+          binDoC(a_frame, m_system.getFirstAtomOfMolec(*itA), DoC, sumElecCharge,
+              isCounterCharge, pairIdx, numCoordCarbons, avgdist);
         }
         if(minDistance < m_maxDist)
         {
           // bin distance as closest species B to species A (reference)
-          binMolecPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx);
+          binMolecPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx, nearestNeighbor);
         }
+      }
+      // Loop over all molecules in pair again to get list of B which "belong" to A
+      int firstIndex = 0;
+      vector<vector<int > > closestPocket;
+      int pairFirstSize = molecsInLayer[pairFirst].size();
+      closestPocket.resize(pairFirstSize);
+
+      for (vector<int>::iterator itA = molecsInLayer[pairFirst].begin();
+          itA != molecsInLayer[pairFirst].end(); ++itA)
+      {
+        int secondIndex = 0;
+        for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin();
+            itB != molecsInLayer[pairSecond].end(); ++itB)
+        {
+          closestPocket[firstIndex].push_back(minDistanceB[secondIndex]);
+          secondIndex++;
+        }
+        firstIndex++;
       }
       // For each molecule of second type in pair
       for (int secondIndex=0; secondIndex<pairSecondSize; secondIndex++)
       {
         if(minDistanceB[secondIndex] < m_maxDist)
         {
-          // bin distance as closest species I to species J (reference)
-          binMolecPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx);
+          // bin distance as closest species A to species B (reference)
+          binMolecPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx,
+              nearestNeighborAtoB[secondIndex]);
         }
       }
     }
@@ -420,7 +458,7 @@ void RDF::clearFrame()
   }
 }
 
-void RDF::binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer)
+void RDF::binMolecPairDistanceClosestLayer(double a_distance, unsigned int a_pair, unsigned int a_whichClosest, unsigned int a_layer, int a_nearestNeighbor)
 {
   int bin = floor(a_distance / m_binSize);
   m_rdfMolecLayerClosest[a_layer][bin][a_pair][a_whichClosest]++;
