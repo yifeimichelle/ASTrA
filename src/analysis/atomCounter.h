@@ -59,6 +59,8 @@ class AtomCounter
     double* getACElecNumIonsSlicesTimeAddress(int i, int j);
     /// Gets address of the first element in the charging mechanism CV.
     double* getChargingParamAddress(int i);
+    /// Gets address of first element of electrode atom charge
+    double* getAvgElecAtomChargeAddress();
     /// Returns system.
     const System& getSystem() const;
     /// Returns interval for saving frames in time-sequence data.

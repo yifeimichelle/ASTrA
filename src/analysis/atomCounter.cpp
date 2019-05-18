@@ -951,6 +951,11 @@ double* AtomCounter::getChargingParamAddress(int i)
   return &(m_chargingParam[i][0]);
 }
 
+double* AtomCounter::getAvgElecAtomChargeAddress()
+{
+  return &(m_avgElecAtomCharge[0]);
+}
+
 array<double, 2> AtomCounter::computeChargingParam(vector<array<int, NUM_ION_TYPES> >& a_ionsInLayer)
 {
   array<double, 2> retArray;
@@ -1221,5 +1226,13 @@ const char* ACWriteElecAtomChargeHist(AtomCounter* a_ac, const char* a_filename)
 const char* ACWriteElecAtomCharge(AtomCounter* a_ac, const char* a_filename)
 {
   // FIXME
-  int varDim = a_ac->getNumElectrodeAtoms()
+  int varDim = 2*a_ac->getSystem().getNumElectrodeAtoms();
+  double* data = a_ac->getAvgElecAtomChargeAddress();
+  ofstream avgElecAtomChargeFile;
+  avgElecAtomChargeFile.open(a_filename, ios::out | ios::trunc);
+  for (int i=0; i<varDim; i++)
+  {
+      avgElecAtomChargeFile << data[i] << endl;
+  }
+  avgElecAtomChargeFile.close();
 }
