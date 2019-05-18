@@ -1226,13 +1226,25 @@ const char* ACWriteElecAtomChargeHist(AtomCounter* a_ac, const char* a_filename)
 const char* ACWriteElecAtomCharge(AtomCounter* a_ac, const char* a_filename)
 {
   // FIXME
+
+  char full_filename[1024];
+  if (strstr(a_filename, ".out") != NULL)
+  {
+    strcpy(full_filename, a_filename);
+  }
+  else
+  {
+    sprintf(full_filename, "%s.out", a_filename);
+  }
+
   int varDim = 2*a_ac->getSystem().getNumElectrodeAtoms();
+  int offset = a_ac->getSystem().getElectrodeAtomIndexOffset();
   double* data = a_ac->getAvgElecAtomChargeAddress();
   ofstream avgElecAtomChargeFile;
   avgElecAtomChargeFile.open(a_filename, ios::out | ios::trunc);
   for (int i=0; i<varDim; i++)
   {
-      avgElecAtomChargeFile << data[i] << endl;
+      avgElecAtomChargeFile << i+offset << " " << data[i] << endl;
   }
   avgElecAtomChargeFile.close();
 }
