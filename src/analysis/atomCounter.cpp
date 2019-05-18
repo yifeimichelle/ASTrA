@@ -1241,7 +1241,7 @@ const char* ACWriteElecAtomCharge(AtomCounter* a_ac, const char* a_filename)
   int offset = a_ac->getSystem().getElectrodeAtomIndexOffset();
   double* data = a_ac->getAvgElecAtomChargeAddress();
   ofstream avgElecAtomChargeFile;
-  avgElecAtomChargeFile.open(a_filename, ios::out | ios::trunc);
+  avgElecAtomChargeFile.open(full_filename, ios::out | ios::trunc);
   for (int i=0; i<varDim; i++)
   {
       avgElecAtomChargeFile << i+offset << " " << data[i] << endl;
