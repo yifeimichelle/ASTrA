@@ -22,6 +22,7 @@ RDF::~RDF()
   {
     m_DoCIndicesFile[i].close();
   }
+  m_tesselPocketFile.close();
 }
 
 RDF::RDF(System& a_system, AtomCounter& a_ac)
@@ -36,6 +37,8 @@ RDF::RDF(System& a_system, AtomCounter& a_ac)
     m_DoCIndicesFile[i].open(full_filename, ios::out | ios::trunc);
     m_DoCIndicesFile[i] << "#atom x y z doc qsum ncoordc idx timestep" << endl;
   }
+  m_tesselPocketFile.open("tesselPockets.out", ios::out | ios::trunc);
+  m_tesselPocketFile << "#atom x y z doc qsum ncoordc idx timestep" << endl;
   m_maxDist = 14.0;
   m_numBins = 500;
   m_binSize = m_maxDist / m_numBins;
@@ -322,24 +325,6 @@ void RDF::sampleMolecules(const Frame& a_frame)
           binMolecPairDistanceClosestLayer(minDistance, pairIdx, 0, layIdx, nearestNeighbor);
         }
       }
-      // Loop over all molecules in pair again to get list of B which "belong" to A
-      int firstIndex = 0;
-      vector<vector<int > > closestPocket;
-      int pairFirstSize = molecsInLayer[pairFirst].size();
-      closestPocket.resize(pairFirstSize);
-
-      for (vector<int>::iterator itA = molecsInLayer[pairFirst].begin();
-          itA != molecsInLayer[pairFirst].end(); ++itA)
-      {
-        int secondIndex = 0;
-        for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin();
-            itB != molecsInLayer[pairSecond].end(); ++itB)
-        {
-          closestPocket[firstIndex].push_back(minDistanceB[secondIndex]);
-          secondIndex++;
-        }
-        firstIndex++;
-      }
       // For each molecule of second type in pair
       for (int secondIndex=0; secondIndex<pairSecondSize; secondIndex++)
       {
@@ -348,6 +333,52 @@ void RDF::sampleMolecules(const Frame& a_frame)
           // bin distance as closest species A to species B (reference)
           binMolecPairDistanceClosestLayer(minDistanceB[secondIndex], pairIdx, 1, layIdx,
               nearestNeighborAtoB[secondIndex]);
+        }
+      }
+
+      // Loop over all molecules in pair again to get list of B which "belong" to A
+      if (computeDoC)
+      {
+        int firstIndex = 0;
+        vector<vector<int > > tesselPocket;
+        vector<vector<double > > tesselPocketDist;
+        int pairFirstSize = molecsInLayer[pairFirst].size();
+        tesselPocket.resize(pairFirstSize);
+        tesselPocketDist.resize(pairFirstSize);
+        double tesselDoCCut = 5.7;
+
+        for (vector<int>::iterator itA = molecsInLayer[pairFirst].begin();
+            itA != molecsInLayer[pairFirst].end(); ++itA)
+        {
+          int secondIndex = 0;
+          double avgdist = 0.0;
+          double sumElecCharge = 0.0;
+          int numCoordCarbons = 0;
+          double DoC = 0.0;
+
+          for (vector<int>::iterator itB = molecsInLayer[pairSecond].begin();
+              itB != molecsInLayer[pairSecond].end(); ++itB)
+          {
+            if ( nearestNeighborAtoB[secondIndex] == *itA ) {
+              tesselPocket[firstIndex].push_back(secondIndex);
+              tesselPocketDist[firstIndex].push_back(minDistanceB[secondIndex]);
+              double distance = minDistanceB[secondIndex];
+              avgdist += distance;
+              sumElecCharge += a_frame.getAtomOfMolec(*itB).getCharge();
+              numCoordCarbons += 1;
+              if (distance < tesselDoCCut)
+              {
+                DoC += computeSolidAngleFactor(distance);
+              }
+            }
+            secondIndex++; // increment counter
+          }
+          // compute average charge and distance for closest pocket, analogous to DoC/coordination shell
+          DoC /= (2.0*m_phi);
+          avgdist /= numCoordCarbons;
+          binTesselPocket(a_frame, m_system.getFirstAtomOfMolec(*itA), DoC, sumElecCharge,
+              isCounterCharge, pairIdx, numCoordCarbons, avgdist);
+          firstIndex++; // increment counter
         }
       }
     }
@@ -514,6 +545,17 @@ double RDF::binDoC(const Frame& a_frame, int a_atomID, double a_doc, double a_el
       }
     }
   }
+}
+
+double RDF::binTesselPocket(const Frame& a_frame, int a_atomID, double a_doc, double a_elecCharge, unsigned int a_isCounterCharge, unsigned int a_pair, int a_numCoordCarbons, double a_avgdist)
+{
+  const Atom& atom = a_frame.getAtom(a_atomID);
+  const array<double, DIM>& pos = atom.getPosition();
+  // FIXME write something analogous to binDoC
+  m_tesselPocketFile << atom.getName() << " " << pos[0] << " " << pos[1] << " " << pos[2];
+  m_tesselPocketFile << " " << a_doc << " " << a_elecCharge << " " << a_numCoordCarbons << " " << a_avgdist;
+  m_tesselPocketFile << " " << a_atomID << " " << a_frame.getTimestep() << endl;
+
 }
 
 double RDF::binCoordNum(double a_coordNum, unsigned int a_pair, unsigned int a_layer)
