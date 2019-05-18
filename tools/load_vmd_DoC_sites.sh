@@ -1,10 +1,25 @@
-head -n 9 all.lammpstrj > DoC.lammpstrj
+#!bin/bash -l
+
+# Used to visualize all ion sites and load into VMD
+#  to enable color by distance/charge/DoC.
+# In VMD, edit "Representations" to change visualization
+# User: charge compensation (total)
+# User2: DoC
+# User3: avg distance between counter-ion and coordination shell
+#
+# Run with cell parameters as arguments: a b c alpha beta gamma
+# must be in folder with either 'all.lammpstrj' or 'header.lammpstrj'
+
+if [ -a all.lammpstrj ]; then
+    head -9 all.lammpstrj > header.lammpstrj
+fi
+head -n 9 header.lammpstrj > DoC.lammpstrj
 n=$(grep 'BF4\|C1' DoCIndices-all.out | wc -l)
 grep 'BF4\|C1' DoCIndices-all.out >> DoC.lammpstrj
-sed -i 's/C1/1/' DoC.lammpstrj
-sed -i 's/BF4/2/' DoC.lammpstrj
-sed -i "4s/.*/${n}/" DoC.lammpstrj
-sed -i "9s/.*/ITEM: ATOMS type x y z DoC charge numcarbons avgdist index step/" DoC.lammpstrj
+sed -i -e 's/C1/1/' DoC.lammpstrj
+sed -i -e 's/BF4/2/' DoC.lammpstrj
+sed -i -e "4s/.*/${n}/" DoC.lammpstrj
+sed -i -e "9s/.*/ITEM: ATOMS type x y z DoC charge numcarbons avgdist index step/" DoC.lammpstrj
 
 cella=$1
 cellb=$2
