@@ -124,6 +124,8 @@ class AtomCounter
     int m_numBinsAtomCharge;
     double m_maxAtomCharge;
     double m_binSizeAtomCharge;
+    /// Stores average charge of each electrode atom
+    vector<double > m_avgElecAtomCharge;
 
     /// Counter of all atoms in bins, during zero-P, zero-Q run.
     vector<array<double, MAX_NUM_TYPES > > m_numZPAtomsProfile;
@@ -155,6 +157,7 @@ const char* ACWriteCollectiveVars(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteIonsInLayersTime(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteElecChargeSlicesTime(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteElecAtomChargeHist(AtomCounter* a_ac, const char* a_filename);
+const char* ACWriteElecAtomCharge(AtomCounter* a_ac, const char* a_filename);
 const char* ACWriteElecNumIonsSlicesTime(AtomCounter* a_ac, const char* a_filename);
 
 

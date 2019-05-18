@@ -65,6 +65,7 @@ AtomCounter::AtomCounter(System& a_system)
   {
     m_elecAtomChargeHist[i].resize( m_system.getNumEleGrps() );
   }
+  m_avgElecAtomCharge.resize(m_system.getNumElectrodeAtoms() * 2);
 };
 
 void AtomCounter::sample(Frame& a_frame)
@@ -113,7 +114,7 @@ void AtomCounter::sample(Frame& a_frame)
       {
         // Get position of atom
         array<double, DIM> position = a_frame.getAtom(atomIndex).getPosition();
-        // Bin atom by type and add to density and charge profile
+        // Bin atom by type and add to density and charge profile, and average electrode atom charge
         binAtom(a_frame, atomIndex, position, i, k, masses[k], isElectrolyte, isElectrode);
         // Compute center of mass
         if (k == 0)
@@ -702,10 +703,12 @@ void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>&
     // Increment density of electrolyte in bin
     m_densityProfile[bin] += a_mass;
   }
+
   if (a_isElectrode)
   {
     // Increment electrode charge in bin
     double charge = a_frame.getAtom(a_atomIndex).getCharge();
+    m_avgElecAtomCharge[a_atomIndex-m_system.getElectrodeAtomIndexOffset()]+=charge;
     m_electrodeChargeProfile[bin] += charge;
     int binAtomCharge = floor(charge / m_binSizeAtomCharge) + m_numBinsAtomCharge/2; // accounts for negative charges
     if (binAtomCharge < 0)
@@ -727,8 +730,8 @@ void AtomCounter::binAtom(Frame& a_frame,  int& a_atomIndex, array<double, DIM>&
       m_elecAtomChargeHist[binAtomCharge][*atomGrpItr] += 1.0;
       atomGrpItr++;
     }
-
   }
+
   unsigned int layer = m_system.getLayer(a_position);
   a_frame.assignAtomToLayer(a_atomIndex, atomType, layer);
 }
@@ -826,6 +829,11 @@ void AtomCounter::normalize()
     }
     m_densityProfile[i] /= normDensity ;
     m_electrodeChargeProfile[i] /= numFrames;
+  }
+  // Normalize average charge per electrode
+  for (int i=0; i<m_system.getNumElectrodeAtoms()*2; i++)
+  {
+    m_avgElecAtomCharge[i] /= numFrames;
   }
   // normalize histogram of charges
   // for number of electrode atom groups, divide by number of prod timesteps and number of atoms in group
@@ -1208,4 +1216,10 @@ const char* ACWriteElecAtomChargeHist(AtomCounter* a_ac, const char* a_filename)
   write_binned_data(a_filename, numBins, binSize, binOffset, varDim, headernames, data);
   delete data;
   return a_filename;
+}
+
+const char* ACWriteElecAtomCharge(AtomCounter* a_ac, const char* a_filename)
+{
+  // FIXME
+  int varDim = a_ac->getNumElectrodeAtoms()
 }

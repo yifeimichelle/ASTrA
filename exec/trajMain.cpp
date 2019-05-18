@@ -129,4 +129,5 @@ int main(int argc, char** argv)
   ACWriteElecNumIonsSlicesTime(&ac, "numionselecslices");
   ACWriteCollectiveVars(&ac, "ionCV");
   ACWriteElecAtomChargeHist(&ac, "elecatomchargehist");
+  ACWriteElecAtomCharge(&ac, "elecatomcharge");
 }
